@@ -118,6 +118,53 @@ export type Database = {
         };
         Relationships: [];
       };
+      services: {
+        Row: {
+          active: boolean;
+          buffer_minutes: number;
+          business_id: string;
+          created_at: string;
+          currency: string;
+          duration_minutes: number;
+          id: string;
+          name_ar: string | null;
+          name_en: string | null;
+          price: number;
+        };
+        Insert: {
+          active?: boolean;
+          buffer_minutes?: number;
+          business_id: string;
+          created_at?: string;
+          currency: string;
+          duration_minutes: number;
+          id?: string;
+          name_ar?: string | null;
+          name_en?: string | null;
+          price: number;
+        };
+        Update: {
+          active?: boolean;
+          buffer_minutes?: number;
+          business_id?: string;
+          created_at?: string;
+          currency?: string;
+          duration_minutes?: number;
+          id?: string;
+          name_ar?: string | null;
+          name_en?: string | null;
+          price?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "services_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;

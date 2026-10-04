@@ -1,11 +1,11 @@
 begin;
-select plan(20);
+select plan(22);
 select tests.clear_tenant_data();
 
 -- Structure
 select tables_are(
   'public',
-  array['profiles', 'businesses', 'business_members'],
+  array['profiles', 'businesses', 'business_members', 'services'],
   'public contains exactly the expected tables'
 );
 
@@ -30,6 +30,8 @@ select table_privs_are('public', 'businesses', 'authenticated', array['SELECT'])
 select table_privs_are(
   'public', 'business_members', 'authenticated', array['SELECT', 'INSERT', 'DELETE']
 );
+select table_privs_are('public', 'services', 'anon', array[]::text[]);
+select table_privs_are('public', 'services', 'authenticated', array['SELECT']);
 
 -- Fixtures: two users (profiles come from the auth trigger) and one business.
 insert into auth.users (id, email) values

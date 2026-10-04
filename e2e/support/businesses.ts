@@ -51,3 +51,30 @@ export async function addMember(
     .insert({ business_id: businessId, user_id: profile.id, role });
   if (error) throw error;
 }
+
+/** Adds a service straight to the database (service role), for tests that only need one listed. */
+export async function addService(
+  businessId: string,
+  service: {
+    nameEn?: string;
+    nameAr?: string;
+    duration?: number;
+    price?: number;
+    currency?: string;
+  },
+) {
+  const { data, error } = await adminClient()
+    .from("services")
+    .insert({
+      business_id: businessId,
+      name_en: service.nameEn ?? null,
+      name_ar: service.nameAr ?? null,
+      duration_minutes: service.duration ?? 30,
+      price: service.price ?? 10000,
+      currency: service.currency ?? "EGP",
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id as string;
+}

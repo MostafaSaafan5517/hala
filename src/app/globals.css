@@ -131,4 +131,9 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  /* Arabic text is always marked lang="ar". A font list alone can't pick the Arabic font
+     reliably: Geist's fallback face is the system's Arial, which has Arabic letters too. */
+  :lang(ar) {
+    font-family: var(--font-arabic), var(--font-sans);
+  }
 }

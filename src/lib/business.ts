@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import type { Database, Enums } from "@/lib/supabase/database.types";
+import { createServerActionClient } from "@/lib/supabase/server";
 
 export type MemberRole = Enums<"member_role">;
 
@@ -31,6 +32,20 @@ export async function getMemberBusiness(
   if (error) throw new Error(`Could not load the business: ${error.message}`);
   if (!data) return null;
   return { role: data.role, business: data.businesses };
+}
+
+/**
+ * For Server Actions on a business: a client that can write the session cookies, the user's id,
+ * and their membership, or null when they aren't a member. Visitors are sent to sign in and back
+ * to `currentPath`. Actions take their arguments from the browser, so each one checks the role
+ * it needs from this, and RLS checks again in the database.
+ */
+export async function memberForAction(slug: string, currentPath: string) {
+  const supabase = await createServerActionClient();
+  const { data } = await supabase.auth.getClaims();
+  if (!data) redirect(`/login?next=${encodeURIComponent(currentPath)}`);
+  const member = await getMemberBusiness(supabase, data.claims.sub, slug);
+  return { supabase, userId: data.claims.sub, member };
 }
 
 /**
