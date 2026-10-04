@@ -90,3 +90,31 @@ test("a sign-in link can't send the user to another site", async ({ page }) => {
   await signIn(page, user.email, user.password);
   await expect(page).toHaveURL(/^http:\/\/localhost:3100\/dashboard$/);
 });
+
+test("signing in returns to the page that asked for it", async ({ page }) => {
+  const user = await createConfirmedUser();
+
+  await page.goto("/dashboard/new-business");
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%2Fnew-business$/);
+  await signIn(page, user.email, user.password);
+  await expect(page).toHaveURL(/\/dashboard\/new-business$/);
+});
+
+test("signing up from a page that needed sign-in comes back to that page after confirming", async ({
+  page,
+}) => {
+  const email = uniqueEmail("return");
+
+  await page.goto("/dashboard/new-business");
+  await page.getByRole("link", { name: "Create an account" }).click();
+  await expect(page).toHaveURL(/\/signup\?next=%2Fdashboard%2Fnew-business$/);
+
+  await page.getByLabel("Full name").fill("Rhea Return");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(TEST_PASSWORD);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
+
+  await page.goto(await getEmailLink(email, "/auth/confirm"));
+  await expect(page).toHaveURL(/\/dashboard\/new-business$/);
+});

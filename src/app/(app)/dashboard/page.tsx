@@ -1,21 +1,104 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
+import { roleLabels } from "@/lib/business";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
-  const { claims } = await requireUser("/dashboard");
-  // Sign-up stores the name in the user's metadata, which the token carries.
-  const fullName: unknown = claims.user_metadata?.full_name;
+  const { supabase, userId } = await requireUser("/dashboard");
+
+  // Both reads go through RLS as the signed-in user: their own profile, and only the
+  // businesses where they are a member.
+  const [profileResult, membersResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", userId)
+      .single(),
+    supabase
+      .from("business_members")
+      .select("role, businesses(id, name, slug)")
+      .eq("user_id", userId)
+      .order("created_at"),
+  ]);
+  if (profileResult.error) {
+    throw new Error(
+      `Could not load your profile: ${profileResult.error.message}`,
+    );
+  }
+  if (membersResult.error) {
+    throw new Error(
+      `Could not load your businesses: ${membersResult.error.message}`,
+    );
+  }
+  const profile = profileResult.data;
+  const memberships = membersResult.data;
 
   return (
-    <div className="grid gap-1">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        {typeof fullName === "string" && fullName
-          ? `Welcome, ${fullName}`
-          : "Welcome"}
-      </h1>
-      <p className="text-muted-foreground">Signed in as {claims.email}</p>
-    </div>
+    <>
+      <div className="grid gap-1">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Welcome{profile.full_name ? `, ${profile.full_name}` : ""}
+        </h1>
+        <p className="text-muted-foreground">Signed in as {profile.email}</p>
+      </div>
+
+      {memberships.length === 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>You don&apos;t have a business yet</CardTitle>
+            <CardDescription>
+              Create one to set up your services, staff and opening hours.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/new-business" className={buttonVariants()}>
+              Create a business
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        <section className="grid gap-3" aria-labelledby="businesses-heading">
+          <div className="flex items-center justify-between gap-4">
+            <h2 id="businesses-heading" className="text-lg font-semibold">
+              Your businesses
+            </h2>
+            <Link
+              href="/dashboard/new-business"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              New business
+            </Link>
+          </div>
+          <ul className="grid gap-3">
+            {memberships.map(({ role, businesses: business }) => (
+              <li
+                key={business.id}
+                className="grid gap-0.5 rounded-lg border p-4"
+              >
+                <Link
+                  href={`/dashboard/b/${business.slug}`}
+                  className="font-medium underline-offset-4 hover:underline"
+                >
+                  {business.name}
+                </Link>
+                <span className="text-sm text-muted-foreground">
+                  {roleLabels[role]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </>
   );
 }
