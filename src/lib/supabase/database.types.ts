@@ -269,6 +269,105 @@ export type Database = {
           },
         ];
       };
+      conversation_messages: {
+        Row: {
+          business_id: string;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          message: NonNullable<Json>;
+          position: number;
+          role: string;
+          updated_at: string;
+        };
+        Insert: {
+          business_id: string;
+          conversation_id: string;
+          created_at?: string;
+          id: string;
+          message: NonNullable<Json>;
+          position: number;
+          role: string;
+          updated_at?: string;
+        };
+        Update: {
+          business_id?: string;
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          message?: NonNullable<Json>;
+          position?: number;
+          role?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_business_id_fkey";
+            columns: ["conversation_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id", "business_id"];
+          },
+        ];
+      };
+      conversations: {
+        Row: {
+          business_id: string;
+          channel: string;
+          created_at: string;
+          customer_id: string | null;
+          id: string;
+          started_by: string | null;
+          status: Database["public"]["Enums"]["conversation_status"];
+          updated_at: string;
+          verification_failures: number;
+        };
+        Insert: {
+          business_id: string;
+          channel: string;
+          created_at?: string;
+          customer_id?: string | null;
+          id?: string;
+          started_by?: string | null;
+          status?: Database["public"]["Enums"]["conversation_status"];
+          updated_at?: string;
+          verification_failures?: number;
+        };
+        Update: {
+          business_id?: string;
+          channel?: string;
+          created_at?: string;
+          customer_id?: string | null;
+          id?: string;
+          started_by?: string | null;
+          status?: Database["public"]["Enums"]["conversation_status"];
+          updated_at?: string;
+          verification_failures?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "conversations_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "conversations_customer_id_business_id_fkey";
+            columns: ["customer_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "conversations_started_by_fkey";
+            columns: ["started_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       customers: {
         Row: {
           business_id: string;
@@ -398,6 +497,7 @@ export type Database = {
       model_calls: {
         Row: {
           business_id: string;
+          conversation_id: string | null;
           cost_usd: number;
           created_at: string;
           error: string | null;
@@ -410,6 +510,7 @@ export type Database = {
         };
         Insert: {
           business_id: string;
+          conversation_id?: string | null;
           cost_usd: number;
           created_at?: string;
           error?: string | null;
@@ -422,6 +523,7 @@ export type Database = {
         };
         Update: {
           business_id?: string;
+          conversation_id?: string | null;
           cost_usd?: number;
           created_at?: string;
           error?: string | null;
@@ -605,6 +707,48 @@ export type Database = {
           },
         ];
       };
+      tool_calls: {
+        Row: {
+          approved: boolean;
+          business_id: string;
+          conversation_id: string;
+          created_at: string;
+          id: number;
+          input: NonNullable<Json>;
+          latency_ms: number;
+          output: Json | null;
+          status: string;
+          tool_call_id: string;
+          tool_name: string;
+        };
+        Insert: {
+          approved?: boolean;
+          business_id: string;
+          conversation_id: string;
+          created_at?: string;
+          id?: never;
+          input: NonNullable<Json>;
+          latency_ms?: number;
+          output?: Json | null;
+          status: string;
+          tool_call_id: string;
+          tool_name: string;
+        };
+        Update: {
+          approved?: boolean;
+          business_id?: string;
+          conversation_id?: string;
+          created_at?: string;
+          id?: never;
+          input?: NonNullable<Json>;
+          latency_ms?: number;
+          output?: Json | null;
+          status?: string;
+          tool_call_id?: string;
+          tool_name?: string;
+        };
+        Relationships: [];
+      };
       working_hours: {
         Row: {
           business_id: string;
@@ -737,6 +881,14 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      chat_usage: {
+        Args: { target_conversation_id: string };
+        Returns: {
+          business_chat_calls_last_minute: number;
+          business_cost_today: number;
+          conversation_tokens: number;
+        }[];
+      };
       create_business: {
         Args: {
           business_language: Database["public"]["Enums"]["language"];
@@ -864,6 +1016,7 @@ export type Database = {
     };
     Enums: {
       booking_status: "confirmed" | "cancelled";
+      conversation_status: "open" | "needs_human" | "closed";
       knowledge_kind: "faq" | "policy";
       language: "en" | "ar";
       member_role: "owner" | "admin" | "staff";
@@ -998,6 +1151,7 @@ export const Constants = {
   public: {
     Enums: {
       booking_status: ["confirmed", "cancelled"],
+      conversation_status: ["open", "needs_human", "closed"],
       knowledge_kind: ["faq", "policy"],
       language: ["en", "ar"],
       member_role: ["owner", "admin", "staff"],
