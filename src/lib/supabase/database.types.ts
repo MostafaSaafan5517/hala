@@ -824,6 +824,26 @@ export type Database = {
         };
         Returns: string;
       };
+      search_knowledge: {
+        Args: {
+          match_count?: number;
+          min_similarity: number;
+          query_embedding: string;
+          query_model: string;
+          query_text: string;
+          target_business_id: string;
+        };
+        Returns: {
+          chunk_id: string;
+          content: string;
+          document_id: string;
+          keyword_match: boolean;
+          kind: Database["public"]["Enums"]["knowledge_kind"];
+          score: number;
+          similarity: number;
+          title: string;
+        }[];
+      };
       set_working_hours: {
         Args: {
           spans: Json;
