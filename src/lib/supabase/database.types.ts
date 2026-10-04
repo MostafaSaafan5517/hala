@@ -537,6 +537,7 @@ export type Database = {
       available_slots: {
         Args: {
           from_date: string;
+          ignored_booking_id?: string;
           target_service_id: string;
           target_staff_id?: string;
           to_date: string;
@@ -625,6 +626,32 @@ export type Database = {
           target_business_id: string;
         };
         Returns: string;
+      };
+      day_bookings: {
+        Args: { day: string; target_business_id: string };
+        Returns: {
+          blocked_until: string;
+          business_id: string;
+          cancelled_at: string | null;
+          created_at: string;
+          currency: string;
+          customer_id: string;
+          ends_at: string;
+          id: string;
+          notes: string | null;
+          price: number;
+          reference: string;
+          service_id: string;
+          staff_id: string;
+          starts_at: string;
+          status: Database["public"]["Enums"]["booking_status"];
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "bookings";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
       };
       reschedule_booking: {
         Args: {
