@@ -22,7 +22,7 @@ export default async function StaffPage({
   const { data: staff, error } = await supabase
     .from("staff")
     .select(
-      "id, name, active, staff_services (services (id, name_en, name_ar))",
+      "id, name, active, staff_services (services (id, name_en, name_ar, created_at))",
     )
     .eq("business_id", business.id)
     .order("active", { ascending: false })
@@ -82,14 +82,20 @@ export default async function StaffPage({
                       aria-label={`Services ${person.name} performs`}
                       className="flex flex-wrap gap-1.5"
                     >
-                      {person.staff_services.map(({ services: service }) => (
-                        <li
-                          key={service.id}
-                          className="rounded-full bg-muted px-2.5 py-1 text-xs"
-                        >
-                          <ServiceName service={service} />
-                        </li>
-                      ))}
+                      {person.staff_services
+                        .map(({ services: service }) => service)
+                        // In the Services tab's order: the database returns links in no order.
+                        .toSorted((a, b) =>
+                          a.created_at.localeCompare(b.created_at),
+                        )
+                        .map((service) => (
+                          <li
+                            key={service.id}
+                            className="rounded-full bg-muted px-2.5 py-1 text-xs"
+                          >
+                            <ServiceName service={service} />
+                          </li>
+                        ))}
                     </ul>
                   )}
                 </div>
