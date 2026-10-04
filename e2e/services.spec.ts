@@ -29,6 +29,7 @@ test("an owner adds a service in English and Arabic, priced in their currency", 
   await page.goto(`/dashboard/b/${business.slug}/services`);
   await expect(page.getByText("No services yet.")).toBeVisible();
   await page.getByRole("link", { name: "New service" }).click();
+  await expect(page).toHaveTitle(/New service/);
   expect(await accessibilityViolations(page)).toEqual([]);
 
   await page.getByLabel("Name in English").fill("Haircut");

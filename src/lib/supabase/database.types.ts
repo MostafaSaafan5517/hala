@@ -165,6 +165,71 @@ export type Database = {
           },
         ];
       };
+      staff: {
+        Row: {
+          active: boolean;
+          business_id: string;
+          created_at: string;
+          id: string;
+          name: string;
+        };
+        Insert: {
+          active?: boolean;
+          business_id: string;
+          created_at?: string;
+          id?: string;
+          name: string;
+        };
+        Update: {
+          active?: boolean;
+          business_id?: string;
+          created_at?: string;
+          id?: string;
+          name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      staff_services: {
+        Row: {
+          business_id: string;
+          service_id: string;
+          staff_id: string;
+        };
+        Insert: {
+          business_id: string;
+          service_id: string;
+          staff_id: string;
+        };
+        Update: {
+          business_id?: string;
+          service_id?: string;
+          staff_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_services_service_id_business_id_fkey";
+            columns: ["service_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "staff_services_staff_id_business_id_fkey";
+            columns: ["staff_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id", "business_id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -178,6 +243,22 @@ export type Database = {
           business_timezone: string;
         };
         Returns: string;
+      };
+      create_staff_member: {
+        Args: {
+          member_name: string;
+          service_ids: string[];
+          target_business_id: string;
+        };
+        Returns: string;
+      };
+      update_staff_member: {
+        Args: {
+          member_name: string;
+          service_ids: string[];
+          target_staff_id: string;
+        };
+        Returns: boolean;
       };
     };
     Enums: {

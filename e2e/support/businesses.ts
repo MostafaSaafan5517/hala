@@ -78,3 +78,38 @@ export async function addService(
   if (error) throw error;
   return data.id as string;
 }
+
+/** Adds a staff member, and the services they perform, straight to the database (service role). */
+export async function addStaffMember(
+  businessId: string,
+  name: string,
+  serviceIds: string[] = [],
+) {
+  const admin = adminClient();
+  const { data, error } = await admin
+    .from("staff")
+    .insert({ business_id: businessId, name })
+    .select("id")
+    .single();
+  if (error) throw error;
+  if (serviceIds.length > 0) {
+    const { error: servicesError } = await admin.from("staff_services").insert(
+      serviceIds.map((serviceId) => ({
+        business_id: businessId,
+        staff_id: data.id,
+        service_id: serviceId,
+      })),
+    );
+    if (servicesError) throw servicesError;
+  }
+  return data.id as string;
+}
+
+/** Archives a service, as an owner can. */
+export async function archiveService(serviceId: string) {
+  const { error } = await adminClient()
+    .from("services")
+    .update({ active: false })
+    .eq("id", serviceId);
+  if (error) throw error;
+}
