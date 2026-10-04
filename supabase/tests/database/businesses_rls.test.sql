@@ -1,5 +1,5 @@
 begin;
-select plan(16);
+select plan(18);
 select tests.clear_tenant_data();
 
 select tests.create_user('owner-a@test.local');
@@ -131,6 +131,19 @@ select results_eq(
   $$ select slug, timezone from public.businesses where slug = 'nour-salon' $$,
   $$ values ('nour-salon', 'Asia/Dubai') $$,
   'the business is unchanged after the refused changes'
+);
+
+-- Server code (seeding, the assistant's tests) can update a business too; the time zone is still
+-- checked, by a private function it may run.
+select tests.authenticate_as_service_role();
+select lives_ok(
+  $$ update public.businesses set cancellation_notice_hours = 48 where slug = 'nour-salon' $$,
+  'server code can update a business'
+);
+select throws_ok(
+  $$ update public.businesses set timezone = 'Mars/Olympus' where slug = 'nour-salon' $$,
+  '23514', null,
+  'and its time zone is still checked'
 );
 
 select * from finish();
