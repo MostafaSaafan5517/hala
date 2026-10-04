@@ -4,7 +4,7 @@
 
 An AI receptionist for appointment-based businesses (salons, clinics, studios, consultants), in Arabic and English. Customers chat with it on the business's website: it answers questions from the business's own data, checks real availability, and books, reschedules or cancels appointments. Staff see every conversation and booking, and can take a conversation over.
 
-**Status:** in development. Business setup (Phase 1) and the booking engine (Phase 2) are done; the knowledge base and retrieval are next. See the [roadmap](#roadmap).
+**Status:** in development. Business setup (Phase 1), the booking engine (Phase 2) and the knowledge base with retrieval (Phase 3) are done; the assistant itself is next. See the [roadmap](#roadmap).
 
 ## What works today
 
@@ -20,6 +20,9 @@ An AI receptionist for appointment-based businesses (salons, clinics, studios, c
 - **Idempotent booking, moving and cancelling:** every request carries a key, so a retried or duplicated request returns the first result instead of acting twice.
 - **Customers' rules versus staff:** customers (through the assistant) can't cancel or move inside the cancellation window; the business's staff always can.
 - **An append-only audit log** of every change, bookings included, written by database triggers; nobody, not even the server, can edit or delete it.
+- **A knowledge base** of FAQs and policies in English or Arabic, split into passages and embedded on save (only changed passages are re-embedded), with a "Try a question" box that shows exactly which passages the assistant would answer from.
+- **Hybrid retrieval in Postgres:** search by meaning (pgvector cosine similarity, above a per-model threshold) and by the question's rare keywords (language-agnostic, Arabic spelling normalized), merged by reciprocal rank fusion. Nothing relevant means an empty result, never a guess. One business's passages are unreachable from another's, proven by tests.
+- **Every AI call logged** with tokens, cost, latency and failures, in an append-only table only server code can write: the base for rate limits and token budgets.
 - **Roles enforced in the database:** owners and admins manage the setup, every member can take bookings, and Row-Level Security keeps every business's data invisible to every other business. pgTAP tests cover each policy, including the refusals.
 
 ## What this project will demonstrate
@@ -50,7 +53,7 @@ pnpm env:local
 pnpm dev
 ```
 
-Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable).
+Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable), and sets `EMBEDDING_MODEL=offline`, a word-matching stand-in that needs no API key. For real semantic search, set `EMBEDDING_MODEL=openai/text-embedding-3-small` and an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/ai-gateway), then re-index on the Knowledge tab.
 
 ## Tests
 
@@ -68,7 +71,7 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 - [x] **Phase 0:** project setup, test tooling and CI
 - [x] **Phase 1:** tenants, auth and business setup (services, staff, hours, time off), with Row-Level Security
 - [x] **Phase 2:** booking engine: availability, the exclusion constraint, idempotent booking
-- [ ] **Phase 3:** knowledge base and retrieval with pgvector
+- [x] **Phase 3:** knowledge base and retrieval with pgvector
 - [ ] **Phase 4:** the assistant: streaming chat, tools, grounding, confirmation flow, injection resistance
 - [ ] **Phase 5:** embeddable widget and staff inbox
 - [ ] **Phase 6:** evaluation suite, end-to-end flows, usage dashboard
