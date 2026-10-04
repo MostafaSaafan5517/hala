@@ -1,3 +1,5 @@
+import { westernDigits } from "@/lib/digits";
+
 // Amounts are stored as integers in the currency's smallest unit (piasters, halalas, fils), and
 // currencies differ in how many decimals that is. Intl knows each currency's ISO 4217 decimals.
 
@@ -29,14 +31,10 @@ export function minorUnitDigits(currency: string): number {
   );
 }
 
-// Arabic-Indic (٠-٩) and Eastern Arabic (۰-۹) digits, and the Arabic decimal and thousands
-// separators, so prices typed on an Arabic keyboard work too.
-function westernDigits(text: string) {
-  return text
-    .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
-    .replace(/[۰-۹]/g, (digit) => String(digit.charCodeAt(0) - 0x06f0))
-    .replaceAll("٫", ".")
-    .replaceAll("٬", ",");
+// Arabic digits, and the Arabic decimal and thousands separators, so prices typed on an Arabic
+// keyboard work too.
+function westernNumber(text: string) {
+  return westernDigits(text).replaceAll("٫", ".").replaceAll("٬", ",");
 }
 
 /**
@@ -46,7 +44,7 @@ function westernDigits(text: string) {
  */
 export function parseAmount(text: string, currency: string): number | null {
   const digits = minorUnitDigits(currency);
-  const cleaned = westernDigits(text.trim()).replaceAll(",", "");
+  const cleaned = westernNumber(text.trim()).replaceAll(",", "");
   const match = /^(\d+)(?:\.(\d+))?$/.exec(cleaned);
   if (!match) return null;
   const [, whole = "", fraction = ""] = match;

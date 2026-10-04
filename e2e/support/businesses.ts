@@ -131,3 +131,24 @@ export async function setHoursFor(
     );
   if (error) throw error;
 }
+
+/**
+ * Books a service through the booking function as server code (the path the assistant will
+ * use), so all the booking rules apply. Returns the booking's id.
+ */
+export async function addBooking(
+  serviceId: string,
+  startsAt: string,
+  options: { staffId?: string; customerName?: string; phone?: string } = {},
+) {
+  const { data, error } = await adminClient().rpc("book_appointment", {
+    target_service_id: serviceId,
+    requested_start: startsAt,
+    customer_name: options.customerName ?? "Mona Adel",
+    customer_phone: options.phone ?? "+966501234567",
+    idempotency_key: crypto.randomUUID(),
+    target_staff_id: options.staffId,
+  });
+  if (error) throw error;
+  return data.id as string;
+}

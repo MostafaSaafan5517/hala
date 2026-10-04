@@ -15,6 +15,30 @@ export function formatLocalDateTime(iso: string, timeZone: string) {
   }).format(new Date(iso));
 }
 
+/** The time of day a moment happens in a time zone: "09:30". */
+export function formatLocalTime(iso: string, timeZone: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(iso));
+}
+
+/** Whether text is a real date written YYYY-MM-DD (so "2026-02-30" is not). */
+export function isIsoDate(text: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const date = new Date(`${text}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(text);
+}
+
+/** The date `days` after a YYYY-MM-DD date (before it, when negative). */
+export function addDays(date: string, days: number) {
+  const moved = new Date(`${date}T00:00:00Z`);
+  moved.setUTCDate(moved.getUTCDate() + days);
+  return moved.toISOString().slice(0, 10);
+}
+
 /** A plain date (YYYY-MM-DD) as people read it: "Fri, 20 Mar 2026". */
 export function formatDay(date: string) {
   return new Intl.DateTimeFormat("en-GB", {
