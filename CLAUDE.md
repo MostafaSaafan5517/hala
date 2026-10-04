@@ -70,13 +70,26 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - `services` (English and/or Arabic name, duration and buffer in 5-minute steps, price in the smallest unit, currency), `staff` (bookable people, no account needed) and `staff_services` (who performs what).
 - `working_hours`: weekly spans in local time, 0 = Sunday, closing at `24:00` allowed, no overlaps (an exclusion constraint). Rows with a null `staff_id` are the business's hours. A staff member with no rows of their own works the business's hours; one with any rows works exactly those. `set_working_hours` replaces a whole week at once.
 - `time_off` (a staff member away, stored in UTC; `add_time_off` takes local times) and `closures` (whole days the business is shut, as plain dates, first and last day included).
-- Booking rules on `businesses`: `booking_notice_minutes`, `booking_horizon_days`, `slot_interval_minutes` and `cancellation_notice_hours`. The booking engine (Phase 2) reads them.
+- Booking rules on `businesses`: `booking_notice_minutes`, `booking_horizon_days`, `slot_interval_minutes` and `cancellation_notice_hours`.
+- `customers`: per business, known by an E.164 phone number (unique per business), with an optional email and the language to answer them in. Created only by `book_appointment`; an existing customer's details aren't changed by booking.
+- `bookings`: customer, service, staff member, `starts_at`/`ends_at`, `blocked_until` (end plus the service's buffer), status `confirmed` or `cancelled`, the price and currency at booking time, and a six-character `reference` (no look-alike characters). The `bookings_no_overlap` exclusion constraint refuses a confirmed booking whose `[starts_at, blocked_until)` overlaps another confirmed booking of the same staff member. Every booking has a staff member (a one-person business adds itself as staff).
+- `private.idempotency_keys`: each key's business, request (action and arguments) and booking. Kept, so a replay months later still can't act twice.
 - `audit_log`: append-only history of every change to the tables above, written only by triggers, with the actor (`user`, `server` for the service role, `database` for migrations and psql). Owners and admins can read their business's history.
+
+## The booking engine
+
+- **Availability** is one SQL function, `private.free_slots`, wrapped by `public.available_slots(service, from_date, to_date, staff?, ignored_booking?)` (at most 31 days per call). The slot pickers and the booking functions both use it, so what is offered and what is accepted can't disagree. A start is offered when it is on the interval grid counted from local midnight, the appointment fits a working span (the staff member's own hours, else the business's), the day isn't a closure, it is past the notice and within the horizon, and the appointment plus buffer avoids time off and confirmed bookings (theirs include their buffers). The buffer may run past closing. Days are converted to UTC one at a time, so each uses its own offset. `free_slots` takes the clock as a parameter (`now_at`), which is how pgTAP checks fixed daylight-saving dates forever.
+- **Writes** go only through `book_appointment`, `reschedule_booking` and `cancel_booking` (security definer). No API role can write `bookings` directly, not even the service role. Each one: checks the caller (a member of the business, or the service role, which acts for a customer), claims the idempotency key (an identical earlier request returns its booking; the same key with different details is refused; a request that fails rolls its key back), applies the rules, and lets the exclusion constraint settle races. Without a staff member, `book_appointment` takes the first one free in a fixed order (`created_at`, then `id`), moving on if another request takes them a moment earlier. A moved booking keeps its id, reference and price; its length comes from the service as it is now.
+- **Customers versus staff:** the cancellation window (`cancellation_notice_hours`) applies only to the service role, that is to customers through the assistant. Members can always move or cancel an upcoming booking, and every member (staff included) can take bookings.
+- **Refusals** raise their own SQLSTATE codes, which callers translate (`src/lib/booking-errors.ts` for the dashboard): `HB001` taken, `HB002` not open, `HB003` too soon, `HB004` too far ahead, `HB005` service or staff member can't be booked, `HB006` idempotency key reused for another request, `HB007` too late for a customer to change, `HB008` booking can't be changed (cancelled or started).
+- `day_bookings(business, day)` lists one local day's bookings, with the day's boundaries converted in Postgres.
 
 ## App structure
 
 - `src/proxy.ts` refreshes the Supabase session on each request (Next.js 16 calls middleware "proxy").
 - Business pages live under `/dashboard/b/[slug]/`. A page loads its business with `requireMemberBusiness(slug, path, roles)` (`src/lib/business.ts`): visitors are sent to sign in, and anyone without one of `roles` gets a 404, so pages never confirm that a business exists. Server Actions use `memberForAction(slug, path)` and check the role themselves, because their arguments come from the browser; RLS checks again in the database.
+- Forms that book, move or cancel carry an idempotency key generated when the page renders (`randomUUID()` on the server), so a double click or a retried request can't act twice. Multi-step choices (service, staff, day) are plain GET forms whose choices live in the URL; only the final step is a Server Action.
+- Phone numbers are typed in any common format (Arabic digits too) and stored as E.164 by `normalizePhone` (`src/lib/phone.ts`, libphonenumber's full metadata, server side). The country code is required: a business can have customers from several countries, so we never guess one.
 
 ## Testing conventions
 
@@ -113,6 +126,7 @@ supabase/
   config.toml        Local Supabase settings (ports 553xx; unused services off)
   migrations/        SQL migrations, applied in filename order
   tests/database/    pgTAP tests for schema, privileges and RLS
+  tests/concurrency/ Vitest + pg: many connections booking at once
 .github/
   workflows/ci.yml   CI pipeline
   actions/setup/     Shared CI setup (pnpm, Node, dependencies)

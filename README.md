@@ -4,7 +4,7 @@
 
 An AI receptionist for appointment-based businesses (salons, clinics, studios, consultants), in Arabic and English. Customers chat with it on the business's website: it answers questions from the business's own data, checks real availability, and books, reschedules or cancels appointments. Staff see every conversation and booking, and can take a conversation over.
 
-**Status:** in development. Accounts and business setup (Phase 1) are done; the booking engine is next. See the [roadmap](#roadmap).
+**Status:** in development. Business setup (Phase 1) and the booking engine (Phase 2) are done; the knowledge base and retrieval are next. See the [roadmap](#roadmap).
 
 ## What works today
 
@@ -14,8 +14,13 @@ An AI receptionist for appointment-based businesses (salons, clinics, studios, c
 - **Staff** (no account needed) and the services each one performs.
 - **Working hours** for the business and, where they differ, for each staff member, with split shifts; **time off** for staff and **closures** for the whole business, entered in the business's local time and stored in UTC, daylight saving included.
 - **Booking rules:** minimum notice, how far ahead customers can book, how often appointments start, and how late they can cancel.
-- **An append-only audit log** of every setup change, written by database triggers; nobody, not even the server, can edit or delete it.
-- **Roles enforced in the database:** owners and admins manage the setup, staff can only view it, and Row-Level Security keeps every business's data invisible to every other business. pgTAP tests cover each policy, including the refusals.
+- **Bookings** from the dashboard: a day view, booking with only truly free times offered, moving and cancelling. Customers are known by phone number (typed in any common format, Arabic digits included).
+- **Availability computed in Postgres** from working hours, time off, closures, existing bookings and buffers, notice, horizon and the start-time interval, one local day at a time so daylight saving is right. The pickers and the booking check use the same function, so they can't disagree.
+- **No double bookings, enforced by Postgres:** an exclusion constraint refuses any overlapping confirmed booking for the same staff member. Concurrency tests fire many simultaneous requests for one slot and prove exactly one wins; with the constraint removed, they fail.
+- **Idempotent booking, moving and cancelling:** every request carries a key, so a retried or duplicated request returns the first result instead of acting twice.
+- **Customers' rules versus staff:** customers (through the assistant) can't cancel or move inside the cancellation window; the business's staff always can.
+- **An append-only audit log** of every change, bookings included, written by database triggers; nobody, not even the server, can edit or delete it.
+- **Roles enforced in the database:** owners and admins manage the setup, every member can take bookings, and Row-Level Security keeps every business's data invisible to every other business. pgTAP tests cover each policy, including the refusals.
 
 ## What this project will demonstrate
 
@@ -62,7 +67,7 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 
 - [x] **Phase 0:** project setup, test tooling and CI
 - [x] **Phase 1:** tenants, auth and business setup (services, staff, hours, time off), with Row-Level Security
-- [ ] **Phase 2:** booking engine: availability, the exclusion constraint, idempotent booking
+- [x] **Phase 2:** booking engine: availability, the exclusion constraint, idempotent booking
 - [ ] **Phase 3:** knowledge base and retrieval with pgvector
 - [ ] **Phase 4:** the assistant: streaming chat, tools, grounding, confirmation flow, injection resistance
 - [ ] **Phase 5:** embeddable widget and staff inbox
