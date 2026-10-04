@@ -72,26 +72,38 @@ export type Database = {
       };
       businesses: {
         Row: {
+          booking_horizon_days: number;
+          booking_notice_minutes: number;
+          cancellation_notice_hours: number;
           created_at: string;
           default_language: Database["public"]["Enums"]["language"];
           id: string;
           name: string;
+          slot_interval_minutes: number;
           slug: string;
           timezone: string;
         };
         Insert: {
+          booking_horizon_days?: number;
+          booking_notice_minutes?: number;
+          cancellation_notice_hours?: number;
           created_at?: string;
           default_language?: Database["public"]["Enums"]["language"];
           id?: string;
           name: string;
+          slot_interval_minutes?: number;
           slug: string;
           timezone: string;
         };
         Update: {
+          booking_horizon_days?: number;
+          booking_notice_minutes?: number;
+          cancellation_notice_hours?: number;
           created_at?: string;
           default_language?: Database["public"]["Enums"]["language"];
           id?: string;
           name?: string;
+          slot_interval_minutes?: number;
           slug?: string;
           timezone?: string;
         };

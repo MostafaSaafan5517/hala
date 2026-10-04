@@ -24,7 +24,10 @@ export async function getMemberBusiness(
   const { data, error } = await supabase
     .from("business_members")
     .select(
-      "role, businesses!inner(id, name, slug, timezone, default_language)",
+      `role, businesses!inner(
+        id, name, slug, timezone, default_language, booking_notice_minutes,
+        booking_horizon_days, slot_interval_minutes, cancellation_notice_hours
+      )`,
     )
     .eq("user_id", userId)
     .eq("businesses.slug", slug)

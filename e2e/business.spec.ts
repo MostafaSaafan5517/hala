@@ -34,8 +34,10 @@ test("a new owner creates their business from the dashboard", async ({
   await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
   await expect(page.getByText("You own this business.")).toBeVisible();
   const details = page.getByRole("region", { name: "Details" });
-  await expect(details).toContainText("Africa/Cairo");
-  await expect(details).toContainText("العربية");
+  await expect(details.getByLabel("Time zone")).toHaveValue("Africa/Cairo");
+  await expect(details.getByLabel("Assistant's first language")).toHaveValue(
+    "ar",
+  );
   expect(await accessibilityViolations(page)).toEqual([]);
 
   await page.getByRole("link", { name: "Businesses" }).click();
@@ -93,4 +95,58 @@ test("staff open the business they work at", async ({ page }) => {
 test("creating a business requires signing in", async ({ page }) => {
   await page.goto("/dashboard/new-business");
   await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%2Fnew-business$/);
+});
+
+test("owners correct the business's details and set its booking rules", async ({
+  page,
+  browser,
+}) => {
+  const owner = await createConfirmedUser();
+  const staff = await createConfirmedUser();
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Amber Salon"),
+    { timezone: "UTC" },
+  );
+  await addMember(business.id, staff.email, "staff");
+
+  await signInAs(page, owner);
+  await page.goto(`/dashboard/b/${business.slug}`);
+  const details = page.getByRole("region", { name: "Details" });
+  await details.getByLabel("Business name").fill("Amber Beauty Lounge");
+  await details.getByLabel("Time zone").selectOption("Asia/Dubai");
+  await details.getByRole("button", { name: "Save details" }).click();
+  await expect(details.getByRole("status")).toHaveText("Saved.");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Amber Beauty Lounge" }),
+  ).toBeVisible();
+
+  const rules = page.getByRole("region", { name: "Booking rules" });
+  await expect(rules.getByLabel("Appointments start")).toHaveValue("15");
+  await rules.getByLabel("Book how soon").selectOption("120");
+  await rules.getByLabel("Book how far ahead (days)").fill("30");
+  await rules.getByLabel("Appointments start").selectOption("30");
+  await rules.getByLabel("Cancel or move a booking").selectOption("12");
+  await rules.getByRole("button", { name: "Save rules" }).click();
+  await expect(rules.getByRole("status")).toHaveText("Saved.");
+  expect(await accessibilityViolations(page)).toEqual([]);
+
+  await page.reload();
+  await expect(details.getByLabel("Time zone")).toHaveValue("Asia/Dubai");
+  await expect(rules.getByLabel("Book how far ahead (days)")).toHaveValue("30");
+
+  // The web address never changes.
+  await expect(page).toHaveURL(new RegExp(`/dashboard/b/${business.slug}$`));
+
+  const staffPage = await (await browser.newContext()).newPage();
+  await signInAs(staffPage, staff);
+  await staffPage.goto(`/dashboard/b/${business.slug}`);
+  const staffRules = staffPage.getByRole("region", { name: "Booking rules" });
+  await expect(staffRules).toContainText("At least 2 h ahead");
+  await expect(staffRules).toContainText("Up to 30 days");
+  await expect(staffRules).toContainText("Every 30 min");
+  await expect(staffRules).toContainText("Up to 12 h before it starts");
+  await expect(
+    staffPage.getByRole("button", { name: "Save rules" }),
+  ).toHaveCount(0);
 });
