@@ -81,6 +81,17 @@ export function passagesOf(document: DocumentText): string[] {
   return pack(paragraphs, "\n\n").map((passage) => `${title}\n${passage}`);
 }
 
+/**
+ * Whether a document's passages need embedding again with the model in use: search only
+ * compares embeddings made by the same model, so it skips them until then.
+ */
+export function needsReindexing(chunkModels: string[], currentModel: string) {
+  return (
+    chunkModels.length === 0 ||
+    chunkModels.some((model) => model !== currentModel)
+  );
+}
+
 /** A passage's SHA-256, in hex: unchanged passages keep their embedding when a document is edited. */
 export function contentHash(content: string) {
   return createHash("sha256").update(content).digest("hex");

@@ -820,7 +820,7 @@ export type Database = {
           document_language: Database["public"]["Enums"]["language"];
           document_title: string;
           target_business_id: string;
-          target_document_id: string;
+          target_document_id?: string;
         };
         Returns: string;
       };

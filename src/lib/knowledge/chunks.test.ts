@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   contentHash,
   MAX_PASSAGE_CHARACTERS,
+  needsReindexing,
   passagesOf,
 } from "@/lib/knowledge/chunks";
 
@@ -81,5 +82,18 @@ describe("contentHash", () => {
     expect(contentHash("abc")).toBe(
       "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
     );
+  });
+});
+
+describe("needsReindexing", () => {
+  it("is false when every passage was embedded by the model in use", () => {
+    expect(needsReindexing(["offline", "offline"], "offline")).toBe(false);
+  });
+
+  it("is true when any passage came from another model, or there are none", () => {
+    expect(
+      needsReindexing(["offline", "openai/text-embedding-3-small"], "offline"),
+    ).toBe(true);
+    expect(needsReindexing([], "offline")).toBe(true);
   });
 });

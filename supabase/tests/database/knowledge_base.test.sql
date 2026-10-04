@@ -68,7 +68,7 @@ select ok(
 select tests.authenticate_as('owner-a@test.local');
 select isnt(
   public.save_knowledge_document(
-    tests.business_id('nour-salon'), null, 'faq', 'en', 'Is there parking?',
+    tests.business_id('nour-salon'), 'faq', 'en', 'Is there parking?',
     'Yes, free parking behind the salon.',
     jsonb_build_array(pg_temp.chunk('Is there parking? Yes, free parking behind the salon.')),
     'offline'
@@ -90,11 +90,11 @@ select results_eq(
 select tests.authenticate_as('admin-a@test.local');
 select is(
   public.save_knowledge_document(
-    tests.business_id('nour-salon'),
-    (select id from public.knowledge_documents where title = 'Is there parking?'),
-    'policy', 'en', 'Is there parking?', 'Yes, free parking for two hours.',
+    tests.business_id('nour-salon'), 'policy', 'en', 'Is there parking?',
+    'Yes, free parking for two hours.',
     jsonb_build_array(pg_temp.chunk('Part one.', 2), pg_temp.chunk('Part two.', 3)),
-    'offline'
+    'offline',
+    target_document_id => (select id from public.knowledge_documents where title = 'Is there parking?')
   ),
   (select id from public.knowledge_documents where title = 'Is there parking?'),
   'admins edit a document'
@@ -117,7 +117,7 @@ select results_eq(
 select throws_ok(
   $$
     select public.save_knowledge_document(
-      tests.business_id('nour-salon'), null, 'faq', 'en', 'Empty', 'Nothing', '[]', 'offline'
+      tests.business_id('nour-salon'), 'faq', 'en', 'Empty', 'Nothing', '[]', 'offline'
     )
   $$,
   '22023', 'A document needs at least one chunk',
@@ -126,7 +126,7 @@ select throws_ok(
 select throws_ok(
   $$
     select public.save_knowledge_document(
-      tests.business_id('nour-salon'), null, 'faq', 'en', 'Short', 'Too few dimensions',
+      tests.business_id('nour-salon'), 'faq', 'en', 'Short', 'Too few dimensions',
       '[{"content": "x", "content_hash": "8a77ec9b2fed9d6e0c2b1a6a3a3c1b6d58c4e8d1f0b7c39b2f2f2b8c5d6e7f80", "embedding": [1, 0, 0]}]',
       'offline'
     )
@@ -146,7 +146,7 @@ select tests.authenticate_as('staff-a@test.local');
 select throws_ok(
   $$
     select public.save_knowledge_document(
-      tests.business_id('nour-salon'), null, 'faq', 'en', 'Staff note', 'No.',
+      tests.business_id('nour-salon'), 'faq', 'en', 'Staff note', 'No.',
       jsonb_build_array(pg_temp.chunk('No.')), 'offline'
     )
   $$,
@@ -163,7 +163,7 @@ select tests.authenticate_as('owner-b@test.local');
 select throws_ok(
   $$
     select public.save_knowledge_document(
-      tests.business_id('nour-salon'), null, 'faq', 'en', 'Spam', 'Spam.',
+      tests.business_id('nour-salon'), 'faq', 'en', 'Spam', 'Spam.',
       jsonb_build_array(pg_temp.chunk('Spam.')), 'offline'
     )
   $$,
@@ -172,9 +172,9 @@ select throws_ok(
 );
 select is(
   public.save_knowledge_document(
-    tests.business_id('cedar-clinic'),
-    pg_temp.document_id('Is there parking?'),
-    'faq', 'en', 'Moved', 'Moved.', jsonb_build_array(pg_temp.chunk('Moved.')), 'offline'
+    tests.business_id('cedar-clinic'), 'faq', 'en', 'Moved', 'Moved.',
+    jsonb_build_array(pg_temp.chunk('Moved.')), 'offline',
+    target_document_id => pg_temp.document_id('Is there parking?')
   ),
   null,
   'nor move a document into their own business'
