@@ -97,6 +97,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      closures: {
+        Row: {
+          business_id: string;
+          created_at: string;
+          ends_on: string;
+          id: string;
+          reason: string | null;
+          starts_on: string;
+        };
+        Insert: {
+          business_id: string;
+          created_at?: string;
+          ends_on: string;
+          id?: string;
+          reason?: string | null;
+          starts_on: string;
+        };
+        Update: {
+          business_id?: string;
+          created_at?: string;
+          ends_on?: string;
+          id?: string;
+          reason?: string | null;
+          starts_on?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "closures_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           created_at: string;
@@ -230,6 +265,44 @@ export type Database = {
           },
         ];
       };
+      time_off: {
+        Row: {
+          business_id: string;
+          created_at: string;
+          ends_at: string;
+          id: string;
+          reason: string | null;
+          staff_id: string;
+          starts_at: string;
+        };
+        Insert: {
+          business_id: string;
+          created_at?: string;
+          ends_at: string;
+          id?: string;
+          reason?: string | null;
+          staff_id: string;
+          starts_at: string;
+        };
+        Update: {
+          business_id?: string;
+          created_at?: string;
+          ends_at?: string;
+          id?: string;
+          reason?: string | null;
+          staff_id?: string;
+          starts_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "time_off_staff_id_business_id_fkey";
+            columns: ["staff_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id", "business_id"];
+          },
+        ];
+      };
       working_hours: {
         Row: {
           business_id: string;
@@ -277,6 +350,15 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      add_time_off: {
+        Args: {
+          ends_local: string;
+          starts_local: string;
+          target_staff_id: string;
+          time_off_reason?: string;
+        };
+        Returns: string;
+      };
       create_business: {
         Args: {
           business_language: Database["public"]["Enums"]["language"];
