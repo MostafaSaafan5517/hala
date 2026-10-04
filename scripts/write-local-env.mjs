@@ -1,6 +1,7 @@
 // Writes the local Supabase URL and keys into .env.local.
 // Usage (via `pnpm env:local`): supabase status -o json | node scripts/write-local-env.mjs
-// Only those lines are written; anything else in .env.local (AI keys, ...) is kept.
+// Only those lines are written; anything else in .env.local (AI keys, ...) is kept. Settings
+// with a local default (the offline embedding model) are added only when missing.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const ENV_FILE = ".env.local";
@@ -29,10 +30,18 @@ if (missing.length > 0) {
   );
 }
 
+// Added only when .env.local doesn't set them: a choice made there is kept.
+const defaults = { EMBEDDING_MODEL: "offline" };
+
 const nameOf = (line) => line.split("=")[0]?.trim();
-const keptLines = (
-  existsSync(ENV_FILE) ? readFileSync(ENV_FILE, "utf8").split(/\r?\n/) : []
-).filter((line) => !(nameOf(line) in values));
+const existingLines = existsSync(ENV_FILE)
+  ? readFileSync(ENV_FILE, "utf8").split(/\r?\n/)
+  : [];
+const existingNames = new Set(existingLines.map(nameOf));
+for (const [name, value] of Object.entries(defaults)) {
+  if (!existingNames.has(name)) values[name] = value;
+}
+const keptLines = existingLines.filter((line) => !(nameOf(line) in values));
 while (keptLines.length > 0 && keptLines.at(-1) === "") keptLines.pop();
 const newLines = Object.entries(values).map(
   ([name, value]) => `${name}=${value}`,

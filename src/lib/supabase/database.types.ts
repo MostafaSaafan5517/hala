@@ -307,6 +307,45 @@ export type Database = {
           },
         ];
       };
+      model_calls: {
+        Row: {
+          business_id: string;
+          cost_usd: number;
+          created_at: string;
+          error: string | null;
+          id: number;
+          input_tokens: number;
+          latency_ms: number;
+          model: string;
+          output_tokens: number;
+          purpose: string;
+        };
+        Insert: {
+          business_id: string;
+          cost_usd: number;
+          created_at?: string;
+          error?: string | null;
+          id?: never;
+          input_tokens: number;
+          latency_ms: number;
+          model: string;
+          output_tokens?: number;
+          purpose: string;
+        };
+        Update: {
+          business_id?: string;
+          cost_usd?: number;
+          created_at?: string;
+          error?: string | null;
+          id?: never;
+          input_tokens?: number;
+          latency_ms?: number;
+          model?: string;
+          output_tokens?: number;
+          purpose?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           created_at: string;
