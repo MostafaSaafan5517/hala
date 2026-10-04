@@ -547,6 +547,68 @@ export type Database = {
           starts_at: string;
         }[];
       };
+      book_appointment: {
+        Args: {
+          booking_notes?: string;
+          customer_email?: string;
+          customer_language?: Database["public"]["Enums"]["language"];
+          customer_name: string;
+          customer_phone: string;
+          idempotency_key: string;
+          requested_start: string;
+          target_service_id: string;
+          target_staff_id?: string;
+        };
+        Returns: {
+          blocked_until: string;
+          business_id: string;
+          cancelled_at: string | null;
+          created_at: string;
+          currency: string;
+          customer_id: string;
+          ends_at: string;
+          id: string;
+          notes: string | null;
+          price: number;
+          reference: string;
+          service_id: string;
+          staff_id: string;
+          starts_at: string;
+          status: Database["public"]["Enums"]["booking_status"];
+        };
+        SetofOptions: {
+          from: "*";
+          to: "bookings";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      cancel_booking: {
+        Args: { idempotency_key: string; target_booking_id: string };
+        Returns: {
+          blocked_until: string;
+          business_id: string;
+          cancelled_at: string | null;
+          created_at: string;
+          currency: string;
+          customer_id: string;
+          ends_at: string;
+          id: string;
+          notes: string | null;
+          price: number;
+          reference: string;
+          service_id: string;
+          staff_id: string;
+          starts_at: string;
+          status: Database["public"]["Enums"]["booking_status"];
+        };
+        SetofOptions: {
+          from: "*";
+          to: "bookings";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       create_business: {
         Args: {
           business_language: Database["public"]["Enums"]["language"];
@@ -563,6 +625,37 @@ export type Database = {
           target_business_id: string;
         };
         Returns: string;
+      };
+      reschedule_booking: {
+        Args: {
+          idempotency_key: string;
+          new_start: string;
+          target_booking_id: string;
+          target_staff_id?: string;
+        };
+        Returns: {
+          blocked_until: string;
+          business_id: string;
+          cancelled_at: string | null;
+          created_at: string;
+          currency: string;
+          customer_id: string;
+          ends_at: string;
+          id: string;
+          notes: string | null;
+          price: number;
+          reference: string;
+          service_id: string;
+          staff_id: string;
+          starts_at: string;
+          status: Database["public"]["Enums"]["booking_status"];
+        };
+        SetofOptions: {
+          from: "*";
+          to: "bookings";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       set_working_hours: {
         Args: {
