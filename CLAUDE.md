@@ -13,7 +13,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Next.js 16 (App Router), TypeScript in strict mode plus `noUncheckedIndexedAccess`
 - Tailwind CSS v4 + shadcn/ui (Base UI, `base-nova` style, RTL enabled)
 - Supabase: Postgres, Auth, Row-Level Security, pgvector. Local development with the Supabase CLI and SQL migrations
-- AI through the Vercel AI SDK (v7) and the Vercel AI Gateway: one key, models named `provider/model` and chosen in env, never in code. Embeddings: `openai/text-embedding-3-small` (or the `offline` stand-in). The chat model (Phase 4) will be Anthropic Claude by default, switchable to OpenAI by configuration. Zod validates every tool input and structured model output. The AI SDK changes often: read its bundled docs in `node_modules/ai/docs/` before using an API, never memory
+- AI through the Vercel AI SDK (v7) and the Vercel AI Gateway: one key, models named `provider/model` and chosen in env, never in code. Embeddings: `openai/text-embedding-3-small`; chat: `anthropic/claude-sonnet-5.5` by default, switchable to Claude Haiku or an OpenAI model by `CHAT_MODEL`; each has an `offline` stand-in. Zod validates every tool input and structured model output. The AI SDK changes often: read its bundled docs in `node_modules/ai/docs/` before using an API, never memory
 - Vitest (unit), Playwright (end-to-end, with axe accessibility checks), pgTAP via `supabase test db` (database and RLS)
 - GitHub Actions CI; Vercel hosting
 - pnpm; Node 24. `engines.node` in `package.json` is the single source of truth for the Node version (Vercel and CI both read it)
@@ -75,6 +75,8 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - `bookings`: customer, service, staff member, `starts_at`/`ends_at`, `blocked_until` (end plus the service's buffer), status `confirmed` or `cancelled`, the price and currency at booking time, and a six-character `reference` (no look-alike characters). The `bookings_no_overlap` exclusion constraint refuses a confirmed booking whose `[starts_at, blocked_until)` overlaps another confirmed booking of the same staff member. Every booking has a staff member (a one-person business adds itself as staff).
 - `private.idempotency_keys`: each key's business, request (action and arguments) and booking. Kept, so a replay months later still can't act twice.
 - `audit_log`: append-only history of every change to the tables above, written only by triggers, with the actor (`user`, `server` for the service role, `database` for migrations and psql). Owners and admins can read their business's history.
+- `conversations` (channel `test` or `widget`, the customer the assistant acts for once known, status `open`, `needs_human` or `closed`, failed verification attempts) and `conversation_messages` (each AI SDK UI message as JSON, by position). Written only by server code; members read their business's.
+- `tool_calls`: every tool call the assistant made (input, output, status `succeeded`, `failed` or `declined`, whether the customer approved it, latency). Append-only; owners and admins read it.
 
 ## The booking engine
 
@@ -88,8 +90,22 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 
 - `EMBEDDING_MODEL` picks the embedding model: an ID from `src/lib/ai/catalog.ts` (called through the AI Gateway with `AI_GATEWAY_API_KEY`, or the deployment's OIDC token on Vercel), or `offline`. Unset or unknown is an error, never a silent default. `pnpm env:local` writes `EMBEDDING_MODEL=offline` when `.env.local` has none.
 - `offline` (`src/lib/ai/offline-embedding.ts`) is an AI SDK embedding model that hashes words into the same 1536 dimensions, with the same Arabic normalization as keyword search. It needs no key and is deterministic, so tests, CI and keyless development never call a real model. It knows words, not meaning: judge retrieval quality only with a real model.
-- The catalog holds each supported model's price (to compute what a call cost) and its relevance threshold (`minSimilarity`, tuned by the evaluation suite). Adding a model means adding it there.
+- The catalog holds each supported model's price (to compute what a call cost) and, for embeddings, its relevance threshold (`minSimilarity`, tuned by the evaluation suite). Adding a model means adding it there. `CHAT_MODEL` picks the chat model the same way (`src/lib/ai/chat-model.ts`).
+- The `offline` chat model (`src/lib/ai/offline-chat.ts`) is rule-based: it looks every question up and answers with the best passage, citing it, or says it doesn't know; and it carries out one exact request, "book <service> on <YYYY-MM-DD> at <HH:MM> for <name>, <+phone>", through the real tools, approval included. Tests and keyless development use it.
+- `TOOL_APPROVAL_SECRET` (at least 32 random characters, the same on every server) signs approvals. `pnpm env:local` generates one locally, and sets both models to `offline`, when they're missing.
 - Every model call goes through a helper that records it in `model_calls` (business, purpose, model, tokens, cost in USD, latency, error name): `embedTexts` (`src/lib/ai/embeddings.ts`) for embeddings, and its Phase 4 counterpart for chat. The gateway doesn't return a cost for embeddings, so cost is tokens times the catalog price; the gateway's spend report is the bill to reconcile against. A failed call is recorded too. `model_calls` is written only by server code through `createAdminClient()` (`src/lib/supabase/admin.ts`, the only service-role client in the app) and is append-only; owners and admins can read their business's rows.
+
+## The assistant
+
+- **One turn** (`runAssistantTurn`, `src/lib/assistant/turn.ts`): load the conversation from the database, add the customer's new message or apply their answers to approval requests, check the limits, then stream a `ToolLoopAgent` (at most 8 steps) and save the messages when the stream ends. The browser never sends history (`prepareSendMessagesRequest` sends only `{ text }` or `{ approvals }`), so it can't rewrite what was said or invent an approval: answers are applied only to requests the server stored.
+- **Tools** (`createAssistantToolkit`, `src/lib/assistant/toolkit.ts`): `search_knowledge`, `business_info`, `check_availability`, `book_appointment`, `find_bookings`, `reschedule_booking`, `cancel_booking`, `request_human`. Every query is scoped to the conversation's business: the booking functions trust the service role, so the tools themselves must refuse another business's ids (tests prove it). Every call is recorded in `tool_calls` by `audited`.
+- **Approvals**: booking, moving and cancelling use the AI SDK's `toolApproval`. The approval function first checks the request can go ahead (the time is free, the booking belongs to the verified customer, it's outside the cancellation window) and refuses it with a reason the model can act on, or words it for the customer from the database, in their language (`src/lib/assistant/summaries.ts`). Approvals are signed with `TOOL_APPROVAL_SECRET` (`experimental_toolApprovalSecret`), binding them to the exact tool call and input; a declined request never runs and is recorded as `declined`.
+- **Idempotency**: a booking tool's key is `assistant:<toolCallId>`, so the same call running again returns the same result.
+- **Customers proving a booking is theirs**: its reference plus their phone number (`find_bookings`), five attempts per conversation. A customer who booked in the conversation doesn't need to.
+- **Limits** (`src/lib/assistant/limits.ts`, from `chat_usage`): tokens per conversation, chat calls per business per minute, and spend per business per local day. Over a limit, the customer gets a fixed reply in their language, no model is called, and spent budgets hand the conversation to a person.
+- **Instructions** (`src/lib/assistant/instructions.ts`) ask for answers only from tools, with numbered citations, "I don't know" plus a person otherwise, and documents and messages treated as information, never instructions. The rules that matter don't depend on the model obeying them: tools and the database enforce them, and tests use a scripted model that obeys injected instructions to prove it.
+- **Model usage**: each step's tokens, cost and latency go to `model_calls` with the conversation, from the agent's `onStepEnd`.
+- **Routes**: members test through `/api/assistant/[conversationId]` (test conversations only, RLS decides who sees them); the widget (Phase 5) gets its own route to the same turn.
 
 ## The knowledge base
 
@@ -120,6 +136,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Before committing, run E2E the way CI does: `pnpm build` then `CI=1 pnpm test:e2e`. The dev server compiles each route on its first visit, which makes parallel runs against `pnpm dev` time out at random.
 - Every page gets an accessibility check: `accessibilityViolations(page)` (`e2e/support/accessibility.ts`) runs axe's WCAG 2.1 A and AA rules and must return `[]`.
 - Tests never call a real model: embeddings use the `offline` model (the E2E server runs with `EMBEDDING_MODEL=offline`), and tools and the chat route will be tested with the AI SDK's mock language model. Only the evaluation suite (Phase 6), run on demand, uses real models, and logs what it cost.
+- The integration suite (`integration/`, `pnpm test:integration`) runs app code (the assistant's tools and turns) against the full local stack with the offline models. A scripted `MockLanguageModelV4` plays exactly the tool calls a test needs, including a misbehaving model's. Its Vitest config loads `.env.local` and aliases `server-only` to its empty module.
 - In pgTAP, build embeddings with exact geometry (unit vectors along chosen dimensions) so similarities are known in advance; see `knowledge_search.test.sql`.
 
 ## Folder structure
@@ -136,11 +153,14 @@ src/
   lib/               Helpers: auth, business access, money, dates, hours, booking rules, ...
   lib/ai/            Model catalog, the offline embedding model, logged embedding calls
   lib/knowledge/     Passages, indexing and search of the knowledge base
+  lib/assistant/     The assistant: tools, approvals, instructions, limits, turns
+  app/api/           Route handlers (the assistant's chat)
   lib/supabase/      Supabase clients (user, and the admin client for the usage log) and types
   proxy.ts           Session refresh on every request
 scripts/             Dev tooling (writing .env.local)
 e2e/                 Playwright end-to-end specs (*.spec.ts)
-  support/           E2E helpers (accessibility, users, businesses, forms, Mailpit)
+  support/           E2E helpers (accessibility, users, businesses, knowledge, forms, Mailpit)
+integration/         Vitest against the full local stack: the assistant's tools and turns
 supabase/
   config.toml        Local Supabase settings (ports 553xx; unused services off)
   migrations/        SQL migrations, applied in filename order
@@ -164,6 +184,7 @@ supabase/
 | `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running     |
 | `pnpm test:db`                      | pgTAP database tests (Supabase must be running)         |
 | `pnpm test:concurrency`             | Parallel-connection booking tests (Supabase running)    |
+| `pnpm test:integration`             | The assistant against the full local stack              |
 | `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)      |
 | `pnpm env:local`                    | Write the local Supabase URL and keys into `.env.local` |
 | `pnpm supabase db reset`            | Rebuild the local database from migrations              |
@@ -177,7 +198,7 @@ GitHub Actions runs on every push to `main` and every pull request, as three par
 
 - **checks**: `format:check`, `lint`, `typecheck`, `test`
 - **database**: starts only Postgres (`pnpm supabase db start`, which applies every migration from scratch), runs `test:db` and `test:concurrency`, then checks the generated types are current
-- **e2e**: starts local Supabase (without Studio), writes `.env.local`, builds for production, then runs Playwright
+- **e2e**: starts local Supabase (without Studio), writes `.env.local`, runs the integration suite, builds for production, then runs Playwright
 
 Every CI step is a `pnpm` script, so anything that fails in CI can be reproduced locally with the same command. Keep it that way.
 
@@ -185,3 +206,4 @@ Every CI step is a `pnpm` script, so anything that fails in CI can be reproduced
 
 - Local Supabase needs Docker Desktop running (on Windows with the WSL 2 backend). If tests suddenly fail with `fetch failed`, `ECONNREFUSED` or "cannot connect to the docker API", Docker has stopped: start Docker Desktop, then `pnpm supabase start` (the data is kept). The Supabase CLI is a pinned dev dependency, so always call it through `pnpm supabase`, never a global install.
 - The local stack uses ports 553xx (API 55321, database 55322, Studio 55323, Mailpit 55324) and the app runs on 3100, so it can run next to another local Supabase project on the CLI's default 543xx ports and an app on 3000. Running both stacks at once needs a few GB of memory; stop the one you're not using (`pnpm supabase stop` keeps its data).
+- E2E needs port 3100: the sign-up tests follow email links to the `site_url` in `supabase/config.toml`. If another app holds 3100, stop it first rather than moving Hala.

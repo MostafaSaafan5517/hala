@@ -4,7 +4,7 @@
 
 An AI receptionist for appointment-based businesses (salons, clinics, studios, consultants), in Arabic and English. Customers chat with it on the business's website: it answers questions from the business's own data, checks real availability, and books, reschedules or cancels appointments. Staff see every conversation and booking, and can take a conversation over.
 
-**Status:** in development. Business setup (Phase 1), the booking engine (Phase 2) and the knowledge base with retrieval (Phase 3) are done; the assistant itself is next. See the [roadmap](#roadmap).
+**Status:** in development. Business setup (Phase 1), the booking engine (Phase 2), the knowledge base with retrieval (Phase 3) and the assistant (Phase 4) are done; the embeddable widget and staff inbox are next. See the [roadmap](#roadmap).
 
 ## What works today
 
@@ -22,7 +22,11 @@ An AI receptionist for appointment-based businesses (salons, clinics, studios, c
 - **An append-only audit log** of every change, bookings included, written by database triggers; nobody, not even the server, can edit or delete it.
 - **A knowledge base** of FAQs and policies in English or Arabic, split into passages and embedded on save (only changed passages are re-embedded), with a "Try a question" box that shows exactly which passages the assistant would answer from.
 - **Hybrid retrieval in Postgres:** search by meaning (pgvector cosine similarity, above a per-model threshold) and by the question's rare keywords (language-agnostic, Arabic spelling normalized), merged by reciprocal rank fusion. Nothing relevant means an empty result, never a guess. One business's passages are unreachable from another's, proven by tests.
-- **Every AI call logged** with tokens, cost, latency and failures, in an append-only table only server code can write: the base for rate limits and token budgets.
+- **The assistant** (Claude by default, switchable by configuration): answers from the knowledge base with numbered sources, or says it doesn't know and offers a person; checks real availability; books, moves and cancels through eight server-side tools, each scoped to one business and recorded in an append-only audit. Members can test it from the dashboard.
+- **Confirm before anything happens:** every booking, move or cancellation is shown to the customer, worded from the database in their language, and runs only when they tap Confirm. Approvals are cryptographically signed, so a request changed after it was shown can't run; tests prove it fails without the signature.
+- **Prompt injection changes nothing that matters:** tests drive a model that obeys injected instructions, and it still can't book outside the rules, at another business, or at another price.
+- **Cost controls:** every model call logged with tokens, cost and latency; a token budget per conversation, a rate limit and a daily budget per business. Over a limit, no model is called and a person takes over.
+- **Every AI call logged** with tokens, cost, latency and failures, in an append-only table only server code can write.
 - **Roles enforced in the database:** owners and admins manage the setup, every member can take bookings, and Row-Level Security keeps every business's data invisible to every other business. pgTAP tests cover each policy, including the refusals.
 
 ## What this project will demonstrate
@@ -53,7 +57,7 @@ pnpm env:local
 pnpm dev
 ```
 
-Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable), and sets `EMBEDDING_MODEL=offline`, a word-matching stand-in that needs no API key. For real semantic search, set `EMBEDDING_MODEL=openai/text-embedding-3-small` and an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/ai-gateway), then re-index on the Knowledge tab.
+Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable), and sets `EMBEDDING_MODEL=offline`, a word-matching stand-in that needs no API key. For real semantic search, set `EMBEDDING_MODEL=openai/text-embedding-3-small` and an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/ai-gateway), then re-index on the Knowledge tab. `CHAT_MODEL` works the same way: `offline` (answers from the knowledge base, and books from one exact request) or `anthropic/claude-sonnet-5.5`.
 
 ## Tests
 
@@ -62,9 +66,10 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 | Unit           | `pnpm test`             | Vitest                                                                                   |
 | Database / RLS | `pnpm test:db`          | pgTAP; needs `pnpm supabase start` first                                                 |
 | Concurrency    | `pnpm test:concurrency` | Many connections booking the same slot at once; needs Supabase running                   |
+| Integration    | `pnpm test:integration` | The assistant's tools and turns against the full local stack, with a scripted model      |
 | End-to-end     | `pnpm test:e2e`         | Playwright with accessibility checks; first run: `pnpm exec playwright install chromium` |
 
-`pnpm lint`, `pnpm typecheck` and `pnpm format:check` run in CI alongside all three suites.
+`pnpm lint`, `pnpm typecheck` and `pnpm format:check` run in CI alongside every suite. No test calls a real AI model.
 
 ## Roadmap
 
@@ -72,7 +77,7 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 - [x] **Phase 1:** tenants, auth and business setup (services, staff, hours, time off), with Row-Level Security
 - [x] **Phase 2:** booking engine: availability, the exclusion constraint, idempotent booking
 - [x] **Phase 3:** knowledge base and retrieval with pgvector
-- [ ] **Phase 4:** the assistant: streaming chat, tools, grounding, confirmation flow, injection resistance
+- [x] **Phase 4:** the assistant: streaming chat, tools, grounding, confirmation flow, injection resistance
 - [ ] **Phase 5:** embeddable widget and staff inbox
 - [ ] **Phase 6:** evaluation suite, end-to-end flows, usage dashboard
 - [ ] **Phase 7:** documentation, demo data and live demo
