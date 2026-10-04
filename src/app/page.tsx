@@ -6,7 +6,9 @@ export default function Home() {
       <h1 className="text-4xl font-semibold tracking-tight">
         {appConfig.name}
       </h1>
-      <p className="max-w-md text-lg text-zinc-600">{appConfig.description}</p>
+      <p className="max-w-md text-lg text-muted-foreground">
+        {appConfig.description}
+      </p>
     </main>
   );
 }
