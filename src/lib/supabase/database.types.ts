@@ -34,16 +34,108 @@ export type Database = {
   };
   public: {
     Tables: {
-      [_ in never]: never;
+      business_members: {
+        Row: {
+          business_id: string;
+          created_at: string;
+          role: Database["public"]["Enums"]["member_role"];
+          user_id: string;
+        };
+        Insert: {
+          business_id: string;
+          created_at?: string;
+          role: Database["public"]["Enums"]["member_role"];
+          user_id: string;
+        };
+        Update: {
+          business_id?: string;
+          created_at?: string;
+          role?: Database["public"]["Enums"]["member_role"];
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "business_members_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "business_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      businesses: {
+        Row: {
+          created_at: string;
+          default_language: Database["public"]["Enums"]["language"];
+          id: string;
+          name: string;
+          slug: string;
+          timezone: string;
+        };
+        Insert: {
+          created_at?: string;
+          default_language?: Database["public"]["Enums"]["language"];
+          id?: string;
+          name: string;
+          slug: string;
+          timezone: string;
+        };
+        Update: {
+          created_at?: string;
+          default_language?: Database["public"]["Enums"]["language"];
+          id?: string;
+          name?: string;
+          slug?: string;
+          timezone?: string;
+        };
+        Relationships: [];
+      };
+      profiles: {
+        Row: {
+          created_at: string;
+          email: string;
+          full_name: string | null;
+          id: string;
+        };
+        Insert: {
+          created_at?: string;
+          email: string;
+          full_name?: string | null;
+          id: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          full_name?: string | null;
+          id?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      create_business: {
+        Args: {
+          business_language: Database["public"]["Enums"]["language"];
+          business_name: string;
+          business_slug: string;
+          business_timezone: string;
+        };
+        Returns: string;
+      };
     };
     Enums: {
-      [_ in never]: never;
+      language: "en" | "ar";
+      member_role: "owner" | "admin" | "staff";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -173,6 +265,9 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      language: ["en", "ar"],
+      member_role: ["owner", "admin", "staff"],
+    },
   },
 } as const;
