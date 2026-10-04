@@ -113,3 +113,21 @@ export async function archiveService(serviceId: string) {
     .eq("id", serviceId);
   if (error) throw error;
 }
+
+/** Sets a weekly schedule straight in the database (service role): the business's when `staffId` is null. */
+export async function setHoursFor(
+  businessId: string,
+  staffId: string | null,
+  spans: { weekday: number; opens_at: string; closes_at: string }[],
+) {
+  const { error } = await adminClient()
+    .from("working_hours")
+    .insert(
+      spans.map((span) => ({
+        business_id: businessId,
+        staff_id: staffId,
+        ...span,
+      })),
+    );
+  if (error) throw error;
+}

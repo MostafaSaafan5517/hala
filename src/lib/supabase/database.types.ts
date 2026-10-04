@@ -230,6 +230,48 @@ export type Database = {
           },
         ];
       };
+      working_hours: {
+        Row: {
+          business_id: string;
+          closes_at: string;
+          id: string;
+          opens_at: string;
+          staff_id: string | null;
+          weekday: number;
+        };
+        Insert: {
+          business_id: string;
+          closes_at: string;
+          id?: string;
+          opens_at: string;
+          staff_id?: string | null;
+          weekday: number;
+        };
+        Update: {
+          business_id?: string;
+          closes_at?: string;
+          id?: string;
+          opens_at?: string;
+          staff_id?: string | null;
+          weekday?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "working_hours_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "working_hours_staff_id_business_id_fkey";
+            columns: ["staff_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id", "business_id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -252,6 +294,15 @@ export type Database = {
         };
         Returns: string;
       };
+      set_working_hours: {
+        Args: {
+          spans: Json;
+          target_business_id: string;
+          target_staff_id?: string;
+        };
+        Returns: undefined;
+      };
+      time_multirange: { Args: Record<PropertyKey, never>; Returns: unknown };
       update_staff_member: {
         Args: {
           member_name: string;
