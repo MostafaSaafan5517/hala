@@ -4,27 +4,29 @@ import type { EmbeddingModelV4 } from "@ai-sdk/provider";
 export const EMBEDDING_DIMENSIONS = 1536;
 
 // Arabic is written with optional vowel marks and several forms of some letters, and words take
-// the article "ال" (often with a preposition: "لل", "بال", ...). Normalizing these lets the same
-// word match however it was typed.
-function normalizeWord(word: string) {
+// the article "ال" (often with a preposition: "لل", "بال", ...). A word that starts like the
+// article is kept both whole and without it, since the letters alone can't tell an article from
+// a word that starts that way (إلغاء normalizes to الغاء). The database's keyword search
+// (private.search_words) normalizes the same way.
+function formsOf(word: string) {
   const plain = word
     .replace(/[ً-ْٰـ]/g, "")
     .replace(/[أإآٱ]/g, "ا")
     .replaceAll("ة", "ه")
     .replaceAll("ى", "ي");
   const stem = plain.replace(/^(?:وال|بال|كال|فال|لل|ال)/, "");
-  return stem.length >= 2 ? stem : plain;
+  return stem !== plain && stem.length >= 2 ? [plain, stem] : [plain];
 }
 
-/** The words of a text, lowercased and normalized. */
+/** The words of a text, lowercased and normalized (with both forms of article-like words). */
 export function wordsOf(text: string) {
   return (
     text
       .toLowerCase()
-      // Marks (Arabic vowel marks) belong to their word; normalizeWord removes them.
+      // Marks (Arabic vowel marks) belong to their word; formsOf removes them.
       .split(/[^\p{L}\p{M}\p{N}]+/u)
       .filter(Boolean)
-      .map(normalizeWord)
+      .flatMap(formsOf)
   );
 }
 

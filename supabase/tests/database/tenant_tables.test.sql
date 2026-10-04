@@ -1,5 +1,5 @@
 begin;
-select plan(43);
+select plan(49);
 select tests.clear_tenant_data();
 
 -- Structure
@@ -7,7 +7,7 @@ select tables_are(
   'public',
   array['profiles', 'businesses', 'business_members', 'services', 'staff', 'staff_services',
     'working_hours', 'time_off', 'closures', 'audit_log', 'customers',
-    'bookings', 'model_calls'
+    'bookings', 'model_calls', 'knowledge_documents', 'knowledge_chunks'
   ],
   'public contains exactly the expected tables'
 );
@@ -60,6 +60,12 @@ select table_privs_are('public', 'bookings', 'service_role', array['SELECT']);
 select table_privs_are('public', 'model_calls', 'anon', array[]::text[]);
 select table_privs_are('public', 'model_calls', 'authenticated', array['SELECT']);
 select table_privs_are('public', 'model_calls', 'service_role', array['SELECT', 'INSERT']);
+select table_privs_are('public', 'knowledge_documents', 'anon', array[]::text[]);
+select table_privs_are('public', 'knowledge_documents', 'authenticated', array['SELECT']);
+select table_privs_are('public', 'knowledge_chunks', 'anon', array[]::text[]);
+select table_privs_are('public', 'knowledge_chunks', 'authenticated', array['SELECT']);
+select table_privs_are('public', 'knowledge_chunks', 'service_role', array['SELECT']);
+select table_privs_are('public', 'knowledge_documents', 'service_role', array['SELECT']);
 
 -- Fixtures: two users (profiles come from the auth trigger) and one business.
 insert into auth.users (id, email) values

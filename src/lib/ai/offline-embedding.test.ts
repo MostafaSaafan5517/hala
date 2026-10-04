@@ -17,12 +17,16 @@ describe("wordsOf", () => {
     ]);
   });
 
-  it("normalizes Arabic spelling variants, vowel marks and the article", () => {
+  it("normalizes Arabic spelling variants and vowel marks", () => {
     expect(wordsOf("إلغاء")).toEqual(wordsOf("الغاء"));
-    expect(wordsOf("السيارات")).toEqual(wordsOf("سيارات"));
-    expect(wordsOf("للسيارات")).toEqual(wordsOf("سيارات"));
     expect(wordsOf("مَوْقِف")).toEqual(wordsOf("موقف"));
-    expect(wordsOf("الساعة")).toEqual(wordsOf("ساعه"));
+  });
+
+  it("keeps words that start like the article both whole and without it", () => {
+    expect(wordsOf("للسيارات")).toEqual(["للسيارات", "سيارات"]);
+    expect(wordsOf("السيارات")).toContain("سيارات");
+    expect(wordsOf("الساعة")).toContain("ساعه");
+    expect(wordsOf("الإلغاء")).toContain("الغاء");
   });
 });
 

@@ -307,6 +307,94 @@ export type Database = {
           },
         ];
       };
+      knowledge_chunks: {
+        Row: {
+          business_id: string;
+          content: string;
+          content_hash: string;
+          document_id: string;
+          embedding: string;
+          embedding_model: string;
+          id: string;
+          position: number;
+          words: string[] | null;
+        };
+        Insert: {
+          business_id: string;
+          content: string;
+          content_hash: string;
+          document_id: string;
+          embedding: string;
+          embedding_model: string;
+          id?: string;
+          position: number;
+          words?: never;
+        };
+        Update: {
+          business_id?: string;
+          content?: string;
+          content_hash?: string;
+          document_id?: string;
+          embedding?: string;
+          embedding_model?: string;
+          id?: string;
+          position?: number;
+          words?: never;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_chunks_document_id_business_id_fkey";
+            columns: ["document_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "knowledge_documents";
+            referencedColumns: ["id", "business_id"];
+          },
+        ];
+      };
+      knowledge_documents: {
+        Row: {
+          active: boolean;
+          body: string;
+          business_id: string;
+          created_at: string;
+          id: string;
+          kind: Database["public"]["Enums"]["knowledge_kind"];
+          language: Database["public"]["Enums"]["language"];
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          active?: boolean;
+          body: string;
+          business_id: string;
+          created_at?: string;
+          id?: string;
+          kind: Database["public"]["Enums"]["knowledge_kind"];
+          language: Database["public"]["Enums"]["language"];
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          body?: string;
+          business_id?: string;
+          created_at?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["knowledge_kind"];
+          language?: Database["public"]["Enums"]["language"];
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_documents_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       model_calls: {
         Row: {
           business_id: string;
@@ -723,6 +811,19 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      save_knowledge_document: {
+        Args: {
+          chunks: Json;
+          chunks_model: string;
+          document_body: string;
+          document_kind: Database["public"]["Enums"]["knowledge_kind"];
+          document_language: Database["public"]["Enums"]["language"];
+          document_title: string;
+          target_business_id: string;
+          target_document_id: string;
+        };
+        Returns: string;
+      };
       set_working_hours: {
         Args: {
           spans: Json;
@@ -743,6 +844,7 @@ export type Database = {
     };
     Enums: {
       booking_status: "confirmed" | "cancelled";
+      knowledge_kind: "faq" | "policy";
       language: "en" | "ar";
       member_role: "owner" | "admin" | "staff";
     };
@@ -876,6 +978,7 @@ export const Constants = {
   public: {
     Enums: {
       booking_status: ["confirmed", "cancelled"],
+      knowledge_kind: ["faq", "policy"],
       language: ["en", "ar"],
       member_role: ["owner", "admin", "staff"],
     },
