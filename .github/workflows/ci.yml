@@ -27,7 +27,7 @@ jobs:
       - run: pnpm test
 
   database:
-    name: Database tests (pgTAP)
+    name: Database tests (pgTAP, concurrency)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -37,6 +37,8 @@ jobs:
       # Starting it applies every migration from scratch, which is itself a test.
       - run: pnpm supabase db start
       - run: pnpm test:db
+      # Many connections booking the same slot at once: exactly one wins.
+      - run: pnpm test:concurrency
       # The generated TypeScript types must match the migrations: regenerate, fail on any change.
       - run: pnpm db:types
       - run: git diff --exit-code -- src/lib/supabase/database.types.ts

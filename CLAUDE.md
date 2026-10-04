@@ -83,6 +83,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks inside `src/`. End-to-end specs live in `e2e/` and only Playwright runs them.
 - pgTAP tests live in `supabase/tests/database/*.test.sql`. Each file runs in a transaction and rolls back. `000_setup.test.sql` runs first and defines helpers in a `tests` schema that only exists in test databases: `tests.create_user(email)`, `tests.authenticate_as(email)` (the API's `authenticated` role with `auth.uid()` set), `tests.authenticate_as_anon()`, `tests.authenticate_as_service_role()`, and `tests.act_as_database()` to go back to the database role with no claims left over.
 - RLS denies silently on SELECT/UPDATE/DELETE (the rows just aren't there) but raises on INSERT and on missing grants. Test both kinds: check state after a refused update, and use `throws_ok` with the exact message for refused inserts. Prefer whole-row assertions (`results_eq`) over single values.
+- Concurrency guarantees (no double bookings, idempotent requests) are proven in `supabase/tests/concurrency/` with Vitest and the `pg` driver: many connections call the booking functions at once, each in its own transaction as the `authenticated` role, the way API requests would. pgTAP can't, because it runs in one session.
 - More pgTAP helpers: `tests.get_user_id(email)`, `tests.business_id(slug)`, and `tests.clear_tenant_data()`, which empties every tenant table so a file starts from a known state. `audit_log` can't be emptied (it's append-only), so audit tests look only at the businesses they create.
 - Insert fixtures the way the API would: a column grant refuses values the app never sends (an explicit `id`, for example), so look rows up by name instead of choosing ids.
 - A test must be able to fail. When adding one, break the rule once (drop the constraint, re-grant, change the code) and confirm the test goes red, then `pnpm supabase db reset` to rebuild.
@@ -129,6 +130,7 @@ supabase/
 | `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode              |
 | `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running     |
 | `pnpm test:db`                      | pgTAP database tests (Supabase must be running)         |
+| `pnpm test:concurrency`             | Parallel-connection booking tests (Supabase running)    |
 | `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)      |
 | `pnpm env:local`                    | Write the local Supabase URL and keys into `.env.local` |
 | `pnpm supabase db reset`            | Rebuild the local database from migrations              |
@@ -141,7 +143,7 @@ First Playwright run on a machine: `pnpm exec playwright install chromium`. With
 GitHub Actions runs on every push to `main` and every pull request, as three parallel jobs:
 
 - **checks**: `format:check`, `lint`, `typecheck`, `test`
-- **database**: starts only Postgres (`pnpm supabase db start`, which applies every migration from scratch), runs `test:db`, then checks the generated types are current
+- **database**: starts only Postgres (`pnpm supabase db start`, which applies every migration from scratch), runs `test:db` and `test:concurrency`, then checks the generated types are current
 - **e2e**: starts local Supabase (without Studio), writes `.env.local`, builds for production, then runs Playwright
 
 Every CI step is a `pnpm` script, so anything that fails in CI can be reproduced locally with the same command. Keep it that way.

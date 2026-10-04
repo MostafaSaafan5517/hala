@@ -49,11 +49,12 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 
 ## Tests
 
-| Suite          | Command         | Notes                                                                                    |
-| -------------- | --------------- | ---------------------------------------------------------------------------------------- |
-| Unit           | `pnpm test`     | Vitest                                                                                   |
-| Database / RLS | `pnpm test:db`  | pgTAP; needs `pnpm supabase start` first                                                 |
-| End-to-end     | `pnpm test:e2e` | Playwright with accessibility checks; first run: `pnpm exec playwright install chromium` |
+| Suite          | Command                 | Notes                                                                                    |
+| -------------- | ----------------------- | ---------------------------------------------------------------------------------------- |
+| Unit           | `pnpm test`             | Vitest                                                                                   |
+| Database / RLS | `pnpm test:db`          | pgTAP; needs `pnpm supabase start` first                                                 |
+| Concurrency    | `pnpm test:concurrency` | Many connections booking the same slot at once; needs Supabase running                   |
+| End-to-end     | `pnpm test:e2e`         | Playwright with accessibility checks; first run: `pnpm exec playwright install chromium` |
 
 `pnpm lint`, `pnpm typecheck` and `pnpm format:check` run in CI alongside all three suites.
 
