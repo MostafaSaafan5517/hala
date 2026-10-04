@@ -76,6 +76,89 @@ export type Database = {
         };
         Relationships: [];
       };
+      bookings: {
+        Row: {
+          blocked_until: string;
+          business_id: string;
+          cancelled_at: string | null;
+          created_at: string;
+          currency: string;
+          customer_id: string;
+          ends_at: string;
+          id: string;
+          notes: string | null;
+          price: number;
+          reference: string;
+          service_id: string;
+          staff_id: string;
+          starts_at: string;
+          status: Database["public"]["Enums"]["booking_status"];
+        };
+        Insert: {
+          blocked_until: string;
+          business_id: string;
+          cancelled_at?: string | null;
+          created_at?: string;
+          currency: string;
+          customer_id: string;
+          ends_at: string;
+          id?: string;
+          notes?: string | null;
+          price: number;
+          reference?: string;
+          service_id: string;
+          staff_id: string;
+          starts_at: string;
+          status?: Database["public"]["Enums"]["booking_status"];
+        };
+        Update: {
+          blocked_until?: string;
+          business_id?: string;
+          cancelled_at?: string | null;
+          created_at?: string;
+          currency?: string;
+          customer_id?: string;
+          ends_at?: string;
+          id?: string;
+          notes?: string | null;
+          price?: number;
+          reference?: string;
+          service_id?: string;
+          staff_id?: string;
+          starts_at?: string;
+          status?: Database["public"]["Enums"]["booking_status"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bookings_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bookings_customer_id_business_id_fkey";
+            columns: ["customer_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "bookings_service_id_business_id_fkey";
+            columns: ["service_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "bookings_staff_id_business_id_fkey";
+            columns: ["staff_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id", "business_id"];
+          },
+        ];
+      };
       business_members: {
         Row: {
           business_id: string;
@@ -487,6 +570,7 @@ export type Database = {
       };
     };
     Enums: {
+      booking_status: "confirmed" | "cancelled";
       language: "en" | "ar";
       member_role: "owner" | "admin" | "staff";
     };
@@ -619,6 +703,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      booking_status: ["confirmed", "cancelled"],
       language: ["en", "ar"],
       member_role: ["owner", "admin", "staff"],
     },
