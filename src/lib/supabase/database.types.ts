@@ -534,6 +534,19 @@ export type Database = {
         };
         Returns: string;
       };
+      available_slots: {
+        Args: {
+          from_date: string;
+          target_service_id: string;
+          target_staff_id?: string;
+          to_date: string;
+        };
+        Returns: {
+          ends_at: string;
+          staff_id: string;
+          starts_at: string;
+        }[];
+      };
       create_business: {
         Args: {
           business_language: Database["public"]["Enums"]["language"];
