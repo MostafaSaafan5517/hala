@@ -50,8 +50,9 @@ create or replace function tests.clear_tenant_data()
 returns void
 language sql
 as $$
-  truncate public.closures, public.time_off, public.working_hours, public.staff_services,
-    public.staff, public.services, public.business_members, public.businesses;
+  truncate public.customers, public.closures, public.time_off, public.working_hours,
+    public.staff_services, public.staff, public.services, public.business_members,
+    public.businesses;
 $$;
 
 -- Makes the rest of the transaction run as that user, exactly as the API would: the

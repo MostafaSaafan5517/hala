@@ -186,6 +186,44 @@ export type Database = {
           },
         ];
       };
+      customers: {
+        Row: {
+          business_id: string;
+          created_at: string;
+          email: string | null;
+          id: string;
+          language: Database["public"]["Enums"]["language"];
+          name: string;
+          phone: string;
+        };
+        Insert: {
+          business_id: string;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          language: Database["public"]["Enums"]["language"];
+          name: string;
+          phone: string;
+        };
+        Update: {
+          business_id?: string;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          language?: Database["public"]["Enums"]["language"];
+          name?: string;
+          phone?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "customers_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           created_at: string;
