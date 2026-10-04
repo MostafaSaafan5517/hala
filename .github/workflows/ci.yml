@@ -44,7 +44,7 @@ jobs:
       - run: git diff --exit-code -- src/lib/supabase/database.types.ts
 
   e2e:
-    name: End-to-end tests (Playwright)
+    name: Integration and end-to-end tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -56,6 +56,8 @@ jobs:
       - run: pnpm supabase start -x studio,postgres-meta
       # Must come before the build: NEXT_PUBLIC_ values are baked into the bundle.
       - run: pnpm env:local
+      # The assistant's tools and turns against the real local stack, with the offline models.
+      - run: pnpm test:integration
       # Playwright serves this production build when CI is set.
       - run: pnpm build
       - run: pnpm test:e2e
