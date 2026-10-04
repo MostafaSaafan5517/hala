@@ -41,7 +41,10 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Layouts must work right-to-left for Arabic: use logical classes (`ms-`/`me-`, `ps-`/`pe-`, `start-`/`end-`, `text-start`), never `left`/`right` ones. shadcn generates logical classes because `rtl` is on in `components.json`.
 - Anything that navigates is a `<Link>`, even when it looks like a button: style it with `buttonVariants()`, which merges its classes like `<Button>` does. Never `<Button render={<Link />}>`, which gives the link `role="button"`.
 - Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors, so the palette can change in one place (`src/app/globals.css`).
-- Money is always an integer in the currency's smallest unit. Convert only for display.
+- Money is always an integer in the currency's smallest unit. Convert only for display, with `src/lib/money.ts`: the number of decimals comes from the currency (`minorUnitDigits`: 2 for EGP, 3 for KWD, 0 for JPY), never a hard-coded 100, and `parseAmount` accepts Arabic-Indic digits and separators.
+- Arabic text is always marked `lang="ar"` (plus `dir="rtl"` on blocks). The Arabic font is applied by a `:lang(ar)` rule in `globals.css`, because a font list alone falls back to Arial for Arabic. Text whose language we don't know (names, typed input) gets `dir="auto"`. `ServiceName` (`src/components/service-name.tsx`) shows a service's names this way.
+- Times: moments are stored in UTC (`timestamptz`) and shown in the business's time zone with `formatLocalDateTime` (`src/lib/dates.ts`); never in the browser's or the server's zone. Weekly hours are local wall-clock times, and whole days (closures) are plain dates. Local times are converted to UTC in Postgres (`local at time zone businesses.timezone`), so daylight saving comes from the time zone database, not from our code.
+- Forms are Server Actions validated with Zod. A failed validation returns the form's values and one plain message; success redirects or shows "Saved." in a `role="status"` region.
 - No `console.log` in app code, no commented-out code, no unused code. Unexpected server-side failures are logged with `console.error("What failed", { code, status })`; users get a plain message, never raw provider errors. Handle errors explicitly; no empty `catch` blocks.
 - No abstractions for single-use code.
 
@@ -53,13 +56,38 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Helper functions that RLS policies call live in the `private` schema, which the API never serves. A policy must not query another RLS-protected table whose policy could query back: ask through a `private` security-definer helper instead.
 - Extensions live in the `extensions` schema (pgvector is there: `extensions.vector`).
 - Policy names are short sentences of at most 62 characters: Postgres silently cuts identifiers at 63 bytes.
+- Roles are checked with `private.has_business_role(business_id, '{owner,admin}')` (or `'{owner,admin,staff}'` for reading). Owners and admins manage a business's setup; staff only view it.
+- Grant only the columns an API role may write (`grant insert (a, b)`, `grant update (c)`), so ids, `business_id` and timestamps can't be changed through the API even where RLS allows the row.
+- Rows that point at another tenant row use a composite foreign key with `business_id` (for example `(staff_id, business_id) references staff (id, business_id)`), so a row can never link two businesses' data, whatever the policies say.
+- A save that touches several rows (a staff member and their services, a week of hours) is one `security invoker` SQL function: it runs under the caller's RLS and in one transaction, so it either all happens or none of it does. Use `security definer` only when the caller must not have the underlying rights (as in `create_business`), and then check `auth.uid()` yourself.
+- Things a past booking may point to (services, staff) are archived (`active = false`), not deleted: there is no delete grant on them.
+- Every tenant table gets the audit trigger (`private.record_audit_log('<id column>')`), and is added to `tests.clear_tenant_data()` in `000_setup.test.sql`.
+- Time zones are IANA names checked by `private.is_time_zone` (fixed offsets like `+02` are refused: they ignore daylight saving).
+
+## Data model so far
+
+- `profiles` (one per auth user, from a trigger), `businesses` (slug, time zone, the assistant's first language, booking rules) and `business_members` (owner, admin or staff; exactly one owner, enforced by a unique index and a trigger). `create_business` creates a business and its owner row together.
+- `services` (English and/or Arabic name, duration and buffer in 5-minute steps, price in the smallest unit, currency), `staff` (bookable people, no account needed) and `staff_services` (who performs what).
+- `working_hours`: weekly spans in local time, 0 = Sunday, closing at `24:00` allowed, no overlaps (an exclusion constraint). Rows with a null `staff_id` are the business's hours. A staff member with no rows of their own works the business's hours; one with any rows works exactly those. `set_working_hours` replaces a whole week at once.
+- `time_off` (a staff member away, stored in UTC; `add_time_off` takes local times) and `closures` (whole days the business is shut, as plain dates, first and last day included).
+- Booking rules on `businesses`: `booking_notice_minutes`, `booking_horizon_days`, `slot_interval_minutes` and `cancellation_notice_hours`. The booking engine (Phase 2) reads them.
+- `audit_log`: append-only history of every change to the tables above, written only by triggers, with the actor (`user`, `server` for the service role, `database` for migrations and psql). Owners and admins can read their business's history.
+
+## App structure
+
+- `src/proxy.ts` refreshes the Supabase session on each request (Next.js 16 calls middleware "proxy").
+- Business pages live under `/dashboard/b/[slug]/`. A page loads its business with `requireMemberBusiness(slug, path, roles)` (`src/lib/business.ts`): visitors are sent to sign in, and anyone without one of `roles` gets a 404, so pages never confirm that a business exists. Server Actions use `memberForAction(slug, path)` and check the role themselves, because their arguments come from the browser; RLS checks again in the database.
 
 ## Testing conventions
 
 - Unit tests sit next to the code they test as `*.test.ts`; Vitest only looks inside `src/`. End-to-end specs live in `e2e/` and only Playwright runs them.
 - pgTAP tests live in `supabase/tests/database/*.test.sql`. Each file runs in a transaction and rolls back. `000_setup.test.sql` runs first and defines helpers in a `tests` schema that only exists in test databases: `tests.create_user(email)`, `tests.authenticate_as(email)` (the API's `authenticated` role with `auth.uid()` set), `tests.authenticate_as_anon()`, `tests.authenticate_as_service_role()`, and `tests.act_as_database()` to go back to the database role with no claims left over.
 - RLS denies silently on SELECT/UPDATE/DELETE (the rows just aren't there) but raises on INSERT and on missing grants. Test both kinds: check state after a refused update, and use `throws_ok` with the exact message for refused inserts. Prefer whole-row assertions (`results_eq`) over single values.
-- A test must be able to fail. When adding one, break the rule once (drop the constraint, re-grant, change the code) and confirm the test goes red.
+- More pgTAP helpers: `tests.get_user_id(email)`, `tests.business_id(slug)`, and `tests.clear_tenant_data()`, which empties every tenant table so a file starts from a known state. `audit_log` can't be emptied (it's append-only), so audit tests look only at the businesses they create.
+- Insert fixtures the way the API would: a column grant refuses values the app never sends (an explicit `id`, for example), so look rows up by name instead of choosing ids.
+- A test must be able to fail. When adding one, break the rule once (drop the constraint, re-grant, change the code) and confirm the test goes red, then `pnpm supabase db reset` to rebuild.
+- E2E specs set up their data through `e2e/support/` (`createConfirmedUser`, `createBusinessFor`, `addMember`, `addService`, `addStaffMember`, `setHoursFor`, ...) with unique names, so specs run in parallel and never depend on each other. Each spec tests what a user sees and does through the UI; the helpers only build the starting point.
+- Before committing, run E2E the way CI does: `pnpm build` then `CI=1 pnpm test:e2e`. The dev server compiles each route on its first visit, which makes parallel runs against `pnpm dev` time out at random.
 - Every page gets an accessibility check: `accessibilityViolations(page)` (`e2e/support/accessibility.ts`) runs axe's WCAG 2.1 A and AA rules and must return `[]`.
 - Tests never call a real model: tools and the chat route are tested with a mocked model. Only the evaluation suite (Phase 6), run on demand, uses the real one, and logs what it cost.
 
@@ -68,13 +96,18 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 ```
 src/
   app/               Next.js App Router routes and layouts
+    (auth)/          Sign up, sign in, check your email
+    auth/confirm/    The email confirmation link's route
+    (app)/dashboard/ Signed-in pages: the user's businesses, and b/[slug]/ for one business
+  components/        Shared components (ActionButton, ServiceName)
   components/ui/     shadcn/ui components (owned code, edited freely)
   config/            App-wide constants (the product name lives here)
-  lib/               Helpers
+  lib/               Helpers: auth, business access, money, dates, hours, booking rules, ...
   lib/supabase/      Supabase clients and generated database types
+  proxy.ts           Session refresh on every request
 scripts/             Dev tooling (writing .env.local)
 e2e/                 Playwright end-to-end specs (*.spec.ts)
-  support/           E2E helpers (accessibility checks, ...)
+  support/           E2E helpers (accessibility, users, businesses, forms, Mailpit)
 supabase/
   config.toml        Local Supabase settings (ports 553xx; unused services off)
   migrations/        SQL migrations, applied in filename order
@@ -115,5 +148,5 @@ Every CI step is a `pnpm` script, so anything that fails in CI can be reproduced
 
 ## Local setup notes
 
-- Local Supabase needs Docker Desktop running (on Windows with the WSL 2 backend). The Supabase CLI is a pinned dev dependency, so always call it through `pnpm supabase`, never a global install.
+- Local Supabase needs Docker Desktop running (on Windows with the WSL 2 backend). If tests suddenly fail with `fetch failed`, `ECONNREFUSED` or "cannot connect to the docker API", Docker has stopped: start Docker Desktop, then `pnpm supabase start` (the data is kept). The Supabase CLI is a pinned dev dependency, so always call it through `pnpm supabase`, never a global install.
 - The local stack uses ports 553xx (API 55321, database 55322, Studio 55323, Mailpit 55324) and the app runs on 3100, so it can run next to another local Supabase project on the CLI's default 543xx ports and an app on 3000. Running both stacks at once needs a few GB of memory; stop the one you're not using (`pnpm supabase stop` keeps its data).

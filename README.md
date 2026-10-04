@@ -4,7 +4,18 @@
 
 An AI receptionist for appointment-based businesses (salons, clinics, studios, consultants), in Arabic and English. Customers chat with it on the business's website: it answers questions from the business's own data, checks real availability, and books, reschedules or cancels appointments. Staff see every conversation and booking, and can take a conversation over.
 
-**Status:** in development. The project setup (Phase 0) is done; see the [roadmap](#roadmap).
+**Status:** in development. Accounts and business setup (Phase 1) are done; the booking engine is next. See the [roadmap](#roadmap).
+
+## What works today
+
+- **Accounts:** sign up with email confirmation, sign in, sign out; pages that need an account send visitors to sign in and bring them back afterwards.
+- **Businesses:** an owner creates a business with its own web address, time zone and the assistant's first language (English or Arabic). Each business has one owner and can have admins and staff; inviting them from the app comes with the staff inbox (Phase 5).
+- **Services** with English and Arabic names, duration, buffer time and price in any common currency (stored in the currency's smallest unit; Arabic-Indic digits are accepted). Services are archived, never deleted, so past bookings keep their meaning.
+- **Staff** (no account needed) and the services each one performs.
+- **Working hours** for the business and, where they differ, for each staff member, with split shifts; **time off** for staff and **closures** for the whole business, entered in the business's local time and stored in UTC, daylight saving included.
+- **Booking rules:** minimum notice, how far ahead customers can book, how often appointments start, and how late they can cancel.
+- **An append-only audit log** of every setup change, written by database triggers; nobody, not even the server, can edit or delete it.
+- **Roles enforced in the database:** owners and admins manage the setup, staff can only view it, and Row-Level Security keeps every business's data invisible to every other business. pgTAP tests cover each policy, including the refusals.
 
 ## What this project will demonstrate
 
@@ -49,7 +60,7 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 ## Roadmap
 
 - [x] **Phase 0:** project setup, test tooling and CI
-- [ ] **Phase 1:** tenants, auth and business setup (services, staff, hours, time off), with Row-Level Security
+- [x] **Phase 1:** tenants, auth and business setup (services, staff, hours, time off), with Row-Level Security
 - [ ] **Phase 2:** booking engine: availability, the exclusion constraint, idempotent booking
 - [ ] **Phase 3:** knowledge base and retrieval with pgvector
 - [ ] **Phase 4:** the assistant: streaming chat, tools, grounding, confirmation flow, injection resistance
