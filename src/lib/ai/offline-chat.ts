@@ -3,6 +3,7 @@ import type {
   LanguageModelV4CallOptions,
   LanguageModelV4Content,
   LanguageModelV4FinishReason,
+  LanguageModelV4Prompt,
   LanguageModelV4StreamPart,
   LanguageModelV4Usage,
 } from "@ai-sdk/provider";
@@ -11,6 +12,12 @@ import type {
 export type FoundPassage = { source: number; title: string; text: string };
 
 const ARABIC = /[؀-ۿ]/;
+
+// The one booking request the offline model understands, word for word, so the whole booking
+// flow (availability, approval, booking) can be tried and tested without a real model:
+// "book Haircut on 2026-10-05 at 10:00 for Mona Adel, +20 10 1234 5678".
+const BOOK_COMMAND =
+  /^book (.+) on (\d{4}-\d{2}-\d{2}) at (\d{2}:\d{2}) for (.+), (\+[\d ]+)$/i;
 
 const replies = {
   found: {
@@ -25,6 +32,11 @@ const replies = {
   },
 };
 
+type Step = {
+  content: LanguageModelV4Content[];
+  finishReason: LanguageModelV4FinishReason;
+};
+
 function textOf(content: readonly { type: string; text?: string }[]) {
   return content
     .flatMap((part) => (part.type === "text" && part.text ? [part.text] : []))
@@ -35,57 +47,125 @@ function wordCount(text: string) {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
-/**
- * Decides the next step: look the latest question up, or answer from what the lookup found.
- */
-function nextStep(options: LanguageModelV4CallOptions): {
-  content: LanguageModelV4Content[];
-  finishReason: LanguageModelV4FinishReason;
-} {
-  const messages = options.prompt;
-  const lastUser = messages.findLast((message) => message.role === "user");
-  const question = lastUser ? textOf(lastUser.content) : "";
-  const language = ARABIC.test(question) ? "ar" : "en";
-  const last = messages.at(-1);
+function say(text: string): Step {
+  return {
+    content: [{ type: "text", text }],
+    finishReason: { unified: "stop", raw: undefined },
+  };
+}
 
-  const searchResult =
-    last?.role === "tool"
-      ? last.content.find(
-          (part) =>
-            part.type === "tool-result" && part.toolName === "search_knowledge",
-        )
-      : undefined;
-  if (searchResult?.type === "tool-result") {
-    const output = searchResult.output;
-    const passages =
-      output.type === "json"
-        ? ((output.value as { passages?: FoundPassage[] }).passages ?? [])
-        : [];
-    const best = passages[0];
-    return {
-      content: [
-        {
-          type: "text",
-          text: best
-            ? replies.found[language](best)
-            : replies.unknown[language],
-        },
-      ],
-      finishReason: { unified: "stop", raw: undefined },
-    };
-  }
-
+function call(toolName: string, input: unknown): Step {
   return {
     content: [
       {
         type: "tool-call",
         toolCallId: `offline-${crypto.randomUUID()}`,
-        toolName: "search_knowledge",
-        input: JSON.stringify({ question }),
+        toolName,
+        input: JSON.stringify(input),
       },
     ],
     finishReason: { unified: "tool-calls", raw: undefined },
   };
+}
+
+/**
+ * The tools' results since the customer's latest message, by tool name: their JSON output, or
+ * "declined" when the customer didn't approve.
+ */
+function resultsSinceLatestQuestion(prompt: LanguageModelV4Prompt) {
+  const latest = prompt.findLastIndex((message) => message.role === "user");
+  const results = new Map<string, unknown>();
+  for (const message of prompt.slice(latest + 1)) {
+    if (message.role !== "tool") continue;
+    for (const part of message.content) {
+      if (part.type !== "tool-result") continue;
+      results.set(
+        part.toolName,
+        part.output.type === "json"
+          ? part.output.value
+          : part.output.type === "execution-denied"
+            ? "declined"
+            : null,
+      );
+    }
+  }
+  return results;
+}
+
+function bookingStep(
+  command: RegExpExecArray,
+  results: Map<string, unknown>,
+): Step {
+  const [, serviceName = "", date = "", time = "", name = "", phone = ""] =
+    command;
+  const booked = results.get("book_appointment") as
+    | { ok?: boolean; reference?: string; message?: string }
+    | "declined"
+    | undefined;
+  if (booked !== undefined) {
+    return say(
+      booked !== "declined" && booked.ok
+        ? `Booked! Your reference is ${booked.reference}.`
+        : "I haven't booked it.",
+    );
+  }
+  const availability = results.get("check_availability") as
+    { days?: { times: { time: string; starts_at: string }[] }[] } | undefined;
+  const info = results.get("business_info") as
+    | {
+        services?: {
+          id: string;
+          name_en: string | null;
+          name_ar: string | null;
+        }[];
+      }
+    | undefined;
+  const service = info?.services?.find((candidate) =>
+    [candidate.name_en, candidate.name_ar].some(
+      (known) => known?.toLowerCase() === serviceName.trim().toLowerCase(),
+    ),
+  );
+  if (!info) return call("business_info", {});
+  if (!service) return say(`I couldn't find a service called ${serviceName}.`);
+  if (!availability) {
+    return call("check_availability", {
+      service_id: service.id,
+      date,
+      days: 1,
+    });
+  }
+  const slot = availability.days
+    ?.flatMap((day) => day.times)
+    .find((candidate) => candidate.time === time);
+  if (!slot) return say(`${time} isn't free on ${date}.`);
+  return call("book_appointment", {
+    service_id: service.id,
+    starts_at: slot.starts_at,
+    customer_name: name.trim(),
+    customer_phone: phone.trim(),
+  });
+}
+
+/** Decides the next step from the conversation so far. */
+function nextStep(options: LanguageModelV4CallOptions): Step {
+  const lastUser = options.prompt.findLast(
+    (message) => message.role === "user",
+  );
+  const question = lastUser ? textOf(lastUser.content).trim() : "";
+  const results = resultsSinceLatestQuestion(options.prompt);
+
+  const command = BOOK_COMMAND.exec(question);
+  if (command) return bookingStep(command, results);
+
+  if (!results.has("search_knowledge")) {
+    return call("search_knowledge", { question });
+  }
+  const language = ARABIC.test(question) ? "ar" : "en";
+  const found = results.get("search_knowledge") as {
+    passages?: FoundPassage[];
+  } | null;
+  const best = found?.passages?.[0];
+  return say(best ? replies.found[language](best) : replies.unknown[language]);
 }
 
 function usageOf(
@@ -109,9 +189,11 @@ function usageOf(
 
 /**
  * A rule-based stand-in for a chat model, for tests and for developing without an API key
- * (CHAT_MODEL=offline). It only does what the knowledge base can do on its own: it looks every
- * question up with search_knowledge and answers with the best passage, citing it, or says it
- * doesn't know and offers a person. It never books, moves or cancels: that takes a real model.
+ * (CHAT_MODEL=offline). It looks every question up with search_knowledge and answers with the
+ * best passage, citing it, or says it doesn't know and offers a person. It understands one
+ * booking request, word for word ("book Haircut on 2026-10-05 at 10:00 for Mona Adel, +20 10
+ * 1234 5678"), which it carries out through the real tools, approval included. Anything else
+ * takes a real model.
  */
 export const offlineChatModel: LanguageModelV4 = {
   specificationVersion: "v4",

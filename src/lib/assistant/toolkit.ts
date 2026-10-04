@@ -4,10 +4,12 @@ import { type ModelMessage, tool } from "ai";
 import { z } from "zod";
 import { refusalFor } from "@/lib/assistant/refusals";
 import {
-  bookingSummary,
   type CustomerLanguage,
-  cancellationSummary,
   languageOfText,
+} from "@/lib/assistant/language";
+import {
+  bookingSummary,
+  cancellationSummary,
   rescheduleSummary,
   serviceNameIn,
 } from "@/lib/assistant/summaries";

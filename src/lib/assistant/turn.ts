@@ -25,7 +25,7 @@ import {
   limitReached,
   MAX_STEPS_PER_TURN,
 } from "@/lib/assistant/limits";
-import { languageOfText } from "@/lib/assistant/summaries";
+import { languageOfText } from "@/lib/assistant/language";
 import {
   type AssistantContext,
   createAssistantToolkit,

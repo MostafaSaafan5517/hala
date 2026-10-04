@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { languageOfText } from "@/lib/assistant/language";
 import {
   bookingSummary,
   cancellationSummary,
-  languageOfText,
   rescheduleSummary,
   serviceNameIn,
 } from "@/lib/assistant/summaries";

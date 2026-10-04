@@ -6,35 +6,12 @@ import {
   uniqueBusinessName,
 } from "./support/businesses";
 import { formError, signInAs } from "./support/forms";
+import { addDocument } from "./support/knowledge";
 import { adminClient } from "./support/supabase";
 import { createConfirmedUser } from "./support/users";
 
 // The app runs with EMBEDDING_MODEL=offline here: search by meaning is word overlap, so these
 // tests check the pipeline (indexing, search, isolation, logging), not answer quality.
-
-async function addDocument(
-  page: Page,
-  slug: string,
-  document: {
-    kind: "faq" | "policy";
-    language?: "en" | "ar";
-    title: string;
-    body: string;
-  },
-) {
-  await page.goto(`/dashboard/b/${slug}/knowledge/new?kind=${document.kind}`);
-  if (document.language) {
-    await page.getByLabel("Written in").selectOption(document.language);
-  }
-  await page
-    .getByLabel(document.kind === "faq" ? "Question" : "Title")
-    .fill(document.title);
-  await page
-    .getByLabel(document.kind === "faq" ? "Answer" : "Text")
-    .fill(document.body);
-  await page.getByRole("button", { name: "Save" }).click();
-  await expect(page).toHaveURL(/\/knowledge\?saved=1$/);
-}
 
 async function ask(page: Page, question: string) {
   await page.getByLabel("Question", { exact: true }).fill(question);

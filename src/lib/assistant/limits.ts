@@ -1,4 +1,4 @@
-import type { CustomerLanguage } from "@/lib/assistant/summaries";
+import type { CustomerLanguage } from "@/lib/assistant/language";
 
 // Cost and abuse controls, checked before every turn from the model usage log (chat_usage).
 // Hitting one costs nothing: the customer gets a fixed reply, and no model is called.

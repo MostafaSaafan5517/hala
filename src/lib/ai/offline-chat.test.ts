@@ -61,3 +61,87 @@ describe("offlineChatModel", () => {
     expect((await result.usage).inputTokens).toBeGreaterThan(0);
   });
 });
+
+describe("offlineChatModel's one booking request", () => {
+  function bookingAgent(times: string[]) {
+    const calls: string[] = [];
+    const agent = new ToolLoopAgent({
+      model: offlineChatModel,
+      tools: {
+        business_info: tool({
+          inputSchema: z.object({}),
+          execute: async () => {
+            calls.push("business_info");
+            return {
+              services: [
+                { id: "service-1", name_en: "Haircut", name_ar: "قص شعر" },
+              ],
+            };
+          },
+        }),
+        check_availability: tool({
+          inputSchema: z.object({
+            service_id: z.string(),
+            date: z.string(),
+            days: z.number(),
+          }),
+          execute: async (input) => {
+            calls.push(`check_availability ${input.service_id} ${input.date}`);
+            return {
+              days: [
+                {
+                  times: times.map((time) => ({
+                    time,
+                    starts_at: `2026-10-05T${time}:00+03:00`,
+                  })),
+                },
+              ],
+            };
+          },
+        }),
+        book_appointment: tool({
+          inputSchema: z.object({
+            service_id: z.string(),
+            starts_at: z.string(),
+            customer_name: z.string(),
+            customer_phone: z.string(),
+          }),
+          execute: async (input) => {
+            calls.push(
+              `book_appointment ${input.starts_at} ${input.customer_name} ${input.customer_phone}`,
+            );
+            return { ok: true, reference: "7KQ2MX" };
+          },
+        }),
+      },
+    });
+    return { agent, calls };
+  }
+
+  it("carries it out through the real tools, in order", async () => {
+    const { agent, calls } = bookingAgent(["09:45", "10:00"]);
+    const result = await agent.generate({
+      prompt:
+        "book haircut on 2026-10-05 at 10:00 for Mona Adel, +20 10 1234 5678",
+    });
+    expect(calls).toEqual([
+      "business_info",
+      "check_availability service-1 2026-10-05",
+      "book_appointment 2026-10-05T10:00:00+03:00 Mona Adel +20 10 1234 5678",
+    ]);
+    expect(result.text).toBe("Booked! Your reference is 7KQ2MX.");
+  });
+
+  it("stops when the time isn't free, without booking", async () => {
+    const { agent, calls } = bookingAgent(["09:45"]);
+    const result = await agent.generate({
+      prompt:
+        "book Haircut on 2026-10-05 at 10:00 for Mona Adel, +20 10 1234 5678",
+    });
+    expect(calls).toEqual([
+      "business_info",
+      "check_availability service-1 2026-10-05",
+    ]);
+    expect(result.text).toBe("10:00 isn't free on 2026-10-05.");
+  });
+});

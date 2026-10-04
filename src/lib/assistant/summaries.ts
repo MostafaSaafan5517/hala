@@ -1,17 +1,9 @@
+import type { CustomerLanguage } from "@/lib/assistant/language";
 import { formatAmount } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
 
 // What the customer sees on an approval card before a booking, move or cancellation runs, in
 // their language. Built on the server from the database, never from the model's words.
-
-export type CustomerLanguage = "en" | "ar";
-
-const ARABIC = /[؀-ۿ]/;
-
-/** The language a customer writes in: Arabic if their text has Arabic letters, else English. */
-export function languageOfText(text: string): CustomerLanguage {
-  return ARABIC.test(text) ? "ar" : "en";
-}
 
 /** A service's name in the customer's language when it has one, otherwise its other name. */
 export function serviceNameIn(
