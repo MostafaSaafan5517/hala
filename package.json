@@ -3,15 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3100",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 3100",
     "lint": "eslint --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:db": "supabase test db",
+    "env:local": "supabase status -o json | node scripts/write-local-env.mjs",
+    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -34,6 +37,7 @@
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "shadcn": "^4.21.1",
+    "supabase": "^2.119.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.3"
