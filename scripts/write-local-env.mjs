@@ -1,7 +1,8 @@
 // Writes the local Supabase URL and keys into .env.local.
 // Usage (via `pnpm env:local`): supabase status -o json | node scripts/write-local-env.mjs
 // Only those lines are written; anything else in .env.local (AI keys, ...) is kept. Settings
-// with a local default (the offline embedding model) are added only when missing.
+// with a local default (the offline models, an approval secret) are added only when missing.
+import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const ENV_FILE = ".env.local";
@@ -30,8 +31,13 @@ if (missing.length > 0) {
   );
 }
 
-// Added only when .env.local doesn't set them: a choice made there is kept.
-const defaults = { EMBEDDING_MODEL: "offline" };
+// Added only when .env.local doesn't set them: a choice made there is kept. The approval secret
+// is random, generated here and never printed.
+const defaults = {
+  EMBEDDING_MODEL: "offline",
+  CHAT_MODEL: "offline",
+  TOOL_APPROVAL_SECRET: randomBytes(32).toString("base64url"),
+};
 
 const nameOf = (line) => line.split("=")[0]?.trim();
 const existingLines = existsSync(ENV_FILE)
