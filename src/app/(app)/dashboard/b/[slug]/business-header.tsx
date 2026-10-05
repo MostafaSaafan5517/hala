@@ -1,5 +1,6 @@
-import { BusinessTabs } from "@/app/(app)/dashboard/b/[slug]/business-tabs";
+import Link from "next/link";
 import type { MemberRole } from "@/lib/business";
+import { cn } from "@/lib/utils";
 
 const roleDescriptions: Record<MemberRole, string> = {
   owner: "You own this business.",
@@ -90,7 +91,10 @@ const sections = [
 
 export type BusinessSection = (typeof sections)[number]["key"];
 
-/** The business's name, the user's role there, and the tabs their role can open. */
+/**
+ * The business's name, the user's role there, and the tabs their role can open. The tabs wrap onto
+ * more lines rather than scrolling sideways, so every one of them is on screen at any width.
+ */
 export function BusinessHeader({
   business,
   role,
@@ -118,7 +122,23 @@ export function BusinessHeader({
         </h1>
         <p className="text-muted-foreground">{roleDescriptions[role]}</p>
       </div>
-      <BusinessTabs tabs={tabs} />
+      <nav aria-label="Business" className="flex flex-wrap gap-1 border-b pb-3">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            aria-current={tab.current ? "page" : undefined}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-sm whitespace-nowrap",
+              tab.current
+                ? "bg-muted font-medium"
+                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+            )}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }

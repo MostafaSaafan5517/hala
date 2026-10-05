@@ -92,6 +92,31 @@ test("staff open the business they work at", async ({ page }) => {
   await expect(page.getByText("You're on the staff here.")).toBeVisible();
 });
 
+test("an owner sees every section's tab, on a laptop and on a phone", async ({
+  page,
+}) => {
+  const owner = await createConfirmedUser();
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Tab Salon"),
+  );
+  await signInAs(page, owner);
+
+  // Seen, not just present: a row that hid its overflow once kept Usage, Widget and Team out of
+  // sight, and clicking a link scrolls it into view first, so only this check could tell.
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`/dashboard/b/${business.slug}`);
+    const tabs = page
+      .getByRole("navigation", { name: "Business" })
+      .getByRole("link");
+    await expect(tabs).toHaveCount(12);
+    for (const tab of await tabs.all()) {
+      await expect(tab).toBeInViewport({ ratio: 1 });
+    }
+  }
+});
+
 test("creating a business requires signing in", async ({ page }) => {
   await page.goto("/dashboard/new-business");
   await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%2Fnew-business$/);
