@@ -1,22 +1,9 @@
-import { z } from "zod";
-import { runAssistantTurn } from "@/lib/assistant/turn";
+import { runAssistantTurn, turnInputSchema } from "@/lib/assistant/turn";
 import { createServerActionClient } from "@/lib/supabase/server";
 
 // One turn of a test conversation, for members trying the assistant from the dashboard. The
-// customer-facing widget (Phase 5) gets its own route with its own access check; both run the
+// website widget has its own routes and access check (api/widget); both run the
 // same turn.
-
-const turnSchema = z.union([
-  z.object({ text: z.string().trim().min(1).max(2000) }),
-  z.object({
-    approvals: z
-      .array(
-        z.object({ id: z.string().min(1).max(200), approved: z.boolean() }),
-      )
-      .min(1)
-      .max(10),
-  }),
-]);
 
 export async function POST(
   request: Request,
@@ -43,7 +30,9 @@ export async function POST(
     return Response.json({ error: "No such conversation." }, { status: 404 });
   }
 
-  const parsed = turnSchema.safeParse(await request.json().catch(() => null));
+  const parsed = turnInputSchema.safeParse(
+    await request.json().catch(() => null),
+  );
   if (!parsed.success) {
     return Response.json({ error: "Send a message." }, { status: 400 });
   }

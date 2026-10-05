@@ -15,6 +15,12 @@ export const BUSINESS_CALLS_PER_MINUTE = 60;
 /** What one business may spend on AI per local day, in US dollars. */
 export const BUSINESS_DAILY_BUDGET_USD = 5;
 
+/** Conversations one website visitor may start per hour (the widget). */
+export const VISITOR_CONVERSATIONS_PER_HOUR = 5;
+
+/** Chat model calls one website visitor may cause per minute, across their conversations. */
+export const VISITOR_CALLS_PER_MINUTE = 10;
+
 /** The most steps (model calls) in one turn, so a confused model can't loop. */
 export const MAX_STEPS_PER_TURN = 8;
 

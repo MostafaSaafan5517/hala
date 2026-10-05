@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-button";
 import { memberForAction } from "@/lib/business";
-import { createInviteToken } from "@/lib/invites";
+import { createToken } from "@/lib/tokens";
 
 // Every argument comes from the browser, so each action checks the user's role again; RLS
 // decides once more in the database (see the business_members and member_invites policies).
@@ -47,7 +47,7 @@ export async function createInvite(
     throw new Error("Server Action request without an Origin header.");
   }
 
-  const { token, tokenHash } = createInviteToken();
+  const { token, tokenHash } = createToken();
   const { error } = await supabase.from("member_invites").insert({
     business_id: member.business.id,
     role,

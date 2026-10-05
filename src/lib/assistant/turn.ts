@@ -12,6 +12,7 @@ import {
   ToolLoopAgent,
   type UIMessage,
 } from "ai";
+import { z } from "zod";
 import { chatCostUsd } from "@/lib/ai/catalog";
 import {
   chatModel,
@@ -39,8 +40,20 @@ import type { Database } from "@/lib/supabase/database.types";
 // only add a message, or approve or decline a request the server itself stored, and approvals are
 // signed (TOOL_APPROVAL_SECRET) so they only run exactly what the customer was shown.
 
-export type TurnInput =
-  { text: string } | { approvals: { id: string; approved: boolean }[] };
+/** What a turn may receive from the browser: a new message, or answers to approval requests. */
+export const turnInputSchema = z.union([
+  z.object({ text: z.string().trim().min(1).max(2000) }),
+  z.object({
+    approvals: z
+      .array(
+        z.object({ id: z.string().min(1).max(200), approved: z.boolean() }),
+      )
+      .min(1)
+      .max(10),
+  }),
+]);
+
+export type TurnInput = z.output<typeof turnInputSchema>;
 
 type Client = SupabaseClient<Database>;
 
