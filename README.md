@@ -4,6 +4,14 @@
 
 An AI receptionist for appointment-based businesses (salons, clinics, studios, consultants), in Arabic and English. Customers chat with it on the business's website: it answers questions from the business's own data, checks real availability, and books, reschedules or cancels appointments. Staff see every conversation and booking, and can take a conversation over.
 
+![The widget on a salon's website: an answer in Arabic with its sources, then a booking the customer confirms on screen](docs/images/widget-confirm.png)
+
+| The staff inbox: the conversation with every step the assistant took                                                       | What the assistant did and what it cost                                                             |
+| -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| ![The inbox's transcript, with the booking tool's input, the confirmation and the result](docs/images/dashboard-inbox.png) | ![The Usage tab: spend, conversations, bookings and a daily chart](docs/images/dashboard-usage.png) |
+
+**How it works**, decision by decision, with where each lives in the code: [docs/how-it-works.md](docs/how-it-works.md).
+
 **Status:** in development. Business setup (Phase 1), the booking engine (Phase 2), the knowledge base with retrieval (Phase 3), the assistant (Phase 4), the website widget with the staff inbox (Phase 5), and the evaluation suite with the usage dashboard (Phase 6) are done; documentation, demo data and a live demo are next. See the [roadmap](#roadmap).
 
 ## What works today
@@ -63,6 +71,24 @@ pnpm dev
 ```
 
 Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable), and sets `EMBEDDING_MODEL=offline`, a word-matching stand-in that needs no API key. For real semantic search, set `EMBEDDING_MODEL=cohere/embed-v4.0` and an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/ai-gateway), then re-index on the Knowledge tab. `CHAT_MODEL` works the same way: `offline` (answers from the knowledge base, and books from one exact request) or `openai/gpt-5-mini`. Both are on the gateway's free tier ($5 of credit every 30 days, for a subset of models; Claude and OpenAI's embeddings need paid credit), which covers local use and the evaluation suite. The test suites always use the offline models, whatever `.env.local` says.
+
+## Deploying
+
+Hala runs on Vercel with a Supabase project; the AI calls go through the Vercel AI Gateway, which a Vercel deployment reaches with its own OIDC token, so no AI key is needed there.
+
+1. **Database.** Create a Supabase project, then link it and apply the migrations:
+   `pnpm supabase link --project-ref <ref>` and `pnpm supabase db push`. In the project's Authentication settings, set the Site URL to the deployment's address and allow `<address>/**` as a redirect URL.
+2. **App.** Import the GitHub repository into Vercel and set these environment variables (see `.env.example`):
+
+   | Variable                                                                                  | Value                                                     |
+   | ----------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+   | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` | From the Supabase project's API keys                      |
+   | `TOOL_APPROVAL_SECRET`                                                                    | At least 32 random characters                             |
+   | `CHAT_MODEL`, `EMBEDDING_MODEL`                                                           | `openai/gpt-5-mini`, `cohere/embed-v4.0`                  |
+   | `BUSINESS_DAILY_BUDGET_USD`, `SITE_DAILY_BUDGET_USD`                                      | Daily spending limits; the public demo uses 0.15 and 0.16 |
+   | `DEMO_ENABLED`, `CRON_SECRET`                                                             | `1` and a random secret, for the public demo (optional)   |
+
+3. **Demo (optional).** With `DEMO_ENABLED=1`, `vercel.json`'s daily cron calls `/api/demo/reset` with the `CRON_SECRET`, which sets the demo salon up the first time and clears what visitors left every night after. Run the cron job once from the Vercel project's settings to set it up straight away.
 
 ## Tests
 

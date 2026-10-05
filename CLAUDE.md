@@ -62,6 +62,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - A save that touches several rows (a staff member and their services, a week of hours) is one `security invoker` SQL function: it runs under the caller's RLS and in one transaction, so it either all happens or none of it does. Use `security definer` only when the caller must not have the underlying rights (as in `create_business`), and then check `auth.uid()` yourself.
 - Things a past booking may point to (services, staff) are archived (`active = false`), not deleted: there is no delete grant on them.
 - Every tenant table gets the audit trigger (`private.record_audit_log('<id column>')`), and is added to `tests.clear_tenant_data()` in `000_setup.test.sql`.
+- Every table in `public` gets the read-only guard: `create trigger read_only_accounts_cannot_write before insert or update or delete on public.<table> for each statement execute function private.refuse_read_only()`. It refuses writes (HB010) from accounts whose `app_metadata.read_only` is true (the public demo's); `read_only.test.sql` fails for a table without it.
 - Time zones are IANA names checked by `private.is_time_zone` (fixed offsets like `+02` are refused: they ignore daylight saving).
 
 ## Data model so far
@@ -152,6 +153,13 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - `evals/retrieval.eval.ts` reports every passage's similarity to 18 questions (cross-language and unanswerable ones included) and, per threshold, how many answerable questions keep a right passage against how many unanswerable ones get a wrong one. Each embedding model's `minSimilarity` in the catalog comes from this report.
 - To add a case: give it an id, turns, expectations that a wrong reply would fail, and a rubric that says what a good reply does. Run it alone with `EVAL_CASES=<id>`.
 
+## The public demo
+
+- On a deployment with `DEMO_ENABLED=1`, `/api/demo/reset` (run daily by the cron in `vercel.json`, with `Authorization: Bearer <CRON_SECRET>`) sets the demo up the first time and clears it every night after (`src/lib/demo/setup.ts`, data in `src/lib/demo/salon.ts`): the read-only owner account (`src/config/demo.ts`, a public login on purpose), Nour Salon (`businesses.is_demo`, which only server code sets), its services, staff, hours and bilingual knowledge, then two sample bookings and a conversation waiting for the team. `reset_demo_business` clears conversations, bookings and customers, and refuses any business not marked `is_demo`.
+- Read-only accounts: the database refuses their writes (see the read-only guard above); `memberForAction` sends them back to the page with `?read-only=1`, and the signed-in layout's banner explains. Starting a test chat opts out (`allowReadOnly`), since only server code writes there.
+- `/demo` is the salon's website with the real widget (`next/script` with the `data-` attributes), rendered per request (`connection()`); the home and sign-in pages point to it.
+- Spending: `BUSINESS_DAILY_BUDGET_USD` (default 5) per business and local day, and `SITE_DAILY_BUDGET_USD` (no limit when unset) for every business together per UTC day (`chat_usage` returns both); the demo keeps them inside the AI Gateway's free credit.
+
 ## App structure
 
 - `src/proxy.ts` refreshes the Supabase session on each request (Next.js 16 calls middleware "proxy") and sets the widget page's frame policy; the widget's API routes skip the session refresh (visitors have none).
@@ -196,6 +204,7 @@ src/
   lib/knowledge/     Passages, indexing and search of the knowledge base
   lib/assistant/     The assistant: tools, approvals, instructions, limits, turns
   lib/widget/        Frame policy, allowed origins, visitor tokens and limits
+  lib/demo/          The public demo's salon, its setup and nightly reset
   app/api/           Route handlers (the assistant's chat, and the widget's)
   lib/supabase/      Supabase clients (user, and the admin client for the usage log) and types
   proxy.ts           Session refresh on every request
@@ -205,6 +214,7 @@ e2e/                 Playwright end-to-end specs (*.spec.ts)
   support/           E2E helpers (accessibility, users, businesses, knowledge, forms, visitors, sites, Mailpit)
 integration/         Vitest against the full local stack: the assistant's tools and turns
 evals/               The evaluation suite: scripted conversations and retrieval, scored (on demand)
+docs/                How it works, for reviewers, with screenshots (docs/images/)
 supabase/
   config.toml        Local Supabase settings (ports 553xx; unused services off)
   migrations/        SQL migrations, applied in filename order
