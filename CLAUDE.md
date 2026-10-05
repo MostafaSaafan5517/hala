@@ -261,7 +261,7 @@ Every CI step is a `pnpm` script, so anything that fails in CI can be reproduced
 
 - Production is https://hala-phi.vercel.app: the Vercel project `hala`, connected to the GitHub repository, so every push to `main` deploys. Its environment variables are set in the Vercel project (README, "Deploying"); AI calls use the deployment's OIDC token, so no AI key is stored there.
 - The production database is a Supabase free-plan project, changed only by `pnpm supabase db push` of this repository's migrations, never in its dashboard.
-- Free-plan limits: custom email templates are refused (so `supabase/config.toml` describes the local stack only) and the built-in email service sends only to the project's team, so public sign-up confirmations don't arrive without custom SMTP. The demo's account needs no email.
+- Free-plan limits: custom email templates are refused (so `supabase/config.toml` describes the local stack only) and the built-in email service sends only to the project's team, so public sign-up confirmations don't arrive without custom SMTP. The demo's account needs no email. The emails it does send use Supabase's default template, which `/auth/confirm` handles as well as ours: Supabase confirms the address and comes back with a one-time code, which signs in only the browser that signed up (it holds the PKCE verifier); in any other browser the user is told the address is confirmed and asked to sign in.
 
 ## Local setup notes
 

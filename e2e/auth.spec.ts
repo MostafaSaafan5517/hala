@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { accessibilityViolations } from "./support/accessibility";
 import { formError, signIn } from "./support/forms";
-import { getEmailLink } from "./support/mailpit";
+import { defaultTemplateLink, getEmailLink } from "./support/mailpit";
 import {
   createConfirmedUser,
   TEST_PASSWORD,
@@ -117,4 +117,55 @@ test("signing up from a page that needed sign-in comes back to that page after c
 
   await page.goto(await getEmailLink(email, "/auth/confirm"));
   await expect(page).toHaveURL(/\/dashboard\/new-business$/);
+});
+
+// Supabase's free plan can't send our email template, so a hosted project sends Supabase's
+// default email instead: its link confirms the address on Supabase, which comes back to
+// /auth/confirm with a one-time code.
+test("Supabase's default confirmation email signs in the browser that signed up", async ({
+  page,
+}) => {
+  const email = uniqueEmail("default-email");
+
+  await page.goto("/signup?next=%2Fdashboard%2Fnew-business");
+  await page.getByLabel("Full name").fill("Dana Default");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(TEST_PASSWORD);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
+
+  await page.goto(
+    defaultTemplateLink(await getEmailLink(email, "/auth/confirm")),
+  );
+  await expect(page).toHaveURL(/\/dashboard\/new-business$/);
+});
+
+test("Supabase's default email opened on another device confirms the address and asks to sign in", async ({
+  page,
+  browser,
+}) => {
+  const email = uniqueEmail("default-elsewhere");
+
+  await page.goto("/signup");
+  await page.getByLabel("Full name").fill("Eli Elsewhere");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(TEST_PASSWORD);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
+
+  // The code only signs in the browser holding the sign-up's PKCE verifier; this one isn't it.
+  const phone = await browser.newContext();
+  const phonePage = await phone.newPage();
+  await phonePage.goto(
+    defaultTemplateLink(await getEmailLink(email, "/auth/confirm")),
+  );
+  await expect(phonePage).toHaveURL(/\/login\?confirmed=1&next=%2Fdashboard$/);
+  await expect(phonePage.getByRole("status")).toHaveText(
+    "Your email is confirmed. Sign in to continue.",
+  );
+  expect(await accessibilityViolations(phonePage)).toEqual([]);
+
+  await signIn(phonePage, email, TEST_PASSWORD);
+  await expect(phonePage).toHaveURL(/\/dashboard$/);
+  await phone.close();
 });

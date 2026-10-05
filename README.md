@@ -80,7 +80,7 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 Hala runs on Vercel with a Supabase project; the AI calls go through the Vercel AI Gateway, which a Vercel deployment reaches with its own OIDC token, so no AI key is needed there.
 
 1. **Database.** Create a Supabase project, then link it and apply the migrations:
-   `pnpm supabase link --project-ref <ref>` and `pnpm supabase db push`. In the project's Authentication settings, set the Site URL to the deployment's address and allow `<address>/**` as a redirect URL. On Supabase's free plan, the built-in email service only sends to the project's own team, so other people's sign-up confirmations never arrive: set up custom SMTP in the same settings for real sign-ups. The public demo needs none, since its account is ready-made.
+   `pnpm supabase link --project-ref <ref>` and `pnpm supabase db push`. In the project's Authentication settings, set the Site URL to the deployment's address and allow `<address>/**` as a redirect URL. On Supabase's free plan, the built-in email service only sends to the project's own team, so other people's sign-up confirmations never arrive: set up custom SMTP in the same settings for real sign-ups. (Free projects also send Supabase's default email instead of Hala's template; Hala handles both links.) The public demo needs none, since its account is ready-made.
 2. **App.** Import the GitHub repository into Vercel (every push to `main` then deploys) and set these environment variables (see `.env.example`):
 
    | Variable                                                                                  | Value                                                     |

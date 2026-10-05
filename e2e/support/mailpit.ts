@@ -1,4 +1,5 @@
 import { expect } from "@playwright/test";
+import { supabaseSettings } from "./supabase";
 
 // Local Supabase sends every email to Mailpit instead of a real inbox (see supabase/config.toml).
 const MAILPIT_URL = "http://127.0.0.1:55324";
@@ -39,4 +40,24 @@ export async function getEmailLink(recipient: string, path: string) {
     .toBeDefined();
   if (!link) throw new Error(`No ${path} link emailed to ${recipient}`);
   return link;
+}
+
+/**
+ * The link Supabase's default confirmation email holds for the same sign-up, made from our
+ * template's link: Supabase's verify endpoint with the same token, which confirms the address and
+ * sends the browser back to the sign-up's redirect URL with a one-time code. Hosted projects on
+ * Supabase's free plan send this email, since they can't use our template.
+ */
+export function defaultTemplateLink(templateLink: string) {
+  const redirectTo = new URL(templateLink);
+  const token = redirectTo.searchParams.get("token_hash");
+  if (!token) throw new Error(`No token hash in ${templateLink}`);
+  redirectTo.searchParams.delete("token_hash");
+  redirectTo.searchParams.delete("type");
+
+  const link = new URL("/auth/v1/verify", supabaseSettings().url);
+  link.searchParams.set("token", token);
+  link.searchParams.set("type", "signup");
+  link.searchParams.set("redirect_to", redirectTo.toString());
+  return link.toString();
 }

@@ -22,7 +22,7 @@ const linkErrorMessage =
   "That link is invalid or has expired. Sign in below, or sign up again for a new link.";
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  const { next, error } = await searchParams;
+  const { next, error, confirmed } = await searchParams;
   const nextPath = readNext(next);
 
   const supabase = await createServerComponentClient();
@@ -39,6 +39,11 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         {error === "link" && (
           <p role="alert" className="text-sm text-destructive">
             {linkErrorMessage}
+          </p>
+        )}
+        {confirmed === "1" && (
+          <p role="status" className="text-sm">
+            Your email is confirmed. Sign in to continue.
           </p>
         )}
         <LoginForm next={nextPath} />

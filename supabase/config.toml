@@ -250,8 +250,10 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 # Email links point at our /auth/confirm route with a token hash, instead of Supabase's default
-# redirect with a one-time code. The code flow only works in the browser that started it; the
-# token hash works wherever the email is opened. Hosted projects need the same templates.
+# link, which comes back with a one-time code that only signs in the browser that signed up; the
+# token hash works wherever the email is opened. The link is the redirect URL sign-up asks for
+# (/auth/confirm?next=...) plus the token hash. Supabase's free plan refuses custom templates,
+# so hosted projects there send the default email, which /auth/confirm handles too.
 [auth.email.template.confirmation]
 subject = "Confirm your email"
 content_path = "./supabase/templates/confirmation.html"

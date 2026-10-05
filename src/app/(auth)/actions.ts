@@ -37,19 +37,21 @@ function formText(formData: FormData, name: string): string {
 }
 
 /**
- * Where the confirmation email should bring the user back to: the page that sent them to sign
- * up (the form's "next" field), on this site. Supabase passes it into the email, and
- * /auth/confirm checks it again before redirecting.
+ * Where the confirmation email should bring the user back to: /auth/confirm, which signs them
+ * in, with the page that sent them to sign up (the form's "next" field, on this site) to go on
+ * to. Supabase puts it into the email, and /auth/confirm checks `next` again before redirecting.
  */
 async function emailRedirectTo(formData: FormData) {
   const origin = (await headers()).get("origin");
   if (!origin) {
     throw new Error("Server Action request without an Origin header.");
   }
-  return new URL(
+  const url = new URL("/auth/confirm", origin);
+  url.searchParams.set(
+    "next",
     safeRedirectPath(formText(formData, "next"), SIGNED_IN_HOME),
-    origin,
-  ).toString();
+  );
+  return url.toString();
 }
 
 export async function signUp(
