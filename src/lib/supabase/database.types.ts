@@ -494,6 +494,64 @@ export type Database = {
           },
         ];
       };
+      member_invites: {
+        Row: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          business_id: string;
+          created_at: string;
+          created_by: string | null;
+          expires_at: string;
+          id: string;
+          role: Database["public"]["Enums"]["member_role"];
+          token_hash: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          business_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          id?: string;
+          role: Database["public"]["Enums"]["member_role"];
+          token_hash: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          business_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          id?: string;
+          role?: Database["public"]["Enums"]["member_role"];
+          token_hash?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "member_invites_accepted_by_fkey";
+            columns: ["accepted_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "member_invites_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "member_invites_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       model_calls: {
         Row: {
           business_id: string;
@@ -796,6 +854,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_member_invite: { Args: { invite_token: string }; Returns: string };
       add_time_off: {
         Args: {
           ends_local: string;
@@ -931,6 +990,14 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      member_invite_details: {
+        Args: { invite_token: string };
+        Returns: {
+          business_name: string;
+          expires_at: string;
+          role: Database["public"]["Enums"]["member_role"];
+        }[];
       };
       reschedule_booking: {
         Args: {

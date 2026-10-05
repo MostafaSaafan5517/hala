@@ -50,8 +50,8 @@ create or replace function tests.clear_tenant_data()
 returns void
 language sql
 as $$
-  truncate public.conversation_messages, public.conversations, public.knowledge_chunks,
-    public.knowledge_documents, private.idempotency_keys,
+  truncate public.member_invites, public.conversation_messages, public.conversations,
+    public.knowledge_chunks, public.knowledge_documents, private.idempotency_keys,
     public.bookings, public.customers, public.closures, public.time_off, public.working_hours,
     public.staff_services, public.staff, public.services, public.business_members,
     public.businesses;

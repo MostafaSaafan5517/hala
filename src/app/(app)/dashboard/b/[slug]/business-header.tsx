@@ -57,6 +57,12 @@ const sections = [
     path: "/assistant",
     roles: ["owner", "admin", "staff"],
   },
+  {
+    key: "team",
+    label: "Team",
+    path: "/team",
+    roles: ["owner", "admin", "staff"],
+  },
 ] as const satisfies readonly {
   key: string;
   label: string;

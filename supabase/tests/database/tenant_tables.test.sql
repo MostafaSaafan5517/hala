@@ -1,5 +1,5 @@
 begin;
-select plan(55);
+select plan(57);
 select tests.clear_tenant_data();
 
 -- Structure
@@ -8,7 +8,7 @@ select tables_are(
   array['profiles', 'businesses', 'business_members', 'services', 'staff', 'staff_services',
     'working_hours', 'time_off', 'closures', 'audit_log', 'customers',
     'bookings', 'model_calls', 'knowledge_documents', 'knowledge_chunks', 'conversations',
-    'conversation_messages', 'tool_calls'
+    'conversation_messages', 'tool_calls', 'member_invites'
   ],
   'public contains exactly the expected tables'
 );
@@ -73,6 +73,8 @@ select table_privs_are('public', 'conversation_messages', 'authenticated', array
 select table_privs_are('public', 'tool_calls', 'anon', array[]::text[]);
 select table_privs_are('public', 'tool_calls', 'authenticated', array['SELECT']);
 select table_privs_are('public', 'tool_calls', 'service_role', array['SELECT', 'INSERT']);
+select table_privs_are('public', 'member_invites', 'anon', array[]::text[]);
+select table_privs_are('public', 'member_invites', 'authenticated', array['DELETE']);
 
 -- Fixtures: two users (profiles come from the auth trigger) and one business.
 insert into auth.users (id, email) values
