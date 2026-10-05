@@ -29,6 +29,8 @@ An AI receptionist for appointment-based businesses (salons, clinics, studios, c
 - **Cost controls:** every model call logged with tokens, cost and latency; a token budget per conversation, a rate limit and a daily budget per business. Over a limit, no model is called and a person takes over.
 - **Every AI call logged** with tokens, cost, latency and failures, in an append-only table only server code can write.
 - **A website widget:** one script tag adds a chat button to the business's site and opens the chat in an isolated frame, in Arabic or English (right to left for Arabic). Browsers show it only on the sites the business allowed: its page sends a `frame-ancestors` policy listing them, and every other page of the app refuses to be framed at all. Visitors need no account: a random token kept in their browser opens their conversation (only its hash is stored), and per-visitor limits on how many conversations they start and how fast they send messages sit on top of the business's limits.
+- **A Usage tab:** what the assistant did and what it cost, per day in the business's time zone and per model: spend, website conversations, bookings it made, requests for a person, reply latency, failed calls, and today's spend against the daily budget. Computed in Postgres, for owners and admins only.
+- **An evaluation suite** (`pnpm eval`, on demand): 24 scripted English and Arabic conversations with the real assistant (knowledge answers with sources, "I don't know", prices and hours, booking with confirmation, cancelling with and without proof, prompt injection in a document and a message, handover, switching language), each scored by mechanical checks on the tool log and by a judge model against a rubric; plus a retrieval report that picks each embedding model's relevance threshold. It stops at a cost cap and reports what each case cost.
 - **A staff inbox:** conversations waiting for a person come first. A member sees the whole transcript, including every step the assistant took and what each tool returned, then takes the conversation over (the assistant goes quiet), replies in the customer's chat, hands it back or closes it. Each action is a database function that checks the member and the conversation's status, and a reply can only ever be plain text.
 - **Roles enforced in the database:** owners and admins manage the setup, every member can take bookings, and Row-Level Security keeps every business's data invisible to every other business. pgTAP tests cover each policy, including the refusals.
 
@@ -60,7 +62,7 @@ pnpm env:local
 pnpm dev
 ```
 
-Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable), and sets `EMBEDDING_MODEL=offline`, a word-matching stand-in that needs no API key. For real semantic search, set `EMBEDDING_MODEL=openai/text-embedding-3-small` and an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/ai-gateway), then re-index on the Knowledge tab. `CHAT_MODEL` works the same way: `offline` (answers from the knowledge base, and books from one exact request) or `anthropic/claude-haiku-4.5`. The gateway's free monthly credit covers local use and the evaluation suite.
+Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable), and sets `EMBEDDING_MODEL=offline`, a word-matching stand-in that needs no API key. For real semantic search, set `EMBEDDING_MODEL=openai/text-embedding-3-small` and an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/ai-gateway), then re-index on the Knowledge tab. `CHAT_MODEL` works the same way: `offline` (answers from the knowledge base, and books from one exact request) or `anthropic/claude-haiku-4.5`. The gateway's free monthly credit covers local use and the evaluation suite. The test suites always use the offline models, whatever `.env.local` says.
 
 ## Tests
 
@@ -71,8 +73,17 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 | Concurrency    | `pnpm test:concurrency` | Many connections booking the same slot at once; needs Supabase running                   |
 | Integration    | `pnpm test:integration` | The assistant's tools and turns against the full local stack, with a scripted model      |
 | End-to-end     | `pnpm test:e2e`         | Playwright with accessibility checks; first run: `pnpm exec playwright install chromium` |
+| Evaluation     | `pnpm eval`             | On demand, never in CI: the real assistant, scored; reports in `evals/reports/`          |
 
 `pnpm lint`, `pnpm typecheck` and `pnpm format:check` run in CI alongside every suite. No test calls a real AI model.
+
+The evaluation suite runs with the models in `.env.local`, or others set for one run:
+
+```bash
+CHAT_MODEL=anthropic/claude-haiku-4.5 EMBEDDING_MODEL=openai/text-embedding-3-small pnpm eval
+```
+
+A full run with Claude Haiku costs about $2, inside the AI Gateway's free monthly credit. `EVAL_BUDGET_USD` (default 1.50) stops it from starting new cases past that amount, `EVAL_CASES=en-parking,ar-hours` runs only those cases, and `EVAL_JUDGE_MODEL=off` skips the judge.
 
 ## Roadmap
 

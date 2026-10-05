@@ -138,6 +138,20 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 
 - The Team tab lists members and, for owners and admins, pending invites. Invite links are made, shared and revoked there; `/invite/[token]` shows what a link is for and joins once signed in. Only the owner changes roles (admin or staff). The owner removes admins or staff, admins remove staff, and anyone but the owner can leave.
 
+## The Usage tab
+
+- `usage_by_day(business, first_day, last_day)` and `usage_by_model(...)` (security invoker, owners and admins, 1 to 92 days) aggregate `model_calls`, widget `conversations` and `tool_calls` per local day: each day's midnights are converted in Postgres, so daylight saving is right. Latency percentiles are over successful chat calls; bookings and requests for a person come from succeeded tool calls.
+- The tab (`/dashboard/b/[slug]/usage`, 7 or 30 days) shows the totals, today's spend against `BUSINESS_DAILY_BUDGET_USD` as a meter, a spend-per-day chart (one series in the `--chart-1` hue, readable from the keyboard) and day-by-day and per-model tables with every value. Costs under a dollar keep up to four decimals.
+
+## The evaluation suite
+
+- `pnpm eval` (`vitest.evals.config.mts`, `evals/`): never in CI. It uses `CHAT_MODEL`, `EMBEDDING_MODEL` and `AI_GATEWAY_API_KEY` from `.env.local`; a variable set in the shell wins, so one run can try another model.
+- `evals/salon.ts` builds the salon every case talks to: the integration suite's salon plus FAQs and policies in both languages, one poisoned document, and two existing bookings (one inside the 72-hour window, one outside).
+- `evals/cases.ts`: each case is the customer's turns (text, or an answer to the confirmation card), mechanical expectations, and a rubric for the judge. `evals/checks.ts` scores the expectations from the tool log and stored messages; `evals/judge.ts` sends the transcript, with every tool call and result, to a judge model (`EVAL_JUDGE_MODEL`, default Claude Haiku; `off` for the offline model) for a structured verdict: grounded, followed the rubric, right language, safe. A case passes when every check and the verdict pass.
+- `evals/run.eval.ts` runs the cases one at a time, stops starting new ones at `EVAL_BUDGET_USD` (default 1.50), and writes `evals/reports/<time>-<model>.md` and `.json` (gitignored), with each failing case's transcript.
+- `evals/retrieval.eval.ts` reports every passage's similarity to 18 questions (cross-language and unanswerable ones included) and, per threshold, how many answerable questions keep a right passage against how many unanswerable ones get a wrong one. Each embedding model's `minSimilarity` in the catalog comes from this report.
+- To add a case: give it an id, turns, expectations that a wrong reply would fail, and a rubric that says what a good reply does. Run it alone with `EVAL_CASES=<id>`.
+
 ## App structure
 
 - `src/proxy.ts` refreshes the Supabase session on each request (Next.js 16 calls middleware "proxy") and sets the widget page's frame policy; the widget's API routes skip the session refresh (visitors have none).
@@ -157,7 +171,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - E2E specs set up their data through `e2e/support/` (`createConfirmedUser`, `createBusinessFor`, `addMember`, `addService`, `addStaffMember`, `setHoursFor`, ...) with unique names, so specs run in parallel and never depend on each other. Each spec tests what a user sees and does through the UI; the helpers only build the starting point.
 - Before committing, run E2E the way CI does: `pnpm build` then `CI=1 pnpm test:e2e`. The dev server compiles each route on its first visit, which makes parallel runs against `pnpm dev` time out at random.
 - Every page gets an accessibility check: `accessibilityViolations(page)` (`e2e/support/accessibility.ts`) runs axe's WCAG 2.1 A and AA rules and must return `[]`.
-- Tests never call a real model: embeddings use the `offline` model (the E2E server runs with `EMBEDDING_MODEL=offline`), and tools and the chat route will be tested with the AI SDK's mock language model. Only the evaluation suite (Phase 6), run on demand, uses real models, and logs what it cost.
+- Tests never call a real model. `playwright.config.ts` and `vitest.integration.config.mts` set `EMBEDDING_MODEL` and `CHAT_MODEL` to `offline` before loading `.env.local`, so they win over whatever the file says (and the app under test inherits them); the chat route and tools are tested with the offline model or a scripted `MockLanguageModelV4`. Only the evaluation suite, run on demand, uses real models, and it reports what it cost.
 - The integration suite (`integration/`, `pnpm test:integration`) runs app code (the assistant's tools and turns) against the full local stack with the offline models. A scripted `MockLanguageModelV4` plays exactly the tool calls a test needs, including a misbehaving model's. Its Vitest config loads `.env.local` and aliases `server-only` to its empty module.
 - In pgTAP, build embeddings with exact geometry (unit vectors along chosen dimensions) so similarities are known in advance; see `knowledge_search.test.sql`.
 - Widget specs give each browser context its own visitor address (`asNewVisitor()`, `e2e/support/visitors.ts`), since per-visitor limits count by IP and every local request shares one. Integration tests do the same with random `10.x` addresses.
@@ -188,8 +202,9 @@ src/
 public/widget.js     The embed script businesses add to their sites
 scripts/             Dev tooling (writing .env.local)
 e2e/                 Playwright end-to-end specs (*.spec.ts)
-  support/           E2E helpers (accessibility, users, businesses, knowledge, forms, visitors, Mailpit)
+  support/           E2E helpers (accessibility, users, businesses, knowledge, forms, visitors, sites, Mailpit)
 integration/         Vitest against the full local stack: the assistant's tools and turns
+evals/               The evaluation suite: scripted conversations and retrieval, scored (on demand)
 supabase/
   config.toml        Local Supabase settings (ports 553xx; unused services off)
   migrations/        SQL migrations, applied in filename order
@@ -202,22 +217,23 @@ supabase/
 
 ## Commands
 
-| Command                             | What it does                                            |
-| ----------------------------------- | ------------------------------------------------------- |
-| `pnpm dev`                          | Dev server at http://localhost:3100                     |
-| `pnpm build` / `pnpm start`         | Production build / serve that build (port 3100)         |
-| `pnpm lint`                         | ESLint; fails on any warning                            |
-| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`          |
-| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)    |
-| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode              |
-| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running     |
-| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)         |
-| `pnpm test:concurrency`             | Parallel-connection booking tests (Supabase running)    |
-| `pnpm test:integration`             | The assistant against the full local stack              |
-| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)      |
-| `pnpm env:local`                    | Write the local Supabase URL and keys into `.env.local` |
-| `pnpm supabase db reset`            | Rebuild the local database from migrations              |
-| `pnpm db:types`                     | Regenerate TypeScript types from the local database     |
+| Command                             | What it does                                             |
+| ----------------------------------- | -------------------------------------------------------- |
+| `pnpm dev`                          | Dev server at http://localhost:3100                      |
+| `pnpm build` / `pnpm start`         | Production build / serve that build (port 3100)          |
+| `pnpm lint`                         | ESLint; fails on any warning                             |
+| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`           |
+| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)     |
+| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode               |
+| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running      |
+| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)          |
+| `pnpm test:concurrency`             | Parallel-connection booking tests (Supabase running)     |
+| `pnpm test:integration`             | The assistant against the full local stack               |
+| `pnpm eval`                         | The evaluation suite (real models cost money; on demand) |
+| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)       |
+| `pnpm env:local`                    | Write the local Supabase URL and keys into `.env.local`  |
+| `pnpm supabase db reset`            | Rebuild the local database from migrations               |
+| `pnpm db:types`                     | Regenerate TypeScript types from the local database      |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
 
