@@ -31,14 +31,27 @@ export function embeddingCostUsd(model: EmbeddingModelId, tokens: number) {
 
 // The chat models the assistant can run on, with their prices per million input and output
 // tokens (from the AI Gateway's model list, checked 2026-10-05). The gateway's free monthly
-// credit covers only some models: GPT-4.1 mini, GPT-5 mini and Gemini 2.5 Flash, not Claude,
-// and the evaluation suite compares them. Claude Haiku and Sonnet need paid credit. Ling 3.1
+// credit covers only some models: GPT-4.1 mini, GPT-5 mini and Gemini 2.5 Flash, not Claude.
+// On the evaluation suite GPT-5 mini (at low reasoning effort, which halved its slowest calls)
+// was the most careful, so it's the default; GPT-4.1 mini answers faster but slipped more often.
+// Claude Haiku and Sonnet need paid credit. Ling 3.1
 // Flash costs nothing, but unlike the others it promises neither zero data retention nor no
 // training on prompts, so it suits tests and evaluations more than real customers. "offline"
 // is the rule-based stand-in for tests.
+type ChatModelInfo = {
+  usdPerMillionInput: number;
+  usdPerMillionOutput: number;
+  /** How much a reasoning model thinks before answering; the provider's default when unset. */
+  reasoning?: "none" | "minimal" | "low" | "medium" | "high";
+};
+
 export const CHAT_MODELS = {
   "openai/gpt-4.1-mini": { usdPerMillionInput: 0.4, usdPerMillionOutput: 1.6 },
-  "openai/gpt-5-mini": { usdPerMillionInput: 0.25, usdPerMillionOutput: 2 },
+  "openai/gpt-5-mini": {
+    usdPerMillionInput: 0.25,
+    usdPerMillionOutput: 2,
+    reasoning: "low",
+  },
   "google/gemini-2.5-flash": {
     usdPerMillionInput: 0.3,
     usdPerMillionOutput: 2.5,
@@ -57,9 +70,15 @@ export const CHAT_MODELS = {
     usdPerMillionOutput: 0,
   },
   offline: { usdPerMillionInput: 0, usdPerMillionOutput: 0 },
-} as const;
+} as const satisfies Record<string, ChatModelInfo>;
 
 export type ChatModelId = keyof typeof CHAT_MODELS;
+
+/** The reasoning effort set for a chat model, if any. */
+export function chatModelReasoning(model: ChatModelId) {
+  const info: ChatModelInfo = CHAT_MODELS[model];
+  return info.reasoning;
+}
 
 export function isChatModelId(id: string): id is ChatModelId {
   return Object.hasOwn(CHAT_MODELS, id);

@@ -15,7 +15,7 @@ import {
   type UIMessage,
 } from "ai";
 import { z } from "zod";
-import { chatCostUsd } from "@/lib/ai/catalog";
+import { chatCostUsd, chatModelReasoning } from "@/lib/ai/catalog";
 import {
   chatModel,
   chatModelId,
@@ -264,6 +264,7 @@ export async function runAssistantTurn(options: {
   let stepStarted = performance.now();
   const agent = new ToolLoopAgent({
     model: options.model ?? chatModel(modelId),
+    reasoning: chatModelReasoning(modelId),
     instructions: instructionsFor(
       business,
       new Date(),
