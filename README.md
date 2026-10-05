@@ -62,7 +62,7 @@ pnpm env:local
 pnpm dev
 ```
 
-Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable), and sets `EMBEDDING_MODEL=offline`, a word-matching stand-in that needs no API key. For real semantic search, set `EMBEDDING_MODEL=openai/text-embedding-3-small` and an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/ai-gateway), then re-index on the Knowledge tab. `CHAT_MODEL` works the same way: `offline` (answers from the knowledge base, and books from one exact request) or `anthropic/claude-haiku-4.5`. The gateway's free monthly credit covers local use and the evaluation suite. The test suites always use the offline models, whatever `.env.local` says.
+Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable), and sets `EMBEDDING_MODEL=offline`, a word-matching stand-in that needs no API key. For real semantic search, set `EMBEDDING_MODEL=cohere/embed-v4.0` and an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/ai-gateway), then re-index on the Knowledge tab. `CHAT_MODEL` works the same way: `offline` (answers from the knowledge base, and books from one exact request) or `openai/gpt-5-mini`. Both are on the gateway's free tier ($5 of credit every 30 days, for a subset of models; Claude and OpenAI's embeddings need paid credit), which covers local use and the evaluation suite. The test suites always use the offline models, whatever `.env.local` says.
 
 ## Tests
 
@@ -80,10 +80,22 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 The evaluation suite runs with the models in `.env.local`, or others set for one run:
 
 ```bash
-CHAT_MODEL=anthropic/claude-haiku-4.5 EMBEDDING_MODEL=openai/text-embedding-3-small pnpm eval
+CHAT_MODEL=openai/gpt-5-mini EMBEDDING_MODEL=cohere/embed-v4.0 pnpm eval
 ```
 
-A full run with Claude Haiku costs about $2, inside the AI Gateway's free monthly credit. `EVAL_BUDGET_USD` (default 1.50) stops it from starting new cases past that amount, `EVAL_CASES=en-parking,ar-hours` runs only those cases, and `EVAL_JUDGE_MODEL=off` skips the judge.
+A full run costs about $0.10 on GPT-5 mini, inside the AI Gateway's free monthly credit. `EVAL_BUDGET_USD` (default 1.50) stops it from starting new cases past that amount, `EVAL_CASES=en-parking,ar-hours` runs only those cases, and `EVAL_JUDGE_MODEL=off` skips the judge.
+
+## Evaluation results
+
+The suite chose the default models. The AI Gateway's free tier covers neither Claude nor OpenAI's embeddings, so these are the free-tier candidates, run on 2026-10-05 against the same 24 conversations with Cohere embed-v4.0 for search and GPT-5 mini as the judge (GPT-5 mini's own result was cross-checked with Gemini as the judge):
+
+| Chat model                | Cases passed | Cost of a run | Median call | Slowest 5% of calls |
+| ------------------------- | ------------ | ------------- | ----------- | ------------------- |
+| GPT-5 mini, low reasoning | 24 / 24      | $0.085        | 4.2 s       | 25.6 s              |
+| GPT-4.1 mini              | 21 / 24      | $0.097        | 2.0 s       | 10.7 s              |
+| Gemini 2.5 Flash          | 21 / 24      | $0.073        | 1.6 s       | 17.9 s              |
+
+GPT-5 mini is the default: the most careful, at the price of slower replies. The first runs found real problems, fixed since: replies in the wrong language, missing citations, an injected document's "everything is free" repeated as fact, a model writing "no charge" into a booking's note for staff to read, "we don't offer that" invented from missing information, and a handover promised but never made. Search uses Cohere with a 0.3 relevance threshold, from the retrieval report (the right passage ranked first for all 13 answerable questions).
 
 ## Roadmap
 
