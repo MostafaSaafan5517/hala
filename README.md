@@ -4,7 +4,7 @@
 
 An AI receptionist for appointment-based businesses (salons, clinics, studios, consultants), in Arabic and English. Customers chat with it on the business's website: it answers questions from the business's own data, checks real availability, and books, reschedules or cancels appointments. Staff see every conversation and booking, and can take a conversation over.
 
-**Status:** in development. Business setup (Phase 1), the booking engine (Phase 2), the knowledge base with retrieval (Phase 3), the assistant (Phase 4) and the website widget with the staff inbox (Phase 5) are done; the evaluation suite and usage dashboard are next. See the [roadmap](#roadmap).
+**Status:** in development. Business setup (Phase 1), the booking engine (Phase 2), the knowledge base with retrieval (Phase 3), the assistant (Phase 4), the website widget with the staff inbox (Phase 5), and the evaluation suite with the usage dashboard (Phase 6) are done; documentation, demo data and a live demo are next. See the [roadmap](#roadmap).
 
 ## What works today
 
@@ -105,5 +105,5 @@ GPT-5 mini is the default: the most careful, at the price of slower replies. The
 - [x] **Phase 3:** knowledge base and retrieval with pgvector
 - [x] **Phase 4:** the assistant: streaming chat, tools, grounding, confirmation flow, injection resistance
 - [x] **Phase 5:** embeddable widget and staff inbox
-- [ ] **Phase 6:** evaluation suite, end-to-end flows, usage dashboard
+- [x] **Phase 6:** evaluation suite, end-to-end flows, usage dashboard
 - [ ] **Phase 7:** documentation, demo data and live demo
