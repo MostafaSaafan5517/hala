@@ -6,9 +6,11 @@ import {
   createUIMessageStreamResponse,
   generateId,
   getToolName,
+  InvalidToolInputError,
   isStepCount,
   isToolUIPart,
   type LanguageModel,
+  NoSuchToolError,
   ToolLoopAgent,
   type UIMessage,
 } from "ai";
@@ -124,10 +126,17 @@ function applyApprovals(
         input: part.input,
       });
     }
+    // The reason reaches the model with the answer, so a decline reads as final.
     return {
       ...part,
       state: "approval-responded" as const,
-      approval: { ...part.approval, approved: answer.approved },
+      approval: {
+        ...part.approval,
+        approved: answer.approved,
+        reason: answer.approved
+          ? "The customer confirmed it on screen."
+          : "The customer declined it on screen, so nothing was done.",
+      },
     };
   });
   if (applied === 0) return null;
@@ -140,6 +149,14 @@ function latestUserText(messages: UIMessage[]) {
     .map((part) => (part.type === "text" ? part.text : ""))
     .join(" ");
 }
+
+const GENERIC_ERROR = "Sorry, something went wrong. Please try again.";
+/**
+ * The AI SDK's messages for a tool call it refused (InvalidToolInputError, NoSuchToolError),
+ * with the error's name in front when the stream passes it on as a string.
+ */
+const TOOL_INPUT_ERROR =
+  /^(?:AI_(?:InvalidToolInputError|NoSuchToolError): )?(?:Invalid input for tool |Model tried to call unavailable tool )/;
 
 /** No reply at all: while a person has the conversation, the assistant says nothing. */
 function quietReply() {
@@ -247,7 +264,11 @@ export async function runAssistantTurn(options: {
   let stepStarted = performance.now();
   const agent = new ToolLoopAgent({
     model: options.model ?? chatModel(modelId),
-    instructions: instructionsFor(business, new Date()),
+    instructions: instructionsFor(
+      business,
+      new Date(),
+      languageOfText(latestUserText(messages)),
+    ),
     tools: toolkit.tools,
     toolApproval: toolkit.toolApproval,
     experimental_toolApprovalSecret: toolApprovalSecret(),
@@ -281,10 +302,28 @@ export async function runAssistantTurn(options: {
     generateMessageId: generateId,
     onEnd: ({ messages: finished }) => save(finished),
     onError: (error) => {
+      // A tool call the model got wrong (a name where an id belongs, a missing argument) was
+      // refused before anything ran: say what was wrong, so the model can correct it on a later
+      // turn and the team can read it in the transcript. Customers don't see tool errors.
+      if (
+        InvalidToolInputError.isInstance(error) ||
+        NoSuchToolError.isInstance(error)
+      ) {
+        return error.message;
+      }
+      // The stream hands a tool's error over a second time, as a string: keep a refused call's
+      // reason (without the error's name), and don't log the same failure twice.
+      if (typeof error === "string" && TOOL_INPUT_ERROR.test(error)) {
+        return error.replace(/^AI_\w+: /, "");
+      }
+      if (typeof error === "string") return GENERIC_ERROR;
       console.error("An assistant turn failed", {
         name: error instanceof Error ? error.name : "UnknownError",
+        // The gateway's status says what happened: 429 is a rate limit, 403 a model the
+        // account can't use.
+        status: (error as { statusCode?: unknown }).statusCode,
       });
-      return "Sorry, something went wrong. Please try again.";
+      return GENERIC_ERROR;
     },
   });
 }

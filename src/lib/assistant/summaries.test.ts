@@ -46,6 +46,19 @@ describe("bookingSummary", () => {
     );
   });
 
+  it("shows the note the customer is sending, so it can't be added unseen", () => {
+    expect(
+      bookingSummary(
+        { ...booking, notes: "First visit" },
+        "Africa/Cairo",
+        "en",
+      ),
+    ).toMatch(/\. Note for the business: "First visit"\.$/);
+    expect(
+      bookingSummary({ ...booking, notes: "أول زيارة" }, "Africa/Cairo", "ar"),
+    ).toMatch(/ملاحظة للنشاط: «أول زيارة»\.$/);
+  });
+
   it("in Arabic for a customer writing Arabic", () => {
     const summary = bookingSummary(
       { ...booking, serviceName: "قص شعر", staffName: "ليلى" },

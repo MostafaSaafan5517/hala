@@ -52,6 +52,8 @@ export function bookingSummary(
     currency: string;
     customerName: string;
     customerPhone: string;
+    /** What the customer asked to pass on, shown so they see exactly what's sent. */
+    notes?: string;
   },
   timeZone: string,
   language: CustomerLanguage,
@@ -66,10 +68,14 @@ export function bookingSummary(
   const phone = formatPhone(booking.customerPhone);
   if (language === "ar") {
     const withStaff = booking.staffName ? ` مع ${booking.staffName}` : "";
-    return `${booking.serviceName}${withStaff}، ${when} حتى ${until}، ${price}، باسم ${booking.customerName} (${phone}).`;
+    const note = booking.notes ? ` ملاحظة للنشاط: «${booking.notes}».` : "";
+    return `${booking.serviceName}${withStaff}، ${when} حتى ${until}، ${price}، باسم ${booking.customerName} (${phone}).${note}`;
   }
   const withStaff = booking.staffName ? ` with ${booking.staffName}` : "";
-  return `${booking.serviceName}${withStaff} on ${when} to ${until}, ${price}, for ${booking.customerName} (${phone}).`;
+  const note = booking.notes
+    ? ` Note for the business: "${booking.notes}".`
+    : "";
+  return `${booking.serviceName}${withStaff} on ${when} to ${until}, ${price}, for ${booking.customerName} (${phone}).${note}`;
 }
 
 export function rescheduleSummary(

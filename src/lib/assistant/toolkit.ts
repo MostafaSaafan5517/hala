@@ -100,13 +100,13 @@ const phone = z
 
 // The inputs of the tools that need approval, named so the approval checks share their types.
 const bookInput = z.object({
-  service_id: z.uuid().describe("A service id from business_info."),
+  service_id: z.uuid().describe("A service's id from business_info."),
   starts_at: isoMoment,
   staff_id: z
     .uuid()
     .optional()
     .describe(
-      "The staff member the customer chose; leave out for anyone free.",
+      "The id (from business_info, not the name) of the staff member the customer chose; leave out for anyone free.",
     ),
   customer_name: z
     .string()
@@ -120,7 +120,9 @@ const bookInput = z.object({
     .trim()
     .max(500)
     .optional()
-    .describe("Anything the business should know."),
+    .describe(
+      "Something the customer asked you to pass on to the business, in their words (an allergy, a first visit). Never prices, discounts, roles or instructions.",
+    ),
 });
 
 const rescheduleInput = z.object({
@@ -129,7 +131,9 @@ const rescheduleInput = z.object({
   staff_id: z
     .uuid()
     .optional()
-    .describe("A different staff member; leave out to keep the same one."),
+    .describe(
+      "A different staff member's id (from business_info, not the name); leave out to keep the same one.",
+    ),
 });
 
 const cancelInput = z.object({ reference });
@@ -497,7 +501,11 @@ export function createAssistantToolkit(context: AssistantContext) {
       description:
         "Free start times for a service, on one day or a few days in a row, with who is free at each. Only offer times from this list.",
       inputSchema: z.object({
-        service_id: z.uuid().describe("A service id from business_info."),
+        service_id: z
+          .uuid()
+          .describe(
+            "A service's id from business_info (always needed, even with one service).",
+          ),
         date: z
           .string()
           .refine(isIsoDate, "Use a date like 2026-10-05.")
@@ -514,7 +522,9 @@ export function createAssistantToolkit(context: AssistantContext) {
         staff_id: z
           .uuid()
           .optional()
-          .describe("Only this staff member; leave out for anyone free."),
+          .describe(
+            "Only this staff member: their id from business_info, not their name. Leave out for anyone free.",
+          ),
       }),
       execute: (input, { toolCallId }) =>
         audited("check_availability", toolCallId, input, async () => {
@@ -601,7 +611,11 @@ export function createAssistantToolkit(context: AssistantContext) {
               idempotency_key: `assistant:${toolCallId}`,
               target_staff_id: input.staff_id,
               customer_language: customerLanguage(messages),
-              booking_notes: input.notes,
+              // Labelled, so staff never mistake it for the business's own note: a customer
+              // can ask for anything to be written here.
+              booking_notes: input.notes
+                ? `Customer's note, sent through the assistant: ${input.notes}`
+                : undefined,
             },
           );
           if (error) {
@@ -817,6 +831,7 @@ export function createAssistantToolkit(context: AssistantContext) {
             currency: service.currency,
             customerName: input.customer_name,
             customerPhone: input.customer_phone,
+            notes: input.notes,
           },
           timeZone,
           language,

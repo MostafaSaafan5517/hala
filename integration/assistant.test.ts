@@ -365,6 +365,32 @@ describe("limits", () => {
   });
 });
 
+describe("a tool call the model gets wrong", () => {
+  it("is refused before it runs, and the transcript keeps the reason instead of a generic error", async () => {
+    const conversationId = await startConversation(salon.business.id);
+    // A name where the staff member's id belongs, and no service: the call a smaller model made.
+    const script = scriptedModel([
+      {
+        tool: "check_availability",
+        input: { date: localAt(1, "09:00").slice(0, 10), staff_id: "Layla" },
+      },
+      { text: "Which service would you like?" },
+    ]);
+    await turn(
+      conversationId,
+      { text: "Is Layla free tomorrow?" },
+      script.model,
+    );
+
+    const [part] = toolPartsOf((await storedMessages(conversationId)).at(-1));
+    expect(part?.state).toBe("output-error");
+    expect(part && "errorText" in part ? part.errorText : "").toMatch(
+      /^Invalid input for tool check_availability/,
+    );
+    expect(await toolCallsOf(conversationId)).toEqual([]);
+  });
+});
+
 describe("with a person in charge", () => {
   async function setStatus(
     conversationId: string,
