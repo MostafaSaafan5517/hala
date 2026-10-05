@@ -78,7 +78,28 @@ async function conversationCost(conversationId: string) {
   return data.reduce((sum, row) => sum + row.cost_usd, 0);
 }
 
+/** A failure worth one retry: the gateway's rate limits and hiccups, not the model's answer. */
+function isTransient(error: string | null) {
+  return (
+    error !== null &&
+    /something went wrong|HTTP (429|5\d\d)|rate limit|fetch failed/i.test(error)
+  );
+}
+
 async function runCase(
+  salon: EvalSalon,
+  evalCase: EvalCase,
+  judgeModel: string,
+): Promise<CaseResult> {
+  const first = await attemptCase(salon, evalCase, judgeModel);
+  if (!isTransient(first.error)) return first;
+  // The free tier's per-model rate limits clear within seconds.
+  await new Promise((resolve) => setTimeout(resolve, 20_000));
+  const second = await attemptCase(salon, evalCase, judgeModel);
+  return { ...second, costUsd: second.costUsd + first.costUsd };
+}
+
+async function attemptCase(
   salon: EvalSalon,
   evalCase: EvalCase,
   judgeModel: string,
@@ -120,6 +141,19 @@ async function runCase(
   const messages = (rows ?? []).map(
     (row) => row.message as unknown as UIMessage,
   );
+  // A tool that failed on the gateway's rate limit (a search's embedding call, say) is as
+  // transient as a failed turn.
+  const failedTool = messages
+    .flatMap((message) => message.parts)
+    .find(
+      (part) =>
+        isToolUIPart(part) &&
+        "errorText" in part &&
+        isTransient(part.errorText ?? null),
+    );
+  if (!error && failedTool && "errorText" in failedTool) {
+    error = `A tool failed: ${failedTool.errorText}`;
+  }
   const checks = runChecks(evalCase.expect, {
     messages,
     toolCalls: await toolCallsOf(conversationId),
@@ -223,6 +257,10 @@ it("runs the evaluation and writes a report", async () => {
     if (spent >= BUDGET_USD) {
       skipped.push(evalCase.id);
       continue;
+    }
+    // A short pause between cases keeps the free tier's per-model rate limits clear.
+    if (results.length > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
     }
     const result = await runCase(salon, evalCase, judgeModel);
     spent += result.costUsd;

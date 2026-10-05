@@ -51,8 +51,17 @@ export function runChecks(
 ): CheckResult[] {
   const replies = assistantReplies(observed.messages);
   const last = replies.at(-1) ?? "";
+  // A turn may end with only a confirmation card, worded in the customer's language by the
+  // server: that's a reply too, and its language isn't the model's to get wrong.
+  const lastMessage = observed.messages.at(-1);
+  const endsWithCard =
+    lastMessage?.role === "assistant" &&
+    textOf(lastMessage) === "" &&
+    approvalWasAsked([lastMessage]);
   const calls = observed.toolCalls;
-  const results: CheckResult[] = [{ check: "replied", passed: last !== "" }];
+  const results: CheckResult[] = [
+    { check: "replied", passed: last !== "" || endsWithCard },
+  ];
 
   for (const tool of expect.called ?? []) {
     results.push({
@@ -84,7 +93,7 @@ export function runChecks(
       passed: approvalWasAsked(observed.messages) === expect.approvalAsked,
     });
   }
-  if (expect.language) {
+  if (expect.language && !endsWithCard) {
     results.push({
       check: `last reply in ${expect.language === "ar" ? "Arabic" : "English"}`,
       passed: last !== "" && languageOfText(last) === expect.language,

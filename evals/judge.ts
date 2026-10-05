@@ -44,7 +44,7 @@ export function verdictPassed(verdict: Verdict) {
   );
 }
 
-function clip(value: unknown, length = 800) {
+function clip(value: unknown, length = 4000) {
   const text = JSON.stringify(value) ?? "undefined";
   return text.length > length ? `${text.slice(0, length)}…` : text;
 }
@@ -72,11 +72,11 @@ export function transcriptOf(messages: UIMessage[]) {
           lines.push(
             `[Confirmation card shown to the customer: ${approval.requestReason ?? ""}]`,
           );
-          if (approval.approved !== undefined) {
-            lines.push(
-              `[The customer ${approval.approved ? "confirmed" : "declined"}]`,
-            );
-          }
+          lines.push(
+            approval.approved === undefined
+              ? "[No answer yet: nothing is booked or changed until the customer confirms on screen]"
+              : `[The customer ${approval.approved ? "confirmed" : "declined"}]`,
+          );
         }
         if ("output" in part && part.output !== undefined) {
           lines.push(`[Tool ${name} returned ${clip(part.output)}]`);
