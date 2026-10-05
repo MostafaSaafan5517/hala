@@ -125,7 +125,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - **Embedding**: `public/widget.js` is the one script tag a business adds (`data-business="<slug>"`, optional `data-language` and `data-label`). It adds a launcher button and, on first open, an iframe of `/widget/[slug]`, so the chat is isolated from the site's styles and scripts. The frame asks to be closed with a `hala:close` message, which the script accepts only from Hala's origin.
 - **Where it may show**: the proxy gives `/widget/[slug]` a `Content-Security-Policy: frame-ancestors 'self' <allowed origins>` header, read per request (`src/lib/widget/frame-policy.ts`) so a newly allowed site works at once; if the lookup fails, it falls back to `'self'` only. Every other page gets `frame-ancestors 'none'` from `next.config.ts`. Browsers enforce it, so the widget can't be shown on someone else's site.
 - **Visitors** have no account. `POST /api/widget/[slug]/conversations` returns a random token, kept in the visitor's browser (localStorage, else memory); only its SHA-256 is stored. `chat` and `messages` take it as a bearer token. All three routes answer only requests from Hala's own pages (`fromOwnPages` checks `Origin` and `Sec-Fetch-Site`), so a script on another site can't use a visitor's browser.
-- **Per-visitor limits** (`src/lib/widget/server.ts`, from `visitor_usage`): new conversations per hour and chat calls per minute, counted by a keyed hash of the IP address a conversation started from (HMAC with a key derived from `TOOL_APPROVAL_SECRET`), never the address itself. On Vercel the platform sets `x-real-ip`; check it after the first deploy. The business's own limits apply too.
+- **Per-visitor limits** (`src/lib/widget/server.ts`, from `visitor_usage`): new conversations per hour and chat calls per minute, counted by a keyed hash of the IP address a conversation started from (HMAC with a key derived from `TOOL_APPROVAL_SECRET`), never the address itself. On Vercel the platform sets `x-real-ip` from the connection and ignores a client's own header (checked on the live deployment). The business's own limits apply too.
 - **The frame's page** (`src/app/widget/[slug]/`) shares the chat components with the dashboard's test chat (`src/components/chat/`: messages, a safe Markdown subset, the Confirm card, the composer). It switches between Arabic and English, picks the conversation up after a reload, and checks for the team's replies every 5 seconds while a conversation is going.
 - **Settings**: the Widget tab (owners and admins) turns it on, takes the allowed sites (`parseOrigins`, `src/lib/widget/origins.ts`), and shows the embed code and a live preview.
 
@@ -256,6 +256,12 @@ GitHub Actions runs on every push to `main` and every pull request, as three par
 - **e2e**: starts local Supabase (without Studio), writes `.env.local`, runs the integration suite, builds for production, then runs Playwright
 
 Every CI step is a `pnpm` script, so anything that fails in CI can be reproduced locally with the same command. Keep it that way.
+
+## Deployment
+
+- Production is https://hala-phi.vercel.app: the Vercel project `hala`, connected to the GitHub repository, so every push to `main` deploys. Its environment variables are set in the Vercel project (README, "Deploying"); AI calls use the deployment's OIDC token, so no AI key is stored there.
+- The production database is a Supabase free-plan project, changed only by `pnpm supabase db push` of this repository's migrations, never in its dashboard.
+- Free-plan limits: custom email templates are refused (so `supabase/config.toml` describes the local stack only) and the built-in email service sends only to the project's team, so public sign-up confirmations don't arrive without custom SMTP. The demo's account needs no email.
 
 ## Local setup notes
 

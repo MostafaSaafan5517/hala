@@ -4,6 +4,8 @@
 
 An AI receptionist for appointment-based businesses (salons, clinics, studios, consultants), in Arabic and English. Customers chat with it on the business's website: it answers questions from the business's own data, checks real availability, and books, reschedules or cancels appointments. Staff see every conversation and booking, and can take a conversation over.
 
+**Try it live:** [hala-phi.vercel.app/demo](https://hala-phi.vercel.app/demo) is a demo salon's website with the real widget: ask it anything in English or Arabic, or book an appointment. Then [sign in](https://hala-phi.vercel.app/login) as the salon with `demo.owner@example.com` and `demo-salon-2026` to see your conversation in the inbox, the bookings and what it all cost. The account is read-only, and the demo is reset every night.
+
 ![The widget on a salon's website: an answer in Arabic with its sources, then a booking the customer confirms on screen](docs/images/widget-confirm.png)
 
 | The staff inbox: the conversation with every step the assistant took                                                       | What the assistant did and what it cost                                                             |
@@ -12,7 +14,7 @@ An AI receptionist for appointment-based businesses (salons, clinics, studios, c
 
 **How it works**, decision by decision, with where each lives in the code: [docs/how-it-works.md](docs/how-it-works.md).
 
-**Status:** in development. Business setup (Phase 1), the booking engine (Phase 2), the knowledge base with retrieval (Phase 3), the assistant (Phase 4), the website widget with the staff inbox (Phase 5), and the evaluation suite with the usage dashboard (Phase 6) are done; documentation, demo data and a live demo are next. See the [roadmap](#roadmap).
+**Status:** every phase of the [roadmap](#roadmap) is done, and the demo above runs on Vercel.
 
 ## What works today
 
@@ -31,18 +33,19 @@ An AI receptionist for appointment-based businesses (salons, clinics, studios, c
 - **An append-only audit log** of every change, bookings included, written by database triggers; nobody, not even the server, can edit or delete it.
 - **A knowledge base** of FAQs and policies in English or Arabic, split into passages and embedded on save (only changed passages are re-embedded), with a "Try a question" box that shows exactly which passages the assistant would answer from.
 - **Hybrid retrieval in Postgres:** search by meaning (pgvector cosine similarity, above a per-model threshold) and by the question's rare keywords (language-agnostic, Arabic spelling normalized), merged by reciprocal rank fusion. Nothing relevant means an empty result, never a guess. One business's passages are unreachable from another's, proven by tests.
-- **The assistant** (Claude by default, switchable by configuration): answers from the knowledge base with numbered sources, or says it doesn't know and offers a person; checks real availability; books, moves and cancels through eight server-side tools, each scoped to one business and recorded in an append-only audit. Members can test it from the dashboard.
+- **The assistant** (GPT-5 mini, chosen by the evaluation suite; the model is configuration, not code): answers from the knowledge base with numbered sources, or says it doesn't know and offers a person; checks real availability; books, moves and cancels through eight server-side tools, each scoped to one business and recorded in an append-only audit. Members can test it from the dashboard.
 - **Confirm before anything happens:** every booking, move or cancellation is shown to the customer, worded from the database in their language, and runs only when they tap Confirm. Approvals are cryptographically signed, so a request changed after it was shown can't run; tests prove it fails without the signature.
 - **Prompt injection changes nothing that matters:** tests drive a model that obeys injected instructions, and it still can't book outside the rules or at another business. Prices only ever come from the database: no tool takes one.
-- **Cost controls:** every model call logged with tokens, cost and latency; a token budget per conversation, a rate limit and a daily budget per business. Over a limit, no model is called and a person takes over.
+- **Cost controls:** every model call logged with tokens, cost and latency; a token budget per conversation, a rate limit and a daily budget per business, and a daily budget for the whole site. Over a limit, no model is called and a person takes over.
 - **Every AI call logged** with tokens, cost, latency and failures, in an append-only table only server code can write.
 - **A website widget:** one script tag adds a chat button to the business's site and opens the chat in an isolated frame, in Arabic or English (right to left for Arabic). Browsers show it only on the sites the business allowed: its page sends a `frame-ancestors` policy listing them, and every other page of the app refuses to be framed at all. Visitors need no account: a random token kept in their browser opens their conversation (only its hash is stored), and per-visitor limits on how many conversations they start and how fast they send messages sit on top of the business's limits.
 - **A Usage tab:** what the assistant did and what it cost, per day in the business's time zone and per model: spend, website conversations, bookings it made, requests for a person, reply latency, failed calls, and today's spend against the daily budget. Computed in Postgres, for owners and admins only.
 - **An evaluation suite** (`pnpm eval`, on demand): 24 scripted English and Arabic conversations with the real assistant (knowledge answers with sources, "I don't know", prices and hours, booking with confirmation, cancelling with and without proof, prompt injection in a document and a message, handover, switching language), each scored by mechanical checks on the tool log and by a judge model against a rubric; plus a retrieval report that picks each embedding model's relevance threshold. It stops at a cost cap and reports what each case cost.
 - **A staff inbox:** conversations waiting for a person come first. A member sees the whole transcript, including every step the assistant took and what each tool returned, then takes the conversation over (the assistant goes quiet), replies in the customer's chat, hands it back or closes it. Each action is a database function that checks the member and the conversation's status, and a reply can only ever be plain text.
+- **A public demo:** a salon with bilingual FAQs and policies, sample bookings and a conversation waiting for the team, set up by a daily cron job that also clears what visitors left. Its account is read-only, enforced by a trigger on every table in the database, not only by the app.
 - **Roles enforced in the database:** owners and admins manage the setup, every member can take bookings, and Row-Level Security keeps every business's data invisible to every other business. pgTAP tests cover each policy, including the refusals.
 
-## What this project will demonstrate
+## What this project demonstrates
 
 - **The model never writes data.** It only requests actions through server-side tools that validate every input, re-check permissions and business rules, and run inside database transactions.
 - **No double bookings, enforced by Postgres** with an exclusion constraint on staff and time range, proven by a test that fires two simultaneous bookings for the same slot.
@@ -77,8 +80,8 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 Hala runs on Vercel with a Supabase project; the AI calls go through the Vercel AI Gateway, which a Vercel deployment reaches with its own OIDC token, so no AI key is needed there.
 
 1. **Database.** Create a Supabase project, then link it and apply the migrations:
-   `pnpm supabase link --project-ref <ref>` and `pnpm supabase db push`. In the project's Authentication settings, set the Site URL to the deployment's address and allow `<address>/**` as a redirect URL.
-2. **App.** Import the GitHub repository into Vercel and set these environment variables (see `.env.example`):
+   `pnpm supabase link --project-ref <ref>` and `pnpm supabase db push`. In the project's Authentication settings, set the Site URL to the deployment's address and allow `<address>/**` as a redirect URL. On Supabase's free plan, the built-in email service only sends to the project's own team, so other people's sign-up confirmations never arrive: set up custom SMTP in the same settings for real sign-ups. The public demo needs none, since its account is ready-made.
+2. **App.** Import the GitHub repository into Vercel (every push to `main` then deploys) and set these environment variables (see `.env.example`):
 
    | Variable                                                                                  | Value                                                     |
    | ----------------------------------------------------------------------------------------- | --------------------------------------------------------- |
@@ -132,4 +135,4 @@ GPT-5 mini is the default: the most careful, at the price of slower replies. The
 - [x] **Phase 4:** the assistant: streaming chat, tools, grounding, confirmation flow, injection resistance
 - [x] **Phase 5:** embeddable widget and staff inbox
 - [x] **Phase 6:** evaluation suite, end-to-end flows, usage dashboard
-- [ ] **Phase 7:** documentation, demo data and live demo
+- [x] **Phase 7:** documentation, demo data and live demo
