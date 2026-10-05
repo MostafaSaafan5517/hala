@@ -1,3 +1,6 @@
 pnpm-lock.yaml
 # Rewritten by `next dev`; formatting it would cause churn.
 AGENTS.md
+# Written by the Supabase CLI (`supabase link`), and ignored by Git.
+supabase/.temp
+supabase/.branches
