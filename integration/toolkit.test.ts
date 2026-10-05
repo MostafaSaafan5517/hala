@@ -48,11 +48,17 @@ describe("looking things up", () => {
   it("search_knowledge returns this business's passages, numbered as sources", async () => {
     const { tools } = await toolkitFor();
     const result = await run<{
-      passages: { source: number; title: string; text: string }[];
+      passages: {
+        source: number;
+        cite_as: string;
+        title: string;
+        text: string;
+      }[];
     }>(tools.search_knowledge, { question: "Is there parking?" });
     expect(result.passages).toEqual([
       {
         source: 1,
+        cite_as: "[1]",
         title: "Is there parking?",
         text: "Yes, Palm Salon has free parking behind the building.",
       },

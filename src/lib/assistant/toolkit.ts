@@ -399,6 +399,8 @@ export function createAssistantToolkit(context: AssistantContext) {
             ok: true as const,
             passages: results.map((result, index) => ({
               source: index + 1,
+              // Ready to copy into the reply: smaller models cite more reliably with it.
+              cite_as: `[${index + 1}]`,
               title: result.title,
               // The passage starts with its document's title, given separately.
               text: result.content.slice(result.content.indexOf("\n") + 1),
