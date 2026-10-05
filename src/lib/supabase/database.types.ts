@@ -284,6 +284,7 @@ export type Database = {
           message: NonNullable<Json>;
           position: number;
           role: string;
+          sent_by: string | null;
           updated_at: string;
         };
         Insert: {
@@ -294,6 +295,7 @@ export type Database = {
           message: NonNullable<Json>;
           position: number;
           role: string;
+          sent_by?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -304,6 +306,7 @@ export type Database = {
           message?: NonNullable<Json>;
           position?: number;
           role?: string;
+          sent_by?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -313,6 +316,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "conversations";
             referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "conversation_messages_sent_by_fkey";
+            columns: ["sent_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -970,6 +980,10 @@ export type Database = {
           conversation_tokens: number;
         }[];
       };
+      close_conversation: {
+        Args: { target_conversation_id: string };
+        Returns: undefined;
+      };
       create_business: {
         Args: {
           business_language: Database["public"]["Enums"]["language"];
@@ -1013,6 +1027,10 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      hand_back_conversation: {
+        Args: { target_conversation_id: string };
+        Returns: undefined;
+      };
       member_invite_details: {
         Args: { invite_token: string };
         Returns: {
@@ -1020,6 +1038,10 @@ export type Database = {
           expires_at: string;
           role: Database["public"]["Enums"]["member_role"];
         }[];
+      };
+      reply_to_conversation: {
+        Args: { body: string; target_conversation_id: string };
+        Returns: undefined;
       };
       reschedule_booking: {
         Args: {
@@ -1095,6 +1117,10 @@ export type Database = {
           target_business_id: string;
           target_staff_id?: string;
         };
+        Returns: undefined;
+      };
+      take_over_conversation: {
+        Args: { target_conversation_id: string };
         Returns: undefined;
       };
       time_multirange: { Args: Record<PropertyKey, never>; Returns: unknown };

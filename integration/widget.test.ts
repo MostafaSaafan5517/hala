@@ -6,7 +6,6 @@ import {
   VISITOR_CALLS_PER_MINUTE,
   VISITOR_CONVERSATIONS_PER_HOUR,
 } from "@/lib/assistant/limits";
-import { saveMessages } from "@/lib/assistant/turn";
 import { hashToken } from "@/lib/tokens";
 import { createSalon, serviceClient } from "./support";
 
@@ -135,25 +134,30 @@ describe("starting and continuing a conversation", () => {
     const { token } = await startConversation(salon.slug, newVisitorIp());
     const { data: conversation } = await serviceClient()
       .from("conversations")
-      .update({ status: "taken_over" })
-      .eq("visitor_token_hash", hashToken(token!))
       .select("id")
+      .eq("visitor_token_hash", hashToken(token!))
       .single();
-    await saveMessages(serviceClient(), conversation!.id, [
-      {
-        id: "staff-1",
-        role: "assistant",
-        metadata: { from: "staff" },
-        parts: [{ type: "text", text: "Hi, it's Layla." }],
-      },
-    ]);
+    // From the inbox: a member takes the conversation over and replies.
+    const target = { target_conversation_id: conversation!.id };
+    await salon.ownerClient.rpc("take_over_conversation", target);
+    await salon.ownerClient.rpc("reply_to_conversation", {
+      ...target,
+      body: "Hi, it's Layla.",
+    });
     const response = await messages(
       fromWidget(`/api/widget/${salon.slug}/messages`, { token }),
       context(salon.slug),
     );
-    expect(await response.json()).toMatchObject({
+    expect(await response.json()).toEqual({
       status: "taken_over",
-      messages: [{ id: "staff-1", metadata: { from: "staff" } }],
+      messages: [
+        {
+          id: expect.stringMatching(/^staff-/),
+          role: "assistant",
+          metadata: { from: "staff" },
+          parts: [{ type: "text", text: "Hi, it's Layla." }],
+        },
+      ],
     });
   });
 });

@@ -22,6 +22,12 @@ const sections = [
     roles: ["owner", "admin", "staff"],
   },
   {
+    key: "inbox",
+    label: "Inbox",
+    path: "/inbox",
+    roles: ["owner", "admin", "staff"],
+  },
+  {
     key: "services",
     label: "Services",
     path: "/services",

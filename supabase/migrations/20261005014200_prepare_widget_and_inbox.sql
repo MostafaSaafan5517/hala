@@ -52,7 +52,7 @@ create index conversations_visitor_hash_created_at
 -- Saves messages into a conversation: a message it already has is updated in place (the
 -- assistant's reply grows after an approval), a new one goes at the end. The conversation row is
 -- locked first, so a staff reply and the assistant's can't take the same position. Server code
--- only: the assistant's turns and staff replies (after their own checks) both come through here.
+-- only: the assistant's turns come through here.
 create function public.save_conversation_messages(target_conversation_id uuid, messages jsonb)
 returns void
 language plpgsql

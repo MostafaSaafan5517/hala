@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { startTestConversation } from "@/app/(app)/dashboard/b/[slug]/assistant/actions";
-import { conversationStatusLabels } from "@/app/(app)/dashboard/b/[slug]/assistant/labels";
+import { conversationStatusLabels } from "@/app/(app)/dashboard/b/[slug]/conversation-status";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
 import { ActionButton } from "@/components/action-button";
 import { requireMemberBusiness } from "@/lib/business";

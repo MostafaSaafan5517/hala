@@ -33,7 +33,8 @@ const REPLY_ELEMENTS = [
   "br",
 ];
 
-function Reply({ text }: { text: string }) {
+/** The assistant's reply: Markdown, limited to the elements above. */
+export function Reply({ text }: { text: string }) {
   const language = languageOfText(text);
   return (
     <div
@@ -58,7 +59,8 @@ function Reply({ text }: { text: string }) {
   );
 }
 
-function Typed({ text }: { text: string }) {
+/** What a person typed, as typed: never Markdown. */
+export function Typed({ text }: { text: string }) {
   const language = languageOfText(text);
   return (
     <p

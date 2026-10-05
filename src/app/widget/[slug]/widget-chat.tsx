@@ -25,7 +25,7 @@ import type { Enums } from "@/lib/supabase/database.types";
 
 type ConversationStatus = Enums<"conversation_status">;
 
-/** How often the widget checks for a team member's replies while a person is involved. */
+/** How often the widget checks whether someone from the team has joined or replied. */
 const POLL_MS = 5000;
 
 // The visitor's conversation token, per business: kept in memory for this page view and in
@@ -86,6 +86,8 @@ export function WidgetChat({
   const [startError, setStartError] = useState<string | null>(null);
   const embedded = useSyncExternalStore(noChanges, onBusinessSite, () => false);
   const endRef = useRef<HTMLDivElement>(null);
+  // Whether a reply is on its way, for checks that finish after a message was sent.
+  const sendingRef = useRef(false);
   const labels = chatLabels[language];
   const words = widgetLabels[language];
 
@@ -110,6 +112,9 @@ export function WidgetChat({
     onFinish: () => void reload(),
   });
   const busy = status === "submitted" || status === "streaming";
+  useEffect(() => {
+    sendingRef.current = busy;
+  }, [busy]);
 
   /** The conversation as the server has it: messages, and whether a person has it. */
   const reload = useCallback(async () => {
@@ -130,6 +135,8 @@ export function WidgetChat({
       status: ConversationStatus;
       messages: UIMessage[];
     };
+    // A reply streaming in is newer than what the server had when it answered.
+    if (sendingRef.current) return;
     setConversationStatus(data.status);
     setMessages(data.messages);
   }, [slug, setMessages]);
@@ -138,14 +145,14 @@ export function WidgetChat({
     void reload();
   }, [slug, reload]);
 
-  // While a person is involved, their replies arrive by checking every few seconds.
-  const involvesTeam =
-    conversationStatus === "needs_human" || conversationStatus === "taken_over";
+  // Someone from the team can join at any time (from the inbox): their replies, and the
+  // conversation being taken over or closed, arrive by checking every few seconds.
+  const ongoing = messages.length > 0 && conversationStatus !== "closed";
   useEffect(() => {
-    if (!involvesTeam || busy) return;
+    if (!ongoing || busy) return;
     const timer = window.setInterval(() => void reload(), POLL_MS);
     return () => window.clearInterval(timer);
-  }, [involvesTeam, busy, reload]);
+  }, [ongoing, busy, reload]);
 
   useEffect(() => {
     document.documentElement.lang = language;

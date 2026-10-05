@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { ModelMessage } from "ai";
 import {
@@ -34,7 +35,8 @@ export function serviceClient() {
 
 /**
  * A salon open 09:00-17:00 every day with a 45-minute haircut that Layla does, and an FAQ about
- * parking. Customers can cancel or move up to 72 hours before.
+ * parking. Customers can cancel or move up to 72 hours before. Comes with its owner, signed in,
+ * for what members do (the knowledge base, the inbox).
  */
 export async function createSalon(name = "Palm Salon") {
   const owner = await createConfirmedUser();
@@ -70,13 +72,7 @@ export async function createSalon(name = "Palm Salon") {
   if (error) throw error;
 
   // Knowledge is saved as the owner, through the same path as the Knowledge tab.
-  const { url, publishableKey } = supabaseSettings();
-  const ownerClient = createClient<Database>(url, publishableKey, {
-    auth: { persistSession: false },
-  });
-  const { error: signInError } =
-    await ownerClient.auth.signInWithPassword(owner);
-  if (signInError) throw signInError;
+  const ownerClient = await signedInClient(owner);
   await saveDocument(ownerClient, {
     businessId: business.id,
     documentId: null,
@@ -91,13 +87,41 @@ export async function createSalon(name = "Palm Salon") {
     slug: created.slug,
     serviceId,
     laylaId,
+    ownerClient,
   };
+}
+
+/** A typed client signed in as this user, the way the dashboard calls the API. */
+async function signedInClient(user: { email: string; password: string }) {
+  const { url, publishableKey } = supabaseSettings();
+  const client = createClient<Database>(url, publishableKey, {
+    auth: { persistSession: false },
+  });
+  const { error } = await client.auth.signInWithPassword(user);
+  if (error) throw error;
+  return client;
 }
 
 export async function startConversation(businessId: string) {
   const { data, error } = await serviceClient()
     .from("conversations")
     .insert({ business_id: businessId, channel: "test" })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+/** A conversation from the website widget (its visitor's token isn't needed here). */
+export async function startWidgetConversation(businessId: string) {
+  const { data, error } = await serviceClient()
+    .from("conversations")
+    .insert({
+      business_id: businessId,
+      channel: "widget",
+      visitor_token_hash: randomBytes(32).toString("hex"),
+      visitor_hash: randomBytes(32).toString("hex"),
+    })
     .select("id")
     .single();
   if (error) throw error;

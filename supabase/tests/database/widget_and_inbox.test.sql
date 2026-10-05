@@ -168,7 +168,7 @@ select results_eq(
 select throws_ok(
   $$ update public.conversations set status = 'open' $$,
   '42501', 'permission denied for table conversations',
-  'but change it only through the inbox''s server code'
+  'but change it only through the inbox''s actions'
 );
 
 select * from finish();

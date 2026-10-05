@@ -8,16 +8,13 @@ import {
 import { MockLanguageModelV4 } from "ai/test";
 import { beforeAll, describe, expect, it } from "vitest";
 import { CONVERSATION_TOKEN_BUDGET } from "@/lib/assistant/limits";
-import {
-  runAssistantTurn,
-  saveMessages,
-  type TurnInput,
-} from "@/lib/assistant/turn";
+import { runAssistantTurn, type TurnInput } from "@/lib/assistant/turn";
 import {
   createSalon,
   localAt,
   serviceClient,
   startConversation,
+  startWidgetConversation,
   toolCallsOf,
 } from "./support";
 
@@ -401,33 +398,48 @@ describe("with a person in charge", () => {
     expect(closed.status).toBe(409);
   });
 
-  it("a staff reply stays in order between the assistant's turns", async () => {
-    const conversationId = await startConversation(salon.business.id);
+  it("a member takes over, replies and hands back, and the conversation stays in order", async () => {
+    const conversationId = await startWidgetConversation(salon.business.id);
+    const inbox = salon.ownerClient;
     const script = scriptedModel([{ text: "Hello!" }, { text: "Sure." }]);
     await turn(conversationId, { text: "Hi" }, script.model);
-    await saveMessages(serviceClient(), conversationId, [
-      {
-        id: "staff-1",
-        role: "assistant",
-        metadata: { from: "staff" },
-        parts: [{ type: "text", text: "Hi, it's Layla from the salon." }],
-      },
-    ]);
+
+    const target = { target_conversation_id: conversationId };
+    expect(
+      (await inbox.rpc("take_over_conversation", target)).error,
+    ).toBeNull();
+    await turn(conversationId, { text: "Is anyone there?" }, script.model);
+    expect(
+      (
+        await inbox.rpc("reply_to_conversation", {
+          ...target,
+          body: "Hi, it's Layla from the salon.",
+        })
+      ).error,
+    ).toBeNull();
+    expect(
+      (await inbox.rpc("hand_back_conversation", target)).error,
+    ).toBeNull();
     await turn(conversationId, { text: "Thanks Layla" }, script.model);
 
+    // The assistant said nothing while the member had the conversation.
+    expect(script.calls()).toBe(2);
     const messages = await storedMessages(conversationId);
     expect(
-      messages.map((message) =>
+      messages.map((message) => [
+        (message.metadata as { from?: string } | undefined)?.from ??
+          message.role,
         message.parts
           .flatMap((part) => (part.type === "text" ? [part.text] : []))
           .join(""),
-      ),
+      ]),
     ).toEqual([
-      "Hi",
-      "Hello!",
-      "Hi, it's Layla from the salon.",
-      "Thanks Layla",
-      "Sure.",
+      ["user", "Hi"],
+      ["assistant", "Hello!"],
+      ["user", "Is anyone there?"],
+      ["staff", "Hi, it's Layla from the salon."],
+      ["user", "Thanks Layla"],
+      ["assistant", "Sure."],
     ]);
   });
 });

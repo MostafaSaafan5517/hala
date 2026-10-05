@@ -84,7 +84,7 @@ async function loadMessages(supabase: Client, conversationId: string) {
  * Saves messages: ones the conversation has are updated in place, new ones go at the end, under
  * a lock on the conversation, so a staff reply and the assistant's can't collide.
  */
-export async function saveMessages(
+async function saveMessages(
   supabase: Client,
   conversationId: string,
   messages: UIMessage[],

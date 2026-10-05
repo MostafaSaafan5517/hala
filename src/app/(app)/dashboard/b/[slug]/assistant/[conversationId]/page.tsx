@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AssistantChat } from "@/app/(app)/dashboard/b/[slug]/assistant/assistant-chat";
-import { conversationStatusLabels } from "@/app/(app)/dashboard/b/[slug]/assistant/labels";
+import { conversationStatusLabels } from "@/app/(app)/dashboard/b/[slug]/conversation-status";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
 import { chatModelId } from "@/lib/ai/chat-model";
 import { requireMemberBusiness } from "@/lib/business";
