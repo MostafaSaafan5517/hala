@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
+import { demoEnabled } from "@/config/demo";
 import { SIGNED_IN_HOME } from "@/lib/auth";
 import { createServerComponentClient } from "@/lib/supabase/server";
 
@@ -37,6 +38,14 @@ export default async function Home() {
             Sign in
           </Link>
         </div>
+      )}
+      {demoEnabled() && (
+        <Link
+          href="/demo"
+          className="mt-2 text-sm underline underline-offset-4"
+        >
+          Try the live demo: a salon&apos;s website with the assistant on it
+        </Link>
       )}
     </main>
   );

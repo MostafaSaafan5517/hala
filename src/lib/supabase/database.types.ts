@@ -203,6 +203,7 @@ export type Database = {
           created_at: string;
           default_language: Database["public"]["Enums"]["language"];
           id: string;
+          is_demo: boolean;
           name: string;
           slot_interval_minutes: number;
           slug: string;
@@ -217,6 +218,7 @@ export type Database = {
           created_at?: string;
           default_language?: Database["public"]["Enums"]["language"];
           id?: string;
+          is_demo?: boolean;
           name: string;
           slot_interval_minutes?: number;
           slug: string;
@@ -231,6 +233,7 @@ export type Database = {
           created_at?: string;
           default_language?: Database["public"]["Enums"]["language"];
           id?: string;
+          is_demo?: boolean;
           name?: string;
           slot_interval_minutes?: number;
           slug?: string;
@@ -1074,6 +1077,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      reset_demo_business: {
+        Args: { target_business_id: string };
+        Returns: undefined;
       };
       save_conversation_messages: {
         Args: { messages: Json; target_conversation_id: string };

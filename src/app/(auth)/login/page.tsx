@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { demoConfig, demoEnabled } from "@/config/demo";
 import { SIGNED_IN_HOME } from "@/lib/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createServerComponentClient } from "@/lib/supabase/server";
@@ -50,6 +51,31 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             Create an account
           </Link>
         </p>
+        {demoEnabled() && (
+          <aside
+            aria-labelledby="demo-heading"
+            className="grid gap-1 rounded-lg border bg-muted/40 p-3 text-sm"
+          >
+            <h2 id="demo-heading" className="font-medium">
+              Trying the demo?
+            </h2>
+            <p className="text-muted-foreground">
+              Sign in as the demo salon&apos;s owner: email{" "}
+              <code dir="ltr" className="whitespace-nowrap">
+                {demoConfig.email}
+              </code>
+              , password{" "}
+              <code dir="ltr" className="whitespace-nowrap">
+                {demoConfig.password}
+              </code>{" "}
+              (read-only). Or chat with its assistant on{" "}
+              <Link href="/demo" className="text-foreground underline">
+                the salon&apos;s website
+              </Link>
+              .
+            </p>
+          </aside>
+        )}
       </CardContent>
     </Card>
   );
