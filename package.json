@@ -15,6 +15,7 @@
     "test:db": "supabase test db",
     "test:concurrency": "vitest run --config vitest.concurrency.config.mts",
     "test:integration": "vitest run --config vitest.integration.config.mts",
+    "eval": "vitest run --config vitest.evals.config.mts",
     "env:local": "supabase status -o json | node scripts/write-local-env.mjs",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts",
     "test:e2e": "playwright test"
