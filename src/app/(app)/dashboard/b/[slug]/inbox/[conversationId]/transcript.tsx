@@ -76,7 +76,11 @@ function ToolStep({ part }: { part: ToolPart }) {
         )}
         {approval?.reason && (
           <div className="grid gap-1">
-            <p className="font-medium">Why not</p>
+            <p className="font-medium">
+              {approval.isAutomatic
+                ? "Refused before asking, because"
+                : "The customer's answer"}
+            </p>
             <Typed text={approval.reason} />
           </div>
         )}
