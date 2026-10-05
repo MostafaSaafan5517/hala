@@ -299,6 +299,9 @@ export async function runAssistantTurn(options: {
   return createAgentUIStreamResponse({
     agent,
     uiMessages: messages,
+    // A reasoning model's notes to itself stay on the server: they aren't for the customer's
+    // browser, aren't stored, and couldn't be sent back to the model on the next turn anyway.
+    sendReasoning: false,
     abortSignal: options.abortSignal,
     generateMessageId: generateId,
     onEnd: ({ messages: finished }) => save(finished),

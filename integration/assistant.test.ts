@@ -22,7 +22,8 @@ import {
 // approvals answered and checked, usage logged, limits applied. A scripted model plays exactly
 // the tool calls each test needs, including ones a misbehaving model might make.
 
-type Step = { text: string } | { tool: string; input: unknown };
+type Step =
+  { text: string; reasoning?: string } | { tool: string; input: unknown };
 
 function scriptedModel(steps: Step[]) {
   let calls = 0;
@@ -43,6 +44,17 @@ function scriptedModel(steps: Step[]) {
       const chunks: LanguageModelV4StreamPart[] =
         "text" in step
           ? [
+              ...(step.reasoning
+                ? [
+                    { type: "reasoning-start" as const, id: "r" },
+                    {
+                      type: "reasoning-delta" as const,
+                      id: "r",
+                      delta: step.reasoning,
+                    },
+                    { type: "reasoning-end" as const, id: "r" },
+                  ]
+                : []),
               { type: "text-start" as const, id: "t" },
               { type: "text-delta" as const, id: "t", delta: step.text },
               { type: "text-end" as const, id: "t" },
@@ -399,6 +411,21 @@ describe("limits", () => {
       .eq("id", conversationId)
       .single();
     expect(data?.status).toBe("needs_human");
+  });
+});
+
+describe("a reasoning model", () => {
+  it("keeps its notes to itself: they're neither streamed to the customer nor stored", async () => {
+    const conversationId = await startConversation(salon.business.id);
+    const script = scriptedModel([
+      { reasoning: "Internal: the customer seems in a hurry.", text: "Hello!" },
+    ]);
+    const { body } = await turn(conversationId, { text: "Hi" }, script.model);
+
+    expect(body).toContain("Hello!");
+    expect(body).not.toContain("Internal: the customer seems in a hurry.");
+    const [, reply] = await storedMessages(conversationId);
+    expect(reply?.parts.map((part) => part.type)).not.toContain("reasoning");
   });
 });
 
