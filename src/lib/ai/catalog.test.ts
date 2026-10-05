@@ -33,6 +33,12 @@ describe("chatCostUsd", () => {
       chatCostUsd("anthropic/claude-sonnet-5.5", 1_000_000, 100_000),
     ).toBeCloseTo(3);
     expect(chatCostUsd("openai/gpt-5.4-mini", 2000, 500)).toBeCloseTo(0.00375);
+    expect(chatCostUsd("anthropic/claude-haiku-4.5", 12_000, 400)).toBeCloseTo(
+      0.014,
+    );
+    expect(chatCostUsd("inclusionai/ling-3.1-flash-free", 50_000, 5000)).toBe(
+      0,
+    );
     expect(chatCostUsd("offline", 5000, 5000)).toBe(0);
   });
 
