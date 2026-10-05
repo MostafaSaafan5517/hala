@@ -50,12 +50,13 @@ Where: `supabase/migrations/`, `supabase/tests/database/` (about 480 pgTAP tests
 
 - **Availability is one SQL function**, `private.free_slots`: working hours (the staff member's own, else the business's), time off, closures, existing bookings and their buffers, the notice and horizon, and the start-time grid. The day picker and the booking check both use it, so what's offered and what's accepted can't disagree. Each day is converted to UTC separately, so daylight saving comes from the time zone database; the clock is a parameter, so tests pin fixed DST dates forever.
 - **Postgres refuses overlaps.** `bookings_no_overlap` is an exclusion constraint (`btree_gist` with `tstzrange`) on a staff member's confirmed bookings, buffer included. Application code can't be raced past it.
+- **Simultaneous requests queue.** Two overlapping bookings written at the same instant can each wait for the other inside the constraint check, a deadlock Postgres resolves by cancelling one with an error instead of a refusal (CI caught it once). So booking and moving first take a transaction lock on that staff member's schedule: the next request waits for the first to finish, then the constraint refuses it with a plain "already booked".
 - **Every change is idempotent.** Booking, moving and cancelling take a key; a retried or duplicated request returns the first result, and the same key with different details is refused.
 - **Refusals are named.** `HB001` taken, `HB002` not open, `HB003` too soon ... `HB008` can't be changed, so the dashboard and the assistant can each explain them their own way.
 
 ![A day's bookings in the dashboard, in the business's time zone](images/dashboard-bookings.png)
 
-Proof: `supabase/tests/concurrency/` opens many real connections that book the same slot at once: exactly one succeeds, and the test fails with the constraint dropped.
+Proof: `supabase/tests/concurrency/` opens many real connections that book the same slot, or move bookings onto it, at once: exactly one succeeds and the rest are refused as already booked, and the tests fail with the constraint dropped.
 
 ## 3. Answers from the business's own knowledge
 

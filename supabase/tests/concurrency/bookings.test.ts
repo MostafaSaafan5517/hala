@@ -168,8 +168,8 @@ describe("two bookings for the same slot at the same moment", () => {
       await book(first, { startsAt, staffId: laylaId });
 
       // The first booking isn't committed yet, so the second request still sees the slot as
-      // free, tries to insert, and has to wait: the exclusion constraint holds it until the
-      // first transaction ends.
+      // free and has to wait for the first transaction to end, in line for the staff member's
+      // schedule; then the exclusion constraint refuses it.
       const { rows } = await second.query<{ pid: number }>(
         "select pg_backend_pid() as pid",
       );
@@ -268,5 +268,41 @@ describe("a burst of simultaneous requests", () => {
     expect(new Set(bookingIds).size).toBe(1);
     expect(bookingIds[0]).not.toBe("refused");
     expect(await confirmedBookingsAt(startsAt)).toEqual([omarId]);
+  });
+
+  it("twenty bookings moved onto one slot: exactly one is moved", async () => {
+    // Twenty of Layla's bookings, half an hour apart from 14:00, all moved to 08:00 at once.
+    const firstStart = new Date(tomorrowAt(14)).getTime();
+    const bookings = [];
+    for (let index = 0; index < 20; index += 1) {
+      const startsAt = new Date(firstStart + index * 30 * 60_000).toISOString();
+      bookings.push(await bookInOwnTransaction({ startsAt, staffId: laylaId }));
+    }
+    const newStart = tomorrowAt(8);
+
+    const results = await Promise.allSettled(
+      bookings.map(async (booking) => {
+        const client = await pool.connect();
+        try {
+          await signInAsOwner(client);
+          await client.query(
+            "select id from public.reschedule_booking($1, $2, $3)",
+            [booking.id, newStart, randomUUID()],
+          );
+          await client.query("commit");
+        } catch (error) {
+          await client.query("rollback");
+          throw error;
+        } finally {
+          client.release();
+        }
+      }),
+    );
+
+    expect(
+      results.filter((result) => result.status === "fulfilled"),
+    ).toHaveLength(1);
+    expect(errorCodes(results)).toEqual(Array(19).fill("HB001"));
+    expect(await confirmedBookingsAt(newStart)).toEqual([laylaId]);
   });
 });
