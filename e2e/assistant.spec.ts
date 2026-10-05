@@ -1,13 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { addDays, todayIn } from "@/lib/dates";
 import { accessibilityViolations } from "./support/accessibility";
-import {
-  addService,
-  addStaffMember,
-  createBusinessFor,
-  setHoursFor,
-  uniqueBusinessName,
-} from "./support/businesses";
+import { createSalonFor } from "./support/businesses";
 import { signInAs } from "./support/forms";
 import { addDocument } from "./support/knowledge";
 import { adminClient } from "./support/supabase";
@@ -18,31 +12,6 @@ import { createConfirmedUser } from "./support/users";
 // on-screen approval and the access rules; answer quality is the evaluation suite's job.
 
 const timezone = "Asia/Riyadh";
-
-async function salonFor(owner: { email: string; password: string }) {
-  const business = await createBusinessFor(
-    owner,
-    uniqueBusinessName("Palm Salon"),
-    { timezone },
-  );
-  const serviceId = await addService(business.id, {
-    nameEn: "Haircut",
-    duration: 45,
-    price: 12000,
-    currency: "SAR",
-  });
-  await addStaffMember(business.id, "Layla", [serviceId]);
-  await setHoursFor(
-    business.id,
-    null,
-    [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
-      weekday,
-      opens_at: "09:00",
-      closes_at: "17:00",
-    })),
-  );
-  return business;
-}
 
 async function startConversation(page: Page, slug: string) {
   await page.goto(`/dashboard/b/${slug}/assistant`);
@@ -65,7 +34,7 @@ test("members test the assistant: it answers from the knowledge base and cites i
   // A whole conversation, with its setup: more than the default time under parallel load.
   test.slow();
   const owner = await createConfirmedUser();
-  const business = await salonFor(owner);
+  const business = await createSalonFor(owner);
 
   await signInAs(page, owner);
   await addDocument(page, business.slug, {
@@ -104,7 +73,7 @@ test("a booking happens only when the customer confirms it on screen", async ({
 }) => {
   test.slow();
   const owner = await createConfirmedUser();
-  const business = await salonFor(owner);
+  const business = await createSalonFor(owner);
   const tomorrow = addDays(todayIn(timezone), 1);
 
   await signInAs(page, owner);
@@ -153,7 +122,7 @@ test("a business's conversations are private to it", async ({
 }) => {
   const owner = await createConfirmedUser();
   const outsider = await createConfirmedUser();
-  const business = await salonFor(owner);
+  const business = await createSalonFor(owner);
 
   await signInAs(page, owner);
   await startConversation(page, business.slug);

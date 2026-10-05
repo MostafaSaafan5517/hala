@@ -8,6 +8,12 @@ import type { Page } from "@playwright/test";
  * screen reader announces still need a person.
  */
 export async function accessibilityViolations(page: Page) {
+  // Check the page as it settles, not halfway through a transition (a button fading in from
+  // disabled has too little contrast for a moment).
+  await page.addStyleTag({
+    content:
+      "*, *::before, *::after { transition: none !important; animation: none !important; }",
+  });
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     // The Next.js dev tools badge only exists on the dev server.

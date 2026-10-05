@@ -152,3 +152,37 @@ export async function addBooking(
   if (error) throw error;
   return data.id as string;
 }
+
+/**
+ * A salon in Riyadh (UTC+3 all year), open 09:00-17:00 every day, with a 45-minute haircut
+ * that Layla does.
+ */
+export async function createSalonFor(owner: {
+  email: string;
+  password: string;
+}) {
+  const business = await createBusinessFor(
+    owner,
+    uniqueBusinessName("Palm Salon"),
+    {
+      timezone: "Asia/Riyadh",
+    },
+  );
+  const serviceId = await addService(business.id, {
+    nameEn: "Haircut",
+    duration: 45,
+    price: 12000,
+    currency: "SAR",
+  });
+  await addStaffMember(business.id, "Layla", [serviceId]);
+  await setHoursFor(
+    business.id,
+    null,
+    [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+      weekday,
+      opens_at: "09:00",
+      closes_at: "17:00",
+    })),
+  );
+  return business;
+}
