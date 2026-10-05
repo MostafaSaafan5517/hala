@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { isReadOnly, refuseReadOnly } from "@/lib/auth";
 import { MAX_SLUG_LENGTH, MIN_SLUG_LENGTH, SLUG_PATTERN } from "@/lib/slug";
 import { createServerActionClient } from "@/lib/supabase/server";
 import { timeZoneOptions } from "@/lib/time-zones";
@@ -56,6 +57,10 @@ export async function createBusiness(
   // The database function checks the signed-in user too, and makes them the owner in the same
   // transaction as the insert.
   const supabase = await createServerActionClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  if (claims && isReadOnly(claims.claims)) {
+    refuseReadOnly("/dashboard/new-business");
+  }
   const { error } = await supabase.rpc("create_business", {
     business_name: parsed.data.name,
     business_slug: parsed.data.slug,

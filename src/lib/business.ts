@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { notFound, redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { isReadOnly, refuseReadOnly, requireUser } from "@/lib/auth";
 import type { Database, Enums } from "@/lib/supabase/database.types";
 import { createServerActionClient } from "@/lib/supabase/server";
 
@@ -43,10 +43,20 @@ export async function getMemberBusiness(
  * to `currentPath`. Actions take their arguments from the browser, so each one checks the role
  * it needs from this, and RLS checks again in the database.
  */
-export async function memberForAction(slug: string, currentPath: string) {
+export async function memberForAction(
+  slug: string,
+  currentPath: string,
+  options: { allowReadOnly?: boolean } = {},
+) {
   const supabase = await createServerActionClient();
   const { data } = await supabase.auth.getClaims();
   if (!data) redirect(`/login?next=${encodeURIComponent(currentPath)}`);
+  // A read-only account (the public demo) changes nothing: back to the page, which says why. The
+  // database refuses its writes anyway; this is the friendly half. Actions that only write
+  // through server code, like starting a test chat, opt out.
+  if (isReadOnly(data.claims) && !options.allowReadOnly) {
+    refuseReadOnly(currentPath);
+  }
   const member = await getMemberBusiness(supabase, data.claims.sub, slug);
   return { supabase, userId: data.claims.sub, member };
 }

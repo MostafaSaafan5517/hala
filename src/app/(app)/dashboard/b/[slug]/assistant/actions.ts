@@ -13,9 +13,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function startTestConversation(
   slug: string,
 ): Promise<ActionState> {
+  // Demo visitors (read-only accounts) may try the assistant: only server code writes here.
   const { userId, member } = await memberForAction(
     slug,
     `/dashboard/b/${slug}/assistant`,
+    { allowReadOnly: true },
   );
   if (!member) return { error: "You're no longer a member of this business." };
 

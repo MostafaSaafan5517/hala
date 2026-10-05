@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
+import { ReadOnlyNotice } from "@/app/(app)/read-only-notice";
 import { Button } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
 import { SIGNED_IN_HOME } from "@/lib/auth";
@@ -30,6 +31,7 @@ export default function SignedInLayout({ children }: LayoutProps<"/">) {
           </Button>
         </form>
       </header>
+      <ReadOnlyNotice />
       <main className="mx-auto grid w-full max-w-3xl gap-8 p-4 sm:p-6">
         {children}
       </main>

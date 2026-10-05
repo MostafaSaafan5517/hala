@@ -15,3 +15,19 @@ export async function requireUser(currentPath: string) {
   if (!data) redirect(`/login?next=${encodeURIComponent(currentPath)}`);
   return { supabase, userId: data.claims.sub, claims: data.claims };
 }
+
+/**
+ * Whether the account is read-only, like the public demo's: its app_metadata says so (only the
+ * admin API can set that), and the database refuses its changes whatever the app does.
+ */
+export function isReadOnly(claims: { app_metadata?: unknown }) {
+  return (
+    (claims.app_metadata as { read_only?: unknown } | undefined)?.read_only ===
+    true
+  );
+}
+
+/** Sends a read-only account back to the page it tried to change, which then says why. */
+export function refuseReadOnly(path: string): never {
+  redirect(`${path}${path.includes("?") ? "&" : "?"}read-only=1`);
+}
