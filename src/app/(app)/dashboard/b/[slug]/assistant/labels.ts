@@ -6,5 +6,6 @@ export const conversationStatusLabels: Record<
 > = {
   open: "Open",
   needs_human: "Waiting for the team",
+  taken_over: "With the team",
   closed: "Closed",
 };

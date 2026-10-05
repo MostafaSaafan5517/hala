@@ -21,7 +21,7 @@ export default async function AssistantPage({
   // Through RLS as the user: members see their business's conversations.
   const { data: conversations, error } = await supabase
     .from("conversations")
-    .select("id, status, created_at, profiles (full_name)")
+    .select("id, status, created_at, starter:profiles!started_by (full_name)")
     .eq("business_id", business.id)
     .eq("channel", "test")
     .order("updated_at", { ascending: false })
@@ -73,10 +73,10 @@ export default async function AssistantPage({
                       conversation.created_at,
                       business.timezone,
                     )}
-                    {conversation.profiles?.full_name && (
+                    {conversation.starter?.full_name && (
                       <span className="text-muted-foreground" dir="auto">
                         {" "}
-                        · {conversation.profiles.full_name}
+                        · {conversation.starter.full_name}
                       </span>
                     )}
                   </span>

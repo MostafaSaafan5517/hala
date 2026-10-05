@@ -25,8 +25,10 @@ insert into public.customers (business_id, name, phone, language) values
 select tests.authenticate_as_service_role();
 insert into public.conversations (id, business_id, channel, started_by) values
   ('60000000-0000-0000-0000-000000000001', tests.business_id('nour-salon'), 'test',
-    tests.get_user_id('staff-a@test.local')),
-  ('60000000-0000-0000-0000-000000000002', tests.business_id('cedar-clinic'), 'widget', null);
+    tests.get_user_id('staff-a@test.local'));
+insert into public.conversations (id, business_id, channel, visitor_token_hash, visitor_hash)
+values ('60000000-0000-0000-0000-000000000002', tests.business_id('cedar-clinic'), 'widget',
+  repeat('a', 64), repeat('b', 64));
 select lives_ok(
   $$
     insert into public.conversation_messages (conversation_id, business_id, id, position, role, message)

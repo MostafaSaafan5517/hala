@@ -8,7 +8,11 @@ import {
 import { MockLanguageModelV4 } from "ai/test";
 import { beforeAll, describe, expect, it } from "vitest";
 import { CONVERSATION_TOKEN_BUDGET } from "@/lib/assistant/limits";
-import { runAssistantTurn, type TurnInput } from "@/lib/assistant/turn";
+import {
+  runAssistantTurn,
+  saveMessages,
+  type TurnInput,
+} from "@/lib/assistant/turn";
 import {
   createSalon,
   localAt,
@@ -361,5 +365,69 @@ describe("limits", () => {
       .eq("id", conversationId)
       .single();
     expect(data?.status).toBe("needs_human");
+  });
+});
+
+describe("with a person in charge", () => {
+  async function setStatus(
+    conversationId: string,
+    status: "taken_over" | "closed",
+  ) {
+    const { error } = await serviceClient()
+      .from("conversations")
+      .update({ status })
+      .eq("id", conversationId);
+    if (error) throw error;
+  }
+
+  it("while a person has the conversation, the assistant stays quiet and the message waits for them", async () => {
+    const conversationId = await startConversation(salon.business.id);
+    await setStatus(conversationId, "taken_over");
+    const script = scriptedModel([]);
+    await turn(conversationId, { text: "Is anyone there?" }, script.model);
+
+    expect(script.calls()).toBe(0);
+    const { data } = await serviceClient()
+      .from("conversation_messages")
+      .select("role")
+      .eq("conversation_id", conversationId);
+    expect(data).toEqual([{ role: "user" }]);
+  });
+
+  it("a closed conversation takes no more turns", async () => {
+    const conversationId = await startConversation(salon.business.id);
+    await setStatus(conversationId, "closed");
+    const closed = await turn(conversationId, { text: "Hello?" });
+    expect(closed.status).toBe(409);
+  });
+
+  it("a staff reply stays in order between the assistant's turns", async () => {
+    const conversationId = await startConversation(salon.business.id);
+    const script = scriptedModel([{ text: "Hello!" }, { text: "Sure." }]);
+    await turn(conversationId, { text: "Hi" }, script.model);
+    await saveMessages(serviceClient(), conversationId, [
+      {
+        id: "staff-1",
+        role: "assistant",
+        metadata: { from: "staff" },
+        parts: [{ type: "text", text: "Hi, it's Layla from the salon." }],
+      },
+    ]);
+    await turn(conversationId, { text: "Thanks Layla" }, script.model);
+
+    const messages = await storedMessages(conversationId);
+    expect(
+      messages.map((message) =>
+        message.parts
+          .flatMap((part) => (part.type === "text" ? [part.text] : []))
+          .join(""),
+      ),
+    ).toEqual([
+      "Hi",
+      "Hello!",
+      "Hi, it's Layla from the salon.",
+      "Thanks Layla",
+      "Sure.",
+    ]);
   });
 });

@@ -48,7 +48,7 @@ async function loadConversation(supabase: Client, conversationId: string) {
   const { data, error } = await supabase
     .from("conversations")
     .select(
-      "id, business_id, businesses (id, name, timezone, default_language, booking_notice_minutes, booking_horizon_days, cancellation_notice_hours)",
+      "id, business_id, status, businesses (id, name, timezone, default_language, booking_notice_minutes, booking_horizon_days, cancellation_notice_hours)",
     )
     .eq("id", conversationId)
     .single();
@@ -67,31 +67,20 @@ async function loadMessages(supabase: Client, conversationId: string) {
   return data.map((row) => row.message as unknown as UIMessage);
 }
 
-async function saveMessages(
+/**
+ * Saves messages: ones the conversation has are updated in place, new ones go at the end, under
+ * a lock on the conversation, so a staff reply and the assistant's can't collide.
+ */
+export async function saveMessages(
   supabase: Client,
-  conversation: { id: string; business_id: string },
+  conversationId: string,
   messages: UIMessage[],
 ) {
-  const now = new Date().toISOString();
-  const { error } = await supabase.from("conversation_messages").upsert(
-    messages.map((message, position) => ({
-      conversation_id: conversation.id,
-      business_id: conversation.business_id,
-      id: message.id,
-      position,
-      role: message.role as "user" | "assistant",
-      message: message as never,
-      updated_at: now,
-    })),
-  );
+  const { error } = await supabase.rpc("save_conversation_messages", {
+    target_conversation_id: conversationId,
+    messages: messages as never,
+  });
   if (error) throw new Error(`Could not save the messages: ${error.message}`);
-  const { error: touchError } = await supabase
-    .from("conversations")
-    .update({ updated_at: now })
-    .eq("id", conversation.id);
-  if (touchError) {
-    throw new Error(`Could not update the conversation: ${touchError.message}`);
-  }
 }
 
 /**
@@ -139,6 +128,13 @@ function latestUserText(messages: UIMessage[]) {
     .join(" ");
 }
 
+/** No reply at all: while a person has the conversation, the assistant says nothing. */
+function quietReply() {
+  return createUIMessageStreamResponse({
+    stream: createUIMessageStream({ execute: () => undefined }),
+  });
+}
+
 /** A fixed reply, streamed like the assistant's, for when no model may be called. */
 function fixedReply(
   text: string,
@@ -169,6 +165,12 @@ export async function runAssistantTurn(options: {
 }): Promise<Response> {
   const supabase = createAdminClient();
   const conversation = await loadConversation(supabase, options.conversationId);
+  if (conversation.status === "closed") {
+    return Response.json(
+      { error: "This conversation is closed." },
+      { status: 409 },
+    );
+  }
   const business = conversation.businesses;
   const context: AssistantContext = {
     supabase,
@@ -200,9 +202,13 @@ export async function runAssistantTurn(options: {
     messages = applied.messages;
   }
   // Keep what the customer said even if the reply fails.
-  await saveMessages(supabase, conversation, messages);
+  await saveMessages(supabase, conversation.id, messages);
   const save = (finished: UIMessage[]) =>
-    saveMessages(supabase, conversation, finished);
+    saveMessages(supabase, conversation.id, finished);
+
+  // A person from the business has taken over: the assistant stays quiet, and the message waits
+  // for them in the inbox.
+  if (conversation.status === "taken_over") return quietReply();
 
   const { data: usage, error: usageError } = await supabase
     .rpc("chat_usage", { target_conversation_id: conversation.id })

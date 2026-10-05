@@ -207,6 +207,8 @@ export type Database = {
           slot_interval_minutes: number;
           slug: string;
           timezone: string;
+          widget_enabled: boolean;
+          widget_origins: string[];
         };
         Insert: {
           booking_horizon_days?: number;
@@ -219,6 +221,8 @@ export type Database = {
           slot_interval_minutes?: number;
           slug: string;
           timezone: string;
+          widget_enabled?: boolean;
+          widget_origins?: string[];
         };
         Update: {
           booking_horizon_days?: number;
@@ -231,6 +235,8 @@ export type Database = {
           slot_interval_minutes?: number;
           slug?: string;
           timezone?: string;
+          widget_enabled?: boolean;
+          widget_origins?: string[];
         };
         Relationships: [];
       };
@@ -319,8 +325,11 @@ export type Database = {
           id: string;
           started_by: string | null;
           status: Database["public"]["Enums"]["conversation_status"];
+          taken_over_by: string | null;
           updated_at: string;
           verification_failures: number;
+          visitor_hash: string | null;
+          visitor_token_hash: string | null;
         };
         Insert: {
           business_id: string;
@@ -330,8 +339,11 @@ export type Database = {
           id?: string;
           started_by?: string | null;
           status?: Database["public"]["Enums"]["conversation_status"];
+          taken_over_by?: string | null;
           updated_at?: string;
           verification_failures?: number;
+          visitor_hash?: string | null;
+          visitor_token_hash?: string | null;
         };
         Update: {
           business_id?: string;
@@ -341,8 +353,11 @@ export type Database = {
           id?: string;
           started_by?: string | null;
           status?: Database["public"]["Enums"]["conversation_status"];
+          taken_over_by?: string | null;
           updated_at?: string;
           verification_failures?: number;
+          visitor_hash?: string | null;
+          visitor_token_hash?: string | null;
         };
         Relationships: [
           {
@@ -362,6 +377,13 @@ export type Database = {
           {
             foreignKeyName: "conversations_started_by_fkey";
             columns: ["started_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "conversations_taken_over_by_fkey";
+            columns: ["taken_over_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -1030,6 +1052,10 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      save_conversation_messages: {
+        Args: { messages: Json; target_conversation_id: string };
+        Returns: undefined;
+      };
       save_knowledge_document: {
         Args: {
           chunks: Json;
@@ -1080,10 +1106,17 @@ export type Database = {
         };
         Returns: boolean;
       };
+      visitor_usage: {
+        Args: { target_visitor_hash: string };
+        Returns: {
+          chat_calls_last_minute: number;
+          conversations_last_hour: number;
+        }[];
+      };
     };
     Enums: {
       booking_status: "confirmed" | "cancelled";
-      conversation_status: "open" | "needs_human" | "closed";
+      conversation_status: "open" | "needs_human" | "taken_over" | "closed";
       knowledge_kind: "faq" | "policy";
       language: "en" | "ar";
       member_role: "owner" | "admin" | "staff";
@@ -1218,7 +1251,7 @@ export const Constants = {
   public: {
     Enums: {
       booking_status: ["confirmed", "cancelled"],
-      conversation_status: ["open", "needs_human", "closed"],
+      conversation_status: ["open", "needs_human", "taken_over", "closed"],
       knowledge_kind: ["faq", "policy"],
       language: ["en", "ar"],
       member_role: ["owner", "admin", "staff"],
