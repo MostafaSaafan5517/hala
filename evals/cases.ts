@@ -97,7 +97,7 @@ export const CASES: EvalCase[] = [
     turns: () => ["Can my 8 year old son get a haircut there?"],
     expect: { called: ["search_knowledge"], language: "en", cites: true },
     rubric:
-      "Says yes (children 4 to 12, same price as an adult haircut, a parent must stay), citing the FAQ. Any price it gives must come from the services, not be invented.",
+      "Says yes, children aged 4 to 12 are welcome, citing the FAQ. It may add that a parent must stay and that the price is an adult haircut's; any price it gives must come from the services.",
   },
   {
     id: "en-late-from-arabic-policy",
@@ -145,7 +145,7 @@ export const CASES: EvalCase[] = [
       mentions: [/120/],
     },
     rubric:
-      "Gives the haircut's price, 120 SAR, and may mention it takes 45 minutes. Nothing else invented.",
+      "Gives the haircut's price, 120 SAR. Other details from business_info (it takes 45 minutes, who does it) and an offer to book are fine; anything not in business_info is not.",
   },
   {
     id: "ar-hours",

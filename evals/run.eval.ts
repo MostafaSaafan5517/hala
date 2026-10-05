@@ -16,7 +16,9 @@ import { createEvalSalon, type EvalSalon } from "./salon";
 // Runs every case (or EVAL_CASES=id,id) against the assistant as configured in .env.local, one
 // at a time, and writes a report to evals/reports/. It stops starting new cases once the run has
 // spent EVAL_BUDGET_USD (default $1.50: the AI Gateway's free credit is $5 a month). The judge
-// is EVAL_JUDGE_MODEL (default Claude Haiku; "off" skips it, and it's off for the offline model).
+// is EVAL_JUDGE_MODEL (default GPT-5 mini, on the gateway's free tier; "off" skips it, and it's
+// off for the offline model). Judging the same model it grades may flatter it: cross-check with
+// another judge (google/gemini-2.5-flash) before trusting a close result.
 
 const BUDGET_USD = Number(process.env.EVAL_BUDGET_USD ?? "1.5");
 const ONLY = process.env.EVAL_CASES?.split(",")
@@ -237,7 +239,7 @@ it("runs the evaluation and writes a report", async () => {
   const chat = chatModelId();
   const judgeModel =
     process.env.EVAL_JUDGE_MODEL ??
-    (chat === "offline" ? "off" : "anthropic/claude-haiku-4.5");
+    (chat === "offline" ? "off" : "openai/gpt-5-mini");
   const cases = ONLY
     ? CASES.filter((evalCase) => ONLY.includes(evalCase.id))
     : CASES;
