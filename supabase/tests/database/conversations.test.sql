@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(19);
 select tests.clear_tenant_data();
 
 select tests.create_user('owner-a@test.local');
@@ -151,10 +151,29 @@ values
   (tests.business_id('nour-salon'), null, 'search', 'offline', 10, 0, 0.001, 50, now()),
   (tests.business_id('nour-salon'), null, 'chat', 'offline', 10, 0, 0.5, 50, now() - interval '3 days');
 select results_eq(
-  $$ select * from public.chat_usage('60000000-0000-0000-0000-000000000001') $$,
+  $$
+    select conversation_tokens, business_chat_calls_last_minute, business_cost_today
+    from public.chat_usage('60000000-0000-0000-0000-000000000001')
+  $$,
   $$ values (3000::bigint, 2::bigint, 0.011::numeric) $$,
   'chat_usage counts the conversation''s tokens, the business''s chat calls this minute and its spend today'
 );
+-- The whole site's spend includes every business's. Other suites leave usage behind in a local
+-- database, so this measures the change.
+select tests.act_as_database();
+create temporary table site_spend_before as
+  select site_cost_today from public.chat_usage('60000000-0000-0000-0000-000000000001');
+insert into public.model_calls (business_id, purpose, model, input_tokens, cost_usd, latency_ms)
+values (gen_random_uuid(), 'chat', 'offline', 10, 0.25, 50);
+select results_eq(
+  $$
+    select usage.site_cost_today - before.site_cost_today
+    from public.chat_usage('60000000-0000-0000-0000-000000000001') usage, site_spend_before before
+  $$,
+  $$ values (0.25::numeric) $$,
+  'and what every business together has spent today, for the site-wide budget'
+);
+select tests.authenticate_as_service_role();
 select tests.authenticate_as('owner-a@test.local');
 select throws_ok(
   $$ select * from public.chat_usage('60000000-0000-0000-0000-000000000001') $$,

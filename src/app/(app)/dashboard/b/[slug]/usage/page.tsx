@@ -9,7 +9,7 @@ import {
 } from "@/app/(app)/dashboard/b/[slug]/usage/format";
 import { SpendChart } from "@/app/(app)/dashboard/b/[slug]/usage/spend-chart";
 import { buttonVariants } from "@/components/ui/button";
-import { BUSINESS_DAILY_BUDGET_USD } from "@/lib/assistant/limits";
+import { businessDailyBudgetUsd } from "@/lib/assistant/limits";
 import { requireMemberBusiness } from "@/lib/business";
 import { addDays, todayIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -66,7 +66,8 @@ export default async function UsagePage({
     days.reduce((sum, day) => sum + pick(day), 0);
   const spent = total((day) => day.cost_usd);
   const spentToday = days.at(-1)?.cost_usd ?? 0;
-  const budgetShare = Math.min(1, spentToday / BUSINESS_DAILY_BUDGET_USD);
+  const dailyBudget = businessDailyBudgetUsd();
+  const budgetShare = Math.min(1, spentToday / dailyBudget);
   const base = `/dashboard/b/${business.slug}/usage`;
 
   return (
@@ -123,16 +124,16 @@ export default async function UsagePage({
               Spent today
             </span>
             <span className="tabular-nums">
-              {formatUsd(spentToday)} of {formatUsd(BUSINESS_DAILY_BUDGET_USD)}
+              {formatUsd(spentToday)} of {formatUsd(dailyBudget)}
             </span>
           </div>
           <div
             role="meter"
             aria-labelledby="budget-label"
             aria-valuemin={0}
-            aria-valuemax={BUSINESS_DAILY_BUDGET_USD}
+            aria-valuemax={dailyBudget}
             aria-valuenow={spentToday}
-            aria-valuetext={`${formatUsd(spentToday)} of ${formatUsd(BUSINESS_DAILY_BUDGET_USD)}`}
+            aria-valuetext={`${formatUsd(spentToday)} of ${formatUsd(dailyBudget)}`}
             className="h-2 overflow-hidden rounded-full bg-muted"
           >
             <div

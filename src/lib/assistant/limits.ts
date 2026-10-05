@@ -12,8 +12,29 @@ export const CONVERSATION_TOKEN_BUDGET = 100_000;
 /** Chat model calls one business may make per minute, across all its conversations. */
 export const BUSINESS_CALLS_PER_MINUTE = 60;
 
-/** What one business may spend on AI per local day, in US dollars. */
-export const BUSINESS_DAILY_BUDGET_USD = 5;
+function budgetFromEnv(name: string, fallback: number) {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const budget = Number(raw);
+  if (!Number.isFinite(budget) || budget <= 0) {
+    throw new Error(`${name} must be a positive number of US dollars.`);
+  }
+  return budget;
+}
+
+/** What one business may spend on AI per local day, in US dollars (BUSINESS_DAILY_BUDGET_USD). */
+export function businessDailyBudgetUsd() {
+  return budgetFromEnv("BUSINESS_DAILY_BUDGET_USD", 5);
+}
+
+/**
+ * What the whole deployment may spend on AI per day (UTC), every business together, in US
+ * dollars (SITE_DAILY_BUDGET_USD; no limit when unset). A public demo lets anyone create a
+ * business, so per-business budgets alone can't protect a shared monthly credit.
+ */
+export function siteDailyBudgetUsd() {
+  return budgetFromEnv("SITE_DAILY_BUDGET_USD", Number.POSITIVE_INFINITY);
+}
 
 /** Conversations one website visitor may start per hour (the widget). */
 export const VISITOR_CONVERSATIONS_PER_HOUR = 5;
@@ -24,17 +45,22 @@ export const VISITOR_CALLS_PER_MINUTE = 10;
 /** The most steps (model calls) in one turn, so a confused model can't loop. */
 export const MAX_STEPS_PER_TURN = 8;
 
-export type Limit = "conversation" | "rate" | "daily";
+export type Limit = "conversation" | "rate" | "daily" | "site";
 
-export function limitReached(usage: {
-  conversation_tokens: number;
-  business_chat_calls_last_minute: number;
-  business_cost_today: number;
-}): Limit | null {
+export function limitReached(
+  usage: {
+    conversation_tokens: number;
+    business_chat_calls_last_minute: number;
+    business_cost_today: number;
+    site_cost_today: number;
+  },
+  budgets = { business: businessDailyBudgetUsd(), site: siteDailyBudgetUsd() },
+): Limit | null {
   if (usage.conversation_tokens >= CONVERSATION_TOKEN_BUDGET) {
     return "conversation";
   }
-  if (usage.business_cost_today >= BUSINESS_DAILY_BUDGET_USD) return "daily";
+  if (usage.business_cost_today >= budgets.business) return "daily";
+  if (usage.site_cost_today >= budgets.site) return "site";
   if (usage.business_chat_calls_last_minute >= BUSINESS_CALLS_PER_MINUTE) {
     return "rate";
   }
@@ -58,6 +84,10 @@ const messages: Record<Limit, Record<CustomerLanguage, string>> = {
   rate: {
     en: "The assistant is very busy right now. Please try again in a minute.",
     ar: "المساعد مشغول جدًا الآن. يُرجى المحاولة مرة أخرى بعد دقيقة.",
+  },
+  site: {
+    en: "The assistant isn't available for the rest of today, so a member of the team will reply in this chat.",
+    ar: "المساعد غير متاح لبقية اليوم، لذلك سيرد عليك أحد أفراد فريق العمل في هذه المحادثة.",
   },
 };
 

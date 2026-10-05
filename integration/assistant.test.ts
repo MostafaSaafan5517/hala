@@ -6,7 +6,7 @@ import {
   type UIMessage,
 } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { CONVERSATION_TOKEN_BUDGET } from "@/lib/assistant/limits";
 import { runAssistantTurn, type TurnInput } from "@/lib/assistant/turn";
 import {
@@ -356,6 +356,43 @@ describe("limits", () => {
         text: expect.stringContaining("a member of the team"),
       }),
     );
+    const { data } = await serviceClient()
+      .from("conversations")
+      .select("status")
+      .eq("id", conversationId)
+      .single();
+    expect(data?.status).toBe("needs_human");
+  });
+
+  it("over the site-wide daily budget, every business's customers get the fixed reply", async () => {
+    // Set just under what's already spent today, so the site is over it whatever the local
+    // database holds; this salon itself has spent nothing.
+    const { data: usage } = await serviceClient()
+      .rpc("chat_usage", {
+        target_conversation_id: await startConversation(other.business.id),
+      })
+      .single();
+    vi.stubEnv(
+      "SITE_DAILY_BUDGET_USD",
+      String((usage?.site_cost_today ?? 0) + 0.0001),
+    );
+    await serviceClient().from("model_calls").insert({
+      business_id: other.business.id,
+      purpose: "chat",
+      model: "offline",
+      input_tokens: 10,
+      cost_usd: 0.001,
+      latency_ms: 0,
+    });
+    const conversationId = await startConversation(salon.business.id);
+    const script = scriptedModel([]);
+    try {
+      await turn(conversationId, { text: "Is there parking?" }, script.model);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+
+    expect(script.calls()).toBe(0);
     const { data } = await serviceClient()
       .from("conversations")
       .select("status")

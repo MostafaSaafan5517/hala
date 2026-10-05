@@ -978,6 +978,7 @@ export type Database = {
           business_chat_calls_last_minute: number;
           business_cost_today: number;
           conversation_tokens: number;
+          site_cost_today: number;
         }[];
       };
       close_conversation: {
