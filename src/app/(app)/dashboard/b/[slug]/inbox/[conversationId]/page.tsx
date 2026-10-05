@@ -16,6 +16,7 @@ import { Transcript } from "@/app/(app)/dashboard/b/[slug]/inbox/[conversationId
 import { ActionButton } from "@/components/action-button";
 import { requireMemberBusiness } from "@/lib/business";
 import { formatLocalDateTime } from "@/lib/dates";
+import { formatPhone } from "@/lib/phone";
 
 export const metadata: Metadata = { title: "Conversation" };
 
@@ -141,7 +142,7 @@ export default async function InboxConversationPage({
               <dd dir="auto">{customer.name}</dd>
               <dt className="text-muted-foreground">Phone</dt>
               <dd dir="ltr" className="text-start">
-                {customer.phone}
+                {formatPhone(customer.phone)}
               </dd>
               {customer.email && (
                 <>

@@ -1,10 +1,9 @@
-import { createServer, type Server } from "node:http";
-import type { AddressInfo } from "node:net";
 import { expect, type Page, test } from "@playwright/test";
 import { addDays, todayIn } from "@/lib/dates";
 import { accessibilityViolations } from "./support/accessibility";
 import { addMember, createSalonFor } from "./support/businesses";
 import { signInAs } from "./support/forms";
+import { siteWithWidget } from "./support/sites";
 import { addDocument } from "./support/knowledge";
 import { adminClient } from "./support/supabase";
 import { createConfirmedUser } from "./support/users";
@@ -146,29 +145,16 @@ test("a visitor chats, books with a confirmation, switches to Arabic, and comes 
   expect(bookings).toHaveLength(1);
 });
 
-/** Websites the test serves (a business's own, or someone else's), each on its own origin. */
-const sites: Server[] = [];
-test.afterEach(() => {
-  for (const site of sites.splice(0)) site.close();
+/** The websites a test serves; closed when it ends. */
+const sites: Awaited<ReturnType<typeof siteWithWidget>>[] = [];
+test.afterEach(async () => {
+  await Promise.all(sites.splice(0).map((site) => site.close()));
 });
 
-/**
- * A website carrying the embed code, on a loopback port: browsers won't let a public site load
- * scripts from localhost, where the app under test runs.
- */
-async function siteWithWidget(slug: string, baseURL: string | undefined) {
-  const server = createServer((_request, response) => {
-    response.writeHead(200, { "Content-Type": "text/html" });
-    response.end(
-      `<!doctype html><html lang="en"><title>Site</title><body><main>A site</main><script src="${baseURL}/widget.js" data-business="${slug}" data-label="Chat with us" defer></script></body></html>`,
-    );
-  });
-  sites.push(server);
-  await new Promise<void>((resolve) =>
-    server.listen(0, "127.0.0.1", () => resolve()),
-  );
-  const { port } = server.address() as AddressInfo;
-  return `http://127.0.0.1:${port}`;
+async function openSite(slug: string, appUrl: string | undefined) {
+  const site = await siteWithWidget({ appUrl, slug });
+  sites.push(site);
+  return site.origin;
 }
 
 test("the widget shows only for businesses that turned it on, and only on their sites", async ({
@@ -178,8 +164,8 @@ test("the widget shows only for businesses that turned it on, and only on their 
 }) => {
   const owner = await createConfirmedUser();
   const business = await createSalonFor(owner);
-  const ownSite = await siteWithWidget(business.slug, baseURL);
-  const otherSite = await siteWithWidget(business.slug, baseURL);
+  const ownSite = await openSite(business.slug, baseURL);
+  const otherSite = await openSite(business.slug, baseURL);
 
   const off = await request.get(`/widget/${business.slug}`);
   expect(off.status()).toBe(404);
