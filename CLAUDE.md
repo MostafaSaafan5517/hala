@@ -75,7 +75,9 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - `bookings`: customer, service, staff member, `starts_at`/`ends_at`, `blocked_until` (end plus the service's buffer), status `confirmed` or `cancelled`, the price and currency at booking time, and a six-character `reference` (no look-alike characters). The `bookings_no_overlap` exclusion constraint refuses a confirmed booking whose `[starts_at, blocked_until)` overlaps another confirmed booking of the same staff member. Every booking has a staff member (a one-person business adds itself as staff).
 - `private.idempotency_keys`: each key's business, request (action and arguments) and booking. Kept, so a replay months later still can't act twice.
 - `audit_log`: append-only history of every change to the tables above, written only by triggers, with the actor (`user`, `server` for the service role, `database` for migrations and psql). Owners and admins can read their business's history.
-- `conversations` (channel `test` or `widget`, the customer the assistant acts for once known, status `open`, `needs_human` or `closed`, failed verification attempts) and `conversation_messages` (each AI SDK UI message as JSON, by position). Written only by server code; members read their business's.
+- `member_invites`: invite links (role `admin` or `staff`, the SHA-256 of a random token, expiry after 7 days, who accepted). Owners invite admins or staff, admins invite staff; `accept_member_invite` (security definer) adds the signed-in user once.
+- `businesses.widget_enabled` and `widget_origins` (at most 10 origins: scheme, host and optional port, lowercase): whether the website widget is on, and which sites may show it.
+- `conversations` (channel `test` or `widget`, the customer the assistant acts for once known, status `open`, `needs_human`, `taken_over` or `closed`, failed verification attempts; for the widget, the SHA-256 of the visitor's token and a keyed hash of their IP address; who took it over) and `conversation_messages` (each AI SDK UI message as JSON, by position; `sent_by` for a staff reply). Written only by server code and the inbox's functions; members read their business's.
 - `tool_calls`: every tool call the assistant made (input, output, status `succeeded`, `failed` or `declined`, whether the customer approved it, latency). Append-only; owners and admins read it.
 
 ## The booking engine
@@ -83,7 +85,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - **Availability** is one SQL function, `private.free_slots`, wrapped by `public.available_slots(service, from_date, to_date, staff?, ignored_booking?)` (at most 31 days per call). The slot pickers and the booking functions both use it, so what is offered and what is accepted can't disagree. A start is offered when it is on the interval grid counted from local midnight, the appointment fits a working span (the staff member's own hours, else the business's), the day isn't a closure, it is past the notice and within the horizon, and the appointment plus buffer avoids time off and confirmed bookings (theirs include their buffers). The buffer may run past closing. Days are converted to UTC one at a time, so each uses its own offset. `free_slots` takes the clock as a parameter (`now_at`), which is how pgTAP checks fixed daylight-saving dates forever.
 - **Writes** go only through `book_appointment`, `reschedule_booking` and `cancel_booking` (security definer). No API role can write `bookings` directly, not even the service role. Each one: checks the caller (a member of the business, or the service role, which acts for a customer), claims the idempotency key (an identical earlier request returns its booking; the same key with different details is refused; a request that fails rolls its key back), applies the rules, and lets the exclusion constraint settle races. Without a staff member, `book_appointment` takes the first one free in a fixed order (`created_at`, then `id`), moving on if another request takes them a moment earlier. A moved booking keeps its id, reference and price; its length comes from the service as it is now.
 - **Customers versus staff:** the cancellation window (`cancellation_notice_hours`) applies only to the service role, that is to customers through the assistant. Members can always move or cancel an upcoming booking, and every member (staff included) can take bookings.
-- **Refusals** raise their own SQLSTATE codes, which callers translate (`src/lib/booking-errors.ts` for the dashboard): `HB001` taken, `HB002` not open, `HB003` too soon, `HB004` too far ahead, `HB005` service or staff member can't be booked, `HB006` idempotency key reused for another request, `HB007` too late for a customer to change, `HB008` booking can't be changed (cancelled or started).
+- **Refusals** raise their own SQLSTATE codes, which callers translate (`src/lib/booking-errors.ts` for the dashboard): `HB001` taken, `HB002` not open, `HB003` too soon, `HB004` too far ahead, `HB005` service or staff member can't be booked, `HB006` idempotency key reused for another request, `HB007` too late for a customer to change, `HB008` booking can't be changed (cancelled or started). The inbox adds `HB009`: the conversation's status doesn't allow that (replying before taking over, taking over a closed one).
 - `day_bookings(business, day)` lists one local day's bookings, with the day's boundaries converted in Postgres.
 
 ## AI models and usage
@@ -105,7 +107,8 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - **Limits** (`src/lib/assistant/limits.ts`, from `chat_usage`): tokens per conversation, chat calls per business per minute, and spend per business per local day. Over a limit, the customer gets a fixed reply in their language, no model is called, and spent budgets hand the conversation to a person.
 - **Instructions** (`src/lib/assistant/instructions.ts`) ask for answers only from tools, with numbered citations, "I don't know" plus a person otherwise, and documents and messages treated as information, never instructions. The rules that matter don't depend on the model obeying them: tools and the database enforce them, and tests use a scripted model that obeys injected instructions to prove it.
 - **Model usage**: each step's tokens, cost and latency go to `model_calls` with the conversation, from the agent's `onStepEnd`.
-- **Routes**: members test through `/api/assistant/[conversationId]` (test conversations only, RLS decides who sees them); the widget (Phase 5) gets its own route to the same turn.
+- **Routes**: members test through `/api/assistant/[conversationId]` (test conversations only, RLS decides who sees them); the widget's visitors through `/api/widget/[slug]/chat`. Both run the same turn.
+- **While a person has the conversation** (`taken_over`), a turn saves the customer's message and answers nothing; a closed conversation refuses turns (409).
 
 ## The knowledge base
 
@@ -116,9 +119,28 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Keyword words (`private.search_words`) are lowercased, with Arabic vowel marks and tatweel removed, letter variants unified (أإآٱ to ا, ة to ه, ى to ي), and words that start like the article (ال, لل, بال, ...) kept both whole and without it, since letters alone can't tell an article from a word that starts that way (إلغاء normalizes to الغاء).
 - No approximate vector index, on purpose: a business has at most a few hundred passages, which an exact scan (through the `business_id` index) handles fast with perfect recall, while an HNSW index shared by all businesses filters after its approximate search and can miss a business's best matches.
 
+## The website widget
+
+- **Embedding**: `public/widget.js` is the one script tag a business adds (`data-business="<slug>"`, optional `data-language` and `data-label`). It adds a launcher button and, on first open, an iframe of `/widget/[slug]`, so the chat is isolated from the site's styles and scripts. The frame asks to be closed with a `hala:close` message, which the script accepts only from Hala's origin.
+- **Where it may show**: the proxy gives `/widget/[slug]` a `Content-Security-Policy: frame-ancestors 'self' <allowed origins>` header, read per request (`src/lib/widget/frame-policy.ts`) so a newly allowed site works at once; if the lookup fails, it falls back to `'self'` only. Every other page gets `frame-ancestors 'none'` from `next.config.ts`. Browsers enforce it, so the widget can't be shown on someone else's site.
+- **Visitors** have no account. `POST /api/widget/[slug]/conversations` returns a random token, kept in the visitor's browser (localStorage, else memory); only its SHA-256 is stored. `chat` and `messages` take it as a bearer token. All three routes answer only requests from Hala's own pages (`fromOwnPages` checks `Origin` and `Sec-Fetch-Site`), so a script on another site can't use a visitor's browser.
+- **Per-visitor limits** (`src/lib/widget/server.ts`, from `visitor_usage`): new conversations per hour and chat calls per minute, counted by a keyed hash of the IP address a conversation started from (HMAC with a key derived from `TOOL_APPROVAL_SECRET`), never the address itself. On Vercel the platform sets `x-real-ip`; check it after the first deploy. The business's own limits apply too.
+- **The frame's page** (`src/app/widget/[slug]/`) shares the chat components with the dashboard's test chat (`src/components/chat/`: messages, a safe Markdown subset, the Confirm card, the composer). It switches between Arabic and English, picks the conversation up after a reload, and checks for the team's replies every 5 seconds while a conversation is going.
+- **Settings**: the Widget tab (owners and admins) turns it on, takes the allowed sites (`parseOrigins`, `src/lib/widget/origins.ts`), and shows the embed code and a live preview.
+
+## The staff inbox
+
+- The Inbox tab (every member) lists widget conversations: those waiting for the team (`needs_human`, then `taken_over`, the longest waiting first), then the 20 most recent others. The list and a conversation re-render on the server every 5 seconds while the tab is in view.
+- A conversation shows the customer (once known), the whole transcript with every tool step (what it was asked and what came back), and the actions: take over, hand back, close, and reply while taken over.
+- Each action is a security definer function (`take_over_conversation`, `hand_back_conversation`, `close_conversation`, `reply_to_conversation`) that locks the conversation, checks the caller is a member of its business (an outsider can't tell it from one that doesn't exist), and checks the status (`HB009` otherwise). A reply is built in the database from plain text, marked `metadata.from = 'staff'`, with `sent_by`, so it can't carry anything that looks like the assistant's tools.
+
+## The team
+
+- The Team tab lists members and, for owners and admins, pending invites. Invite links are made, shared and revoked there; `/invite/[token]` shows what a link is for and joins once signed in. Only the owner changes roles (admin or staff). The owner removes admins or staff, admins remove staff, and anyone but the owner can leave.
+
 ## App structure
 
-- `src/proxy.ts` refreshes the Supabase session on each request (Next.js 16 calls middleware "proxy").
+- `src/proxy.ts` refreshes the Supabase session on each request (Next.js 16 calls middleware "proxy") and sets the widget page's frame policy; the widget's API routes skip the session refresh (visitors have none).
 - Business pages live under `/dashboard/b/[slug]/`. A page loads its business with `requireMemberBusiness(slug, path, roles)` (`src/lib/business.ts`): visitors are sent to sign in, and anyone without one of `roles` gets a 404, so pages never confirm that a business exists. Server Actions use `memberForAction(slug, path)` and check the role themselves, because their arguments come from the browser; RLS checks again in the database.
 - Forms that book, move or cancel carry an idempotency key generated when the page renders (`randomUUID()` on the server), so a double click or a retried request can't act twice. Multi-step choices (service, staff, day) are plain GET forms whose choices live in the URL; only the final step is a Server Action.
 - Phone numbers are typed in any common format (Arabic digits too) and stored as E.164 by `normalizePhone` (`src/lib/phone.ts`, libphonenumber's full metadata, server side). The country code is required: a business can have customers from several countries, so we never guess one.
@@ -138,6 +160,9 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Tests never call a real model: embeddings use the `offline` model (the E2E server runs with `EMBEDDING_MODEL=offline`), and tools and the chat route will be tested with the AI SDK's mock language model. Only the evaluation suite (Phase 6), run on demand, uses real models, and logs what it cost.
 - The integration suite (`integration/`, `pnpm test:integration`) runs app code (the assistant's tools and turns) against the full local stack with the offline models. A scripted `MockLanguageModelV4` plays exactly the tool calls a test needs, including a misbehaving model's. Its Vitest config loads `.env.local` and aliases `server-only` to its empty module.
 - In pgTAP, build embeddings with exact geometry (unit vectors along chosen dimensions) so similarities are known in advance; see `knowledge_search.test.sql`.
+- Widget specs give each browser context its own visitor address (`asNewVisitor()`, `e2e/support/visitors.ts`), since per-visitor limits count by IP and every local request shares one. Integration tests do the same with random `10.x` addresses.
+- The embed test serves its fake business sites from small HTTP servers on loopback ports, not routed public domains: Chrome blocks a public page from loading a script from localhost (Private Network Access), where the app under test runs.
+- Visitor and staff pages check for changes every 5 seconds, so assertions that wait for the other side use a longer timeout (`{ timeout: 15_000 }`).
 
 ## Folder structure
 
@@ -147,19 +172,23 @@ src/
     (auth)/          Sign up, sign in, check your email
     auth/confirm/    The email confirmation link's route
     (app)/dashboard/ Signed-in pages: the user's businesses, and b/[slug]/ for one business
+  app/widget/        The widget's page, shown in the frame on a business's site
   components/        Shared components (ActionButton, ServiceName)
+  components/chat/   The chat shared by the widget and the dashboard's test chat
   components/ui/     shadcn/ui components (owned code, edited freely)
   config/            App-wide constants (the product name lives here)
   lib/               Helpers: auth, business access, money, dates, hours, booking rules, ...
   lib/ai/            Model catalog, the offline embedding model, logged embedding calls
   lib/knowledge/     Passages, indexing and search of the knowledge base
   lib/assistant/     The assistant: tools, approvals, instructions, limits, turns
-  app/api/           Route handlers (the assistant's chat)
+  lib/widget/        Frame policy, allowed origins, visitor tokens and limits
+  app/api/           Route handlers (the assistant's chat, and the widget's)
   lib/supabase/      Supabase clients (user, and the admin client for the usage log) and types
   proxy.ts           Session refresh on every request
+public/widget.js     The embed script businesses add to their sites
 scripts/             Dev tooling (writing .env.local)
 e2e/                 Playwright end-to-end specs (*.spec.ts)
-  support/           E2E helpers (accessibility, users, businesses, knowledge, forms, Mailpit)
+  support/           E2E helpers (accessibility, users, businesses, knowledge, forms, visitors, Mailpit)
 integration/         Vitest against the full local stack: the assistant's tools and turns
 supabase/
   config.toml        Local Supabase settings (ports 553xx; unused services off)

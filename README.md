@@ -4,12 +4,13 @@
 
 An AI receptionist for appointment-based businesses (salons, clinics, studios, consultants), in Arabic and English. Customers chat with it on the business's website: it answers questions from the business's own data, checks real availability, and books, reschedules or cancels appointments. Staff see every conversation and booking, and can take a conversation over.
 
-**Status:** in development. Business setup (Phase 1), the booking engine (Phase 2), the knowledge base with retrieval (Phase 3) and the assistant (Phase 4) are done; the embeddable widget and staff inbox are next. See the [roadmap](#roadmap).
+**Status:** in development. Business setup (Phase 1), the booking engine (Phase 2), the knowledge base with retrieval (Phase 3), the assistant (Phase 4) and the website widget with the staff inbox (Phase 5) are done; the evaluation suite and usage dashboard are next. See the [roadmap](#roadmap).
 
 ## What works today
 
 - **Accounts:** sign up with email confirmation, sign in, sign out; pages that need an account send visitors to sign in and bring them back afterwards.
-- **Businesses:** an owner creates a business with its own web address, time zone and the assistant's first language (English or Arabic). Each business has one owner and can have admins and staff; inviting them from the app comes with the staff inbox (Phase 5).
+- **Businesses:** an owner creates a business with its own web address, time zone and the assistant's first language (English or Arabic). Each business has one owner and can have admins and staff.
+- **Team invites by link:** owners invite admins or staff, admins invite staff, with a link they share however they like (single use, valid for 7 days; only its hash is stored). No email is sent, and nobody can use it to find out whether an address has an account. The owner changes roles and removes admins or staff; admins remove staff.
 - **Services** with English and Arabic names, duration, buffer time and price in any common currency (stored in the currency's smallest unit; Arabic-Indic digits are accepted). Services are archived, never deleted, so past bookings keep their meaning.
 - **Staff** (no account needed) and the services each one performs.
 - **Working hours** for the business and, where they differ, for each staff member, with split shifts; **time off** for staff and **closures** for the whole business, entered in the business's local time and stored in UTC, daylight saving included.
@@ -27,6 +28,8 @@ An AI receptionist for appointment-based businesses (salons, clinics, studios, c
 - **Prompt injection changes nothing that matters:** tests drive a model that obeys injected instructions, and it still can't book outside the rules or at another business. Prices only ever come from the database: no tool takes one.
 - **Cost controls:** every model call logged with tokens, cost and latency; a token budget per conversation, a rate limit and a daily budget per business. Over a limit, no model is called and a person takes over.
 - **Every AI call logged** with tokens, cost, latency and failures, in an append-only table only server code can write.
+- **A website widget:** one script tag adds a chat button to the business's site and opens the chat in an isolated frame, in Arabic or English (right to left for Arabic). Browsers show it only on the sites the business allowed: its page sends a `frame-ancestors` policy listing them, and every other page of the app refuses to be framed at all. Visitors need no account: a random token kept in their browser opens their conversation (only its hash is stored), and per-visitor limits on how many conversations they start and how fast they send messages sit on top of the business's limits.
+- **A staff inbox:** conversations waiting for a person come first. A member sees the whole transcript, including every step the assistant took and what each tool returned, then takes the conversation over (the assistant goes quiet), replies in the customer's chat, hands it back or closes it. Each action is a database function that checks the member and the conversation's status, and a reply can only ever be plain text.
 - **Roles enforced in the database:** owners and admins manage the setup, every member can take bookings, and Row-Level Security keeps every business's data invisible to every other business. pgTAP tests cover each policy, including the refusals.
 
 ## What this project will demonstrate
@@ -78,6 +81,6 @@ Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL 
 - [x] **Phase 2:** booking engine: availability, the exclusion constraint, idempotent booking
 - [x] **Phase 3:** knowledge base and retrieval with pgvector
 - [x] **Phase 4:** the assistant: streaming chat, tools, grounding, confirmation flow, injection resistance
-- [ ] **Phase 5:** embeddable widget and staff inbox
+- [x] **Phase 5:** embeddable widget and staff inbox
 - [ ] **Phase 6:** evaluation suite, end-to-end flows, usage dashboard
 - [ ] **Phase 7:** documentation, demo data and live demo
