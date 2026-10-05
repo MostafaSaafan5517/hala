@@ -1,6 +1,10 @@
 import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 
+// Tests never call a real model, whatever .env.local says: set first, these win over the file,
+// and the app under test inherits them (Next.js doesn't override variables already set).
+process.env.EMBEDDING_MODEL = "offline";
+process.env.CHAT_MODEL = "offline";
 // Test helpers will call Supabase directly (for example to create a confirmed user), so they need
 // the same local settings as the app. `pnpm env:local` writes them.
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");

@@ -2,7 +2,10 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 // Integration tests: app code against the full local Supabase stack (`pnpm supabase start`),
-// with the offline models. They read the same .env.local as the app (`pnpm env:local`).
+// with the offline models. They read the same .env.local as the app (`pnpm env:local`), but
+// never call a real model, whatever it says: set first, these win over the file.
+process.env.EMBEDDING_MODEL = "offline";
+process.env.CHAT_MODEL = "offline";
 process.loadEnvFile(".env.local");
 
 export default defineConfig({
