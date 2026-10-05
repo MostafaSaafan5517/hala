@@ -1132,6 +1132,45 @@ export type Database = {
         };
         Returns: boolean;
       };
+      usage_by_day: {
+        Args: {
+          first_day: string;
+          last_day: string;
+          target_business_id: string;
+        };
+        Returns: {
+          bookings: number;
+          chat_calls: number;
+          chat_latency_p50_ms: number;
+          chat_latency_p95_ms: number;
+          conversations: number;
+          cost_usd: number;
+          day: string;
+          declined_tool_calls: number;
+          embedding_calls: number;
+          failed_model_calls: number;
+          failed_tool_calls: number;
+          input_tokens: number;
+          output_tokens: number;
+          person_requests: number;
+        }[];
+      };
+      usage_by_model: {
+        Args: {
+          first_day: string;
+          last_day: string;
+          target_business_id: string;
+        };
+        Returns: {
+          calls: number;
+          cost_usd: number;
+          failed_calls: number;
+          input_tokens: number;
+          model: string;
+          output_tokens: number;
+          purpose: string;
+        }[];
+      };
       visitor_usage: {
         Args: { target_visitor_hash: string };
         Returns: {

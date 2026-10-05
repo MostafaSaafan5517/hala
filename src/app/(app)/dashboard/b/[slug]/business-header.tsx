@@ -64,6 +64,12 @@ const sections = [
     roles: ["owner", "admin", "staff"],
   },
   {
+    key: "usage",
+    label: "Usage",
+    path: "/usage",
+    roles: ["owner", "admin"],
+  },
+  {
     key: "widget",
     label: "Widget",
     path: "/widget",
