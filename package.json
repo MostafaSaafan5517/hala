@@ -18,7 +18,8 @@
     "eval": "vitest run --config vitest.evals.config.mts",
     "env:local": "supabase status -o json | node scripts/write-local-env.mjs",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "screens": "playwright test --config playwright.screens.config.ts"
   },
   "dependencies": {
     "@ai-sdk/provider": "4.0.21",

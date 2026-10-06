@@ -227,23 +227,24 @@ supabase/
 
 ## Commands
 
-| Command                             | What it does                                             |
-| ----------------------------------- | -------------------------------------------------------- |
-| `pnpm dev`                          | Dev server at http://localhost:3100                      |
-| `pnpm build` / `pnpm start`         | Production build / serve that build (port 3100)          |
-| `pnpm lint`                         | ESLint; fails on any warning                             |
-| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`           |
-| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)     |
-| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode               |
-| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running      |
-| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)          |
-| `pnpm test:concurrency`             | Parallel-connection booking tests (Supabase running)     |
-| `pnpm test:integration`             | The assistant against the full local stack               |
-| `pnpm eval`                         | The evaluation suite (real models cost money; on demand) |
-| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)       |
-| `pnpm env:local`                    | Write the local Supabase URL and keys into `.env.local`  |
-| `pnpm supabase db reset`            | Rebuild the local database from migrations               |
-| `pnpm db:types`                     | Regenerate TypeScript types from the local database      |
+| Command                             | What it does                                                                                                                                       |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                          | Dev server at http://localhost:3100                                                                                                                |
+| `pnpm build` / `pnpm start`         | Production build / serve that build (port 3100)                                                                                                    |
+| `pnpm lint`                         | ESLint; fails on any warning                                                                                                                       |
+| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`                                                                                                     |
+| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)                                                                                               |
+| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode                                                                                                         |
+| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running                                                                                                |
+| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)                                                                                                    |
+| `pnpm test:concurrency`             | Parallel-connection booking tests (Supabase running)                                                                                               |
+| `pnpm test:integration`             | The assistant against the full local stack                                                                                                         |
+| `pnpm eval`                         | The evaluation suite (real models cost money; on demand)                                                                                           |
+| `SCREENS_DIR=<dir> pnpm screens`    | Screenshots of every screen and state at desktop and mobile, with axe (`pnpm build` first; `LIGHTHOUSE=1` adds Lighthouse, from a normal terminal) |
+| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)                                                                                                 |
+| `pnpm env:local`                    | Write the local Supabase URL and keys into `.env.local`                                                                                            |
+| `pnpm supabase db reset`            | Rebuild the local database from migrations                                                                                                         |
+| `pnpm db:types`                     | Regenerate TypeScript types from the local database                                                                                                |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
 
