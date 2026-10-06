@@ -1,0 +1,65 @@
+# Screens
+
+Captured by `scripts/screens/screens.spec.ts` (`pnpm screens`): each screen at desktop (1440 wide) and mobile (390 wide).
+
+| Screen | Desktop | Mobile |
+| --- | --- | --- |
+| auth-01-login | <img src="auth-01-login-desktop.jpg" width="480" alt="auth-01-login, desktop"> | <img src="auth-01-login-mobile.jpg" width="160" alt="auth-01-login, mobile"> |
+| auth-02-login-link-error | <img src="auth-02-login-link-error-desktop.jpg" width="480" alt="auth-02-login-link-error, desktop"> | <img src="auth-02-login-link-error-mobile.jpg" width="160" alt="auth-02-login-link-error, mobile"> |
+| auth-03-login-confirmed | <img src="auth-03-login-confirmed-desktop.jpg" width="480" alt="auth-03-login-confirmed, desktop"> | <img src="auth-03-login-confirmed-mobile.jpg" width="160" alt="auth-03-login-confirmed, mobile"> |
+| auth-04-signup | <img src="auth-04-signup-desktop.jpg" width="480" alt="auth-04-signup, desktop"> | <img src="auth-04-signup-mobile.jpg" width="160" alt="auth-04-signup, mobile"> |
+| auth-05-signup-error | <img src="auth-05-signup-error-desktop.jpg" width="480" alt="auth-05-signup-error, desktop"> | <img src="auth-05-signup-error-mobile.jpg" width="160" alt="auth-05-signup-error, mobile"> |
+| auth-06-check-email | <img src="auth-06-check-email-desktop.jpg" width="480" alt="auth-06-check-email, desktop"> | <img src="auth-06-check-email-mobile.jpg" width="160" alt="auth-06-check-email, mobile"> |
+| dash-01-businesses | <img src="dash-01-businesses-desktop.jpg" width="480" alt="dash-01-businesses, desktop"> | <img src="dash-01-businesses-mobile.jpg" width="160" alt="dash-01-businesses, mobile"> |
+| dash-02-new-business | <img src="dash-02-new-business-desktop.jpg" width="480" alt="dash-02-new-business, desktop"> | <img src="dash-02-new-business-mobile.jpg" width="160" alt="dash-02-new-business, mobile"> |
+| dash-03-overview | <img src="dash-03-overview-desktop.jpg" width="480" alt="dash-03-overview, desktop"> | <img src="dash-03-overview-mobile.jpg" width="160" alt="dash-03-overview, mobile"> |
+| dash-04-bookings | <img src="dash-04-bookings-desktop.jpg" width="480" alt="dash-04-bookings, desktop"> | <img src="dash-04-bookings-mobile.jpg" width="160" alt="dash-04-bookings, mobile"> |
+| dash-05-booking | <img src="dash-05-booking-desktop.jpg" width="480" alt="dash-05-booking, desktop"> | <img src="dash-05-booking-mobile.jpg" width="160" alt="dash-05-booking, mobile"> |
+| dash-06-new-booking | <img src="dash-06-new-booking-desktop.jpg" width="480" alt="dash-06-new-booking, desktop"> | <img src="dash-06-new-booking-mobile.jpg" width="160" alt="dash-06-new-booking, mobile"> |
+| dash-07-services | <img src="dash-07-services-desktop.jpg" width="480" alt="dash-07-services, desktop"> | <img src="dash-07-services-mobile.jpg" width="160" alt="dash-07-services, mobile"> |
+| dash-08-service | <img src="dash-08-service-desktop.jpg" width="480" alt="dash-08-service, desktop"> | <img src="dash-08-service-mobile.jpg" width="160" alt="dash-08-service, mobile"> |
+| dash-09-staff | <img src="dash-09-staff-desktop.jpg" width="480" alt="dash-09-staff, desktop"> | <img src="dash-09-staff-mobile.jpg" width="160" alt="dash-09-staff, mobile"> |
+| dash-10-staff-member | <img src="dash-10-staff-member-desktop.jpg" width="480" alt="dash-10-staff-member, desktop"> | <img src="dash-10-staff-member-mobile.jpg" width="160" alt="dash-10-staff-member, mobile"> |
+| dash-11-hours | <img src="dash-11-hours-desktop.jpg" width="480" alt="dash-11-hours, desktop"> | <img src="dash-11-hours-mobile.jpg" width="160" alt="dash-11-hours, mobile"> |
+| dash-12-time-off | <img src="dash-12-time-off-desktop.jpg" width="480" alt="dash-12-time-off, desktop"> | <img src="dash-12-time-off-mobile.jpg" width="160" alt="dash-12-time-off, mobile"> |
+| dash-13-knowledge | <img src="dash-13-knowledge-desktop.jpg" width="480" alt="dash-13-knowledge, desktop"> | <img src="dash-13-knowledge-mobile.jpg" width="160" alt="dash-13-knowledge, mobile"> |
+| dash-14-knowledge-try | <img src="dash-14-knowledge-try-desktop.jpg" width="480" alt="dash-14-knowledge-try, desktop"> | <img src="dash-14-knowledge-try-mobile.jpg" width="160" alt="dash-14-knowledge-try, mobile"> |
+| dash-15-knowledge-document | <img src="dash-15-knowledge-document-desktop.jpg" width="480" alt="dash-15-knowledge-document, desktop"> | <img src="dash-15-knowledge-document-mobile.jpg" width="160" alt="dash-15-knowledge-document, mobile"> |
+| dash-16-assistant | <img src="dash-16-assistant-desktop.jpg" width="480" alt="dash-16-assistant, desktop"> | <img src="dash-16-assistant-mobile.jpg" width="160" alt="dash-16-assistant, mobile"> |
+| dash-17-assistant-chat | <img src="dash-17-assistant-chat-desktop.jpg" width="480" alt="dash-17-assistant-chat, desktop"> | <img src="dash-17-assistant-chat-mobile.jpg" width="160" alt="dash-17-assistant-chat, mobile"> |
+| dash-18-usage | <img src="dash-18-usage-desktop.jpg" width="480" alt="dash-18-usage, desktop"> | <img src="dash-18-usage-mobile.jpg" width="160" alt="dash-18-usage, mobile"> |
+| dash-19-widget | <img src="dash-19-widget-desktop.jpg" width="480" alt="dash-19-widget, desktop"> | <img src="dash-19-widget-mobile.jpg" width="160" alt="dash-19-widget, mobile"> |
+| dash-20-team | <img src="dash-20-team-desktop.jpg" width="480" alt="dash-20-team, desktop"> | <img src="dash-20-team-mobile.jpg" width="160" alt="dash-20-team, mobile"> |
+| dash-21-read-only | <img src="dash-21-read-only-desktop.jpg" width="480" alt="dash-21-read-only, desktop"> | <img src="dash-21-read-only-mobile.jpg" width="160" alt="dash-21-read-only, mobile"> |
+| dash-22-read-only-refused | <img src="dash-22-read-only-refused-desktop.jpg" width="480" alt="dash-22-read-only-refused, desktop"> | <img src="dash-22-read-only-refused-mobile.jpg" width="160" alt="dash-22-read-only-refused, mobile"> |
+| demo-01-page | <img src="demo-01-page-desktop.jpg" width="480" alt="demo-01-page, desktop"> | <img src="demo-01-page-mobile.jpg" width="160" alt="demo-01-page, mobile"> |
+| empty-01-businesses | <img src="empty-01-businesses-desktop.jpg" width="480" alt="empty-01-businesses, desktop"> | <img src="empty-01-businesses-mobile.jpg" width="160" alt="empty-01-businesses, mobile"> |
+| empty-02-overview | <img src="empty-02-overview-desktop.jpg" width="480" alt="empty-02-overview, desktop"> | <img src="empty-02-overview-mobile.jpg" width="160" alt="empty-02-overview, mobile"> |
+| empty-03-bookings | <img src="empty-03-bookings-desktop.jpg" width="480" alt="empty-03-bookings, desktop"> | <img src="empty-03-bookings-mobile.jpg" width="160" alt="empty-03-bookings, mobile"> |
+| empty-04-inbox | <img src="empty-04-inbox-desktop.jpg" width="480" alt="empty-04-inbox, desktop"> | <img src="empty-04-inbox-mobile.jpg" width="160" alt="empty-04-inbox, mobile"> |
+| empty-05-services | <img src="empty-05-services-desktop.jpg" width="480" alt="empty-05-services, desktop"> | <img src="empty-05-services-mobile.jpg" width="160" alt="empty-05-services, mobile"> |
+| empty-06-staff | <img src="empty-06-staff-desktop.jpg" width="480" alt="empty-06-staff, desktop"> | <img src="empty-06-staff-mobile.jpg" width="160" alt="empty-06-staff, mobile"> |
+| empty-07-knowledge | <img src="empty-07-knowledge-desktop.jpg" width="480" alt="empty-07-knowledge, desktop"> | <img src="empty-07-knowledge-mobile.jpg" width="160" alt="empty-07-knowledge, mobile"> |
+| empty-08-usage | <img src="empty-08-usage-desktop.jpg" width="480" alt="empty-08-usage, desktop"> | <img src="empty-08-usage-mobile.jpg" width="160" alt="empty-08-usage, mobile"> |
+| inbox-01-list | <img src="inbox-01-list-desktop.jpg" width="480" alt="inbox-01-list, desktop"> | <img src="inbox-01-list-mobile.jpg" width="160" alt="inbox-01-list, mobile"> |
+| inbox-02-conversation | <img src="inbox-02-conversation-desktop.jpg" width="480" alt="inbox-02-conversation, desktop"> | <img src="inbox-02-conversation-mobile.jpg" width="160" alt="inbox-02-conversation, mobile"> |
+| inbox-03-taken-over | <img src="inbox-03-taken-over-desktop.jpg" width="480" alt="inbox-03-taken-over, desktop"> | <img src="inbox-03-taken-over-mobile.jpg" width="160" alt="inbox-03-taken-over, mobile"> |
+| inbox-04-replied | <img src="inbox-04-replied-desktop.jpg" width="480" alt="inbox-04-replied, desktop"> | <img src="inbox-04-replied-mobile.jpg" width="160" alt="inbox-04-replied, mobile"> |
+| public-01-home | <img src="public-01-home-desktop.jpg" width="480" alt="public-01-home, desktop"> | <img src="public-01-home-mobile.jpg" width="160" alt="public-01-home, mobile"> |
+| public-02-not-found | <img src="public-02-not-found-desktop.jpg" width="480" alt="public-02-not-found, desktop"> | <img src="public-02-not-found-mobile.jpg" width="160" alt="public-02-not-found, mobile"> |
+| widget-01-closed | <img src="widget-01-closed-desktop.jpg" width="480" alt="widget-01-closed, desktop"> | <img src="widget-01-closed-mobile.jpg" width="160" alt="widget-01-closed, mobile"> |
+| widget-02-open-en | <img src="widget-02-open-en-desktop.jpg" width="480" alt="widget-02-open-en, desktop"> | <img src="widget-02-open-en-mobile.jpg" width="160" alt="widget-02-open-en, mobile"> |
+| widget-03-answer-en | <img src="widget-03-answer-en-desktop.jpg" width="480" alt="widget-03-answer-en, desktop"> | <img src="widget-03-answer-en-mobile.jpg" width="160" alt="widget-03-answer-en, mobile"> |
+| widget-04-confirm-en | <img src="widget-04-confirm-en-desktop.jpg" width="480" alt="widget-04-confirm-en, desktop"> | <img src="widget-04-confirm-en-mobile.jpg" width="160" alt="widget-04-confirm-en, mobile"> |
+| widget-05-booked-en | <img src="widget-05-booked-en-desktop.jpg" width="480" alt="widget-05-booked-en, desktop"> | <img src="widget-05-booked-en-mobile.jpg" width="160" alt="widget-05-booked-en, mobile"> |
+| widget-06-error-en | <img src="widget-06-error-en-desktop.jpg" width="480" alt="widget-06-error-en, desktop"> | <img src="widget-06-error-en-mobile.jpg" width="160" alt="widget-06-error-en, mobile"> |
+| widget-07-open-ar | <img src="widget-07-open-ar-desktop.jpg" width="480" alt="widget-07-open-ar, desktop"> | <img src="widget-07-open-ar-mobile.jpg" width="160" alt="widget-07-open-ar, mobile"> |
+| widget-08-answer-ar | <img src="widget-08-answer-ar-desktop.jpg" width="480" alt="widget-08-answer-ar, desktop"> | <img src="widget-08-answer-ar-mobile.jpg" width="160" alt="widget-08-answer-ar, mobile"> |
+| widget-09-confirm-ar | <img src="widget-09-confirm-ar-desktop.jpg" width="480" alt="widget-09-confirm-ar, desktop"> | <img src="widget-09-confirm-ar-mobile.jpg" width="160" alt="widget-09-confirm-ar, mobile"> |
+| widget-10-booked-ar | <img src="widget-10-booked-ar-desktop.jpg" width="480" alt="widget-10-booked-ar, desktop"> | <img src="widget-10-booked-ar-mobile.jpg" width="160" alt="widget-10-booked-ar, mobile"> |
+| widget-11-waiting-en | <img src="widget-11-waiting-en-desktop.jpg" width="480" alt="widget-11-waiting-en, desktop"> | <img src="widget-11-waiting-en-mobile.jpg" width="160" alt="widget-11-waiting-en, mobile"> |
+| widget-12-team-en | <img src="widget-12-team-en-desktop.jpg" width="480" alt="widget-12-team-en, desktop"> | <img src="widget-12-team-en-mobile.jpg" width="160" alt="widget-12-team-en, mobile"> |
+| widget-13-ended-en | <img src="widget-13-ended-en-desktop.jpg" width="480" alt="widget-13-ended-en, desktop"> | <img src="widget-13-ended-en-mobile.jpg" width="160" alt="widget-13-ended-en, mobile"> |
+| widget-14-budget-spent-en | <img src="widget-14-budget-spent-en-desktop.jpg" width="480" alt="widget-14-budget-spent-en, desktop"> | <img src="widget-14-budget-spent-en-mobile.jpg" width="160" alt="widget-14-budget-spent-en, mobile"> |
+| widget-15-too-many-en | <img src="widget-15-too-many-en-desktop.jpg" width="480" alt="widget-15-too-many-en, desktop"> | <img src="widget-15-too-many-en-mobile.jpg" width="160" alt="widget-15-too-many-en, mobile"> |
+| widget-16-unknown-business | <img src="widget-16-unknown-business-desktop.jpg" width="480" alt="widget-16-unknown-business, desktop"> | <img src="widget-16-unknown-business-mobile.jpg" width="160" alt="widget-16-unknown-business, mobile"> |
