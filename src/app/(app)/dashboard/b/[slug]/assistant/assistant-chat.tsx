@@ -42,7 +42,7 @@ export function AssistantChat({
       <div
         role="log"
         aria-label="Conversation"
-        className="grid gap-3 rounded-lg border p-4"
+        className="grid grid-cols-[minmax(0,1fr)] gap-3 rounded-lg border p-4"
       >
         {messages.length === 0 && (
           <p className="text-sm text-muted-foreground">{labels.empty}</p>
@@ -50,11 +50,13 @@ export function AssistantChat({
         <ChatMessages
           messages={messages}
           labels={labels}
+          replying={busy}
           onAnswer={(id, approved) => addToolApprovalResponse({ id, approved })}
         />
       </div>
+      {/* The typing dots show it; this says it to screen readers. */}
       {busy && (
-        <p role="status" className="text-sm text-muted-foreground">
+        <p role="status" className="sr-only">
           {labels.replying}
         </p>
       )}

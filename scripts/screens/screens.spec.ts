@@ -155,16 +155,16 @@ test("widget in English: closed, open, an answer, a booking, an error", async ({
   const page = await visitorPage(browser);
   await page.goto("/demo");
   await shot(page, testInfo, "demo-01-page", { fullPage: true, axe: true });
-  await shot(page, testInfo, "widget-01-closed");
+  await shot(page, testInfo, "widget-01-closed", { axe: true });
 
   const chat = await openDemoChat(page);
-  await shot(page, testInfo, "widget-02-open-en");
+  await shot(page, testInfo, "widget-02-open-en", { axe: true });
 
   await ask(chat, "Is there parking?");
   await expect(chat.getByRole("log")).toContainText(
     "parking behind the building",
   );
-  await shot(page, testInfo, "widget-03-answer-en");
+  await shot(page, testInfo, "widget-03-answer-en", { axe: true });
 
   await chat
     .getByRole("textbox")
@@ -173,12 +173,12 @@ test("widget in English: closed, open, an answer, a booking, an error", async ({
     );
   await chat.getByRole("button", { name: "Send" }).click();
   await expect(chat.getByRole("button", { name: "Confirm" })).toBeVisible();
-  await shot(page, testInfo, "widget-04-confirm-en");
+  await shot(page, testInfo, "widget-04-confirm-en", { axe: true });
 
   await chat.getByRole("button", { name: "Confirm" }).click();
   await expect(chat.getByRole("log")).toContainText("Booked ·");
   await expect(chat.getByRole("button", { name: "Send" })).toBeEnabled();
-  await shot(page, testInfo, "widget-05-booked-en");
+  await shot(page, testInfo, "widget-05-booked-en", { axe: true });
 
   await page.route("**/api/widget/*/chat", (route) => route.abort());
   await chat.getByRole("textbox").fill("Thank you");
@@ -186,7 +186,7 @@ test("widget in English: closed, open, an answer, a booking, an error", async ({
   await expect(
     chat.getByRole("alert").filter({ hasText: "Something went wrong" }),
   ).toBeVisible();
-  await shot(page, testInfo, "widget-06-error-en");
+  await shot(page, testInfo, "widget-06-error-en", { axe: true });
   await page.context().close();
 });
 
@@ -197,11 +197,11 @@ test("widget in Arabic: open, an answer, a booking", async ({
   const chat = await openDemoChat(page);
   await chat.getByRole("button", { name: "العربية" }).click();
   await expect(chat.getByRole("button", { name: "إرسال" })).toBeEnabled();
-  await shot(page, testInfo, "widget-07-open-ar");
+  await shot(page, testInfo, "widget-07-open-ar", { axe: true });
 
   await ask(chat, "هل يوجد موقف للسيارات؟", "ar");
   await expect(chat.getByRole("log")).toContainText("موقف");
-  await shot(page, testInfo, "widget-08-answer-ar");
+  await shot(page, testInfo, "widget-08-answer-ar", { axe: true });
 
   await chat
     .getByRole("textbox")
@@ -210,12 +210,12 @@ test("widget in Arabic: open, an answer, a booking", async ({
     );
   await chat.getByRole("button", { name: "إرسال" }).click();
   await expect(chat.getByRole("button", { name: "تأكيد" })).toBeVisible();
-  await shot(page, testInfo, "widget-09-confirm-ar");
+  await shot(page, testInfo, "widget-09-confirm-ar", { axe: true });
 
   await chat.getByRole("button", { name: "تأكيد" }).click();
   await expect(chat.getByRole("log")).toContainText("تم الحجز");
   await expect(chat.getByRole("button", { name: "إرسال" })).toBeEnabled();
-  await shot(page, testInfo, "widget-10-booked-ar");
+  await shot(page, testInfo, "widget-10-booked-ar", { axe: true });
   await page.context().close();
 });
 
@@ -233,7 +233,7 @@ test("widget and inbox: waiting for the team, taken over, a reply, closed", asyn
     .eq("id", conversationId);
   if (handed.error) throw handed.error;
   await expect(chat.getByText("We've asked the team to join.")).toBeVisible();
-  await shot(visitor, testInfo, "widget-11-waiting-en");
+  await shot(visitor, testInfo, "widget-11-waiting-en", { axe: true });
 
   const staff = await staffPage(browser, frontDesk);
   const inbox = `/dashboard/b/${demoConfig.slug}/inbox`;
@@ -258,11 +258,11 @@ test("widget and inbox: waiting for the team, taken over, a reply, closed", asyn
   await shot(staff, testInfo, "inbox-04-replied", { fullPage: true });
 
   await expect(chat.getByRole("log")).toContainText("Rana at the front desk");
-  await shot(visitor, testInfo, "widget-12-team-en");
+  await shot(visitor, testInfo, "widget-12-team-en", { axe: true });
 
   await staff.getByRole("button", { name: "Close conversation" }).click();
   await expect(chat.getByText("This conversation has ended.")).toBeVisible();
-  await shot(visitor, testInfo, "widget-13-ended-en");
+  await shot(visitor, testInfo, "widget-13-ended-en", { axe: true });
   await visitor.context().close();
   await staff.context().close();
 });
@@ -277,7 +277,7 @@ test("widget limits and errors: budget spent, too many conversations, unknown bu
   await expect(spent.getByRole("log")).toContainText(
     "Hello, can I book a session?",
   );
-  await shot(spent, testInfo, "widget-14-budget-spent-en");
+  await shot(spent, testInfo, "widget-14-budget-spent-en", { axe: true });
   await spent.context().close();
 
   const busy = await visitorPage(browser);
@@ -290,10 +290,10 @@ test("widget limits and errors: budget spent, too many conversations, unknown bu
   await expect(
     chat.getByRole("alert").filter({ hasText: "several conversations" }),
   ).toBeVisible();
-  await shot(busy, testInfo, "widget-15-too-many-en");
+  await shot(busy, testInfo, "widget-15-too-many-en", { axe: true });
 
   await busy.goto("/widget/no-such-business");
-  await shot(busy, testInfo, "widget-16-unknown-business");
+  await shot(busy, testInfo, "widget-16-unknown-business", { axe: true });
   await busy.context().close();
 });
 

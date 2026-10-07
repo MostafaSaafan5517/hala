@@ -587,14 +587,14 @@ function Widget({ language }: { language: Language }) {
         </header>
 
         <div className="grid grid-cols-[minmax(0,1fr)] content-start gap-3 px-4 py-4">
-          <p className="max-w-[85%] justify-self-end rounded-bubble rounded-ee-md bg-primary px-3.5 py-2 text-body text-primary-foreground">
+          <p className="max-w-[85%] justify-self-end rounded-bubble rounded-ee-bubble-tail bg-primary px-3.5 py-2 text-body text-primary-foreground">
             {t.parking}
           </p>
           <div className="grid max-w-[88%] justify-items-start gap-1.5">
             <Step icon={<MagnifyingGlass size={14} aria-hidden="true" />}>
               {t.lookedUp}
             </Step>
-            <p className="rounded-bubble rounded-es-md bg-muted px-3.5 py-2 text-body">
+            <p className="rounded-bubble rounded-es-bubble-tail bg-muted px-3.5 py-2 text-body">
               {t.parkingReply}{" "}
               <span className="text-accent-foreground">[1]</span>
             </p>
@@ -605,7 +605,7 @@ function Widget({ language }: { language: Language }) {
               </span>
             </p>
           </div>
-          <p className="max-w-[85%] justify-self-end rounded-bubble rounded-ee-md bg-primary px-3.5 py-2 text-body text-primary-foreground">
+          <p className="max-w-[85%] justify-self-end rounded-bubble rounded-ee-bubble-tail bg-primary px-3.5 py-2 text-body text-primary-foreground">
             {t.bookAsk}
           </p>
           <div className="grid max-w-[92%] gap-1.5">
@@ -652,7 +652,7 @@ function Widget({ language }: { language: Language }) {
               <span className="font-medium text-success">{t.booked}</span>
             </Step>
           </div>
-          <div className="grid max-w-[88%] gap-1 rounded-bubble rounded-es-md bg-card px-3.5 py-2 shadow-[inset_3px_0_0_var(--hala-accent),var(--hala-shadow-1)] rtl:shadow-[inset_-3px_0_0_var(--hala-accent),var(--hala-shadow-1)]">
+          <div className="grid max-w-[88%] gap-1 rounded-bubble rounded-es-bubble-tail bg-card px-3.5 py-2 shadow-[inset_3px_0_0_var(--hala-accent),var(--hala-shadow-1)] rtl:shadow-[inset_-3px_0_0_var(--hala-accent),var(--hala-shadow-1)]">
             <span className="inline-flex items-center gap-1 text-caption font-medium text-accent-foreground">
               <UserCircle size={14} aria-hidden="true" />
               {t.team}
@@ -661,11 +661,15 @@ function Widget({ language }: { language: Language }) {
           </div>
           <p
             aria-hidden="true"
-            className="hp-typing flex gap-1 justify-self-start rounded-bubble rounded-es-md bg-muted px-3.5 py-3"
+            className="flex gap-1 justify-self-start rounded-bubble rounded-es-bubble-tail bg-muted px-3.5 py-3"
           >
-            <span className="size-1.5 rounded-full bg-muted-foreground" />
-            <span className="size-1.5 rounded-full bg-muted-foreground" />
-            <span className="size-1.5 rounded-full bg-muted-foreground" />
+            {[0, 150, 300].map((delay) => (
+              <span
+                key={delay}
+                className="size-1.5 rounded-full bg-muted-foreground motion-safe:animate-typing"
+                style={{ animationDelay: `${delay}ms` }}
+              />
+            ))}
           </p>
         </div>
 

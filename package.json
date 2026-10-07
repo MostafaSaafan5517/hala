@@ -20,7 +20,8 @@
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts",
     "test:e2e": "playwright test",
     "screens": "playwright test --config playwright.screens.config.ts",
-    "tokens": "node scripts/design-tokens.mjs"
+    "tokens": "node scripts/design-tokens.mjs && cn build --css src/app/globals.css --full --out src/lib/cn-tables.ts --quiet",
+    "widget": "node scripts/build-widget.mjs"
   },
   "dependencies": {
     "@ai-sdk/provider": "4.0.21",
@@ -59,6 +60,7 @@
     "shadcn": "^4.21.1",
     "supabase": "^2.119.0",
     "tailwindcss": "^4",
+    "terser": "^5.51.2",
     "typescript": "^5",
     "vitest": "^5.0.3"
   },

@@ -80,6 +80,10 @@ test("owners turn the widget on for their site, copy the code, and try it", asyn
   await expect(preview.getByRole("log")).toContainText(
     "Yes, free parking behind the salon.",
   );
+  // Nothing closes the dashboard's preview.
+  await expect(preview.getByRole("button", { name: "Close chat" })).toHaveCount(
+    0,
+  );
   expect(await accessibilityViolations(page)).toEqual([]);
 
   const staffPage = await (await browser.newContext()).newPage();
@@ -212,6 +216,74 @@ test("the widget shows only for businesses that turned it on, and only on their 
   await expect(
     elsewhere.frameLocator("#hala-widget-frame").getByRole("heading"),
   ).toHaveCount(0);
+});
+
+test("on a phone the chat fills the screen, and closes from its own button", async ({
+  browser,
+  baseURL,
+}) => {
+  const owner = await createConfirmedUser();
+  const business = await createSalonFor(owner);
+  const site = await openSite(business.slug, baseURL);
+  await enableWidget(business.id, [site]);
+  const viewport = { width: 390, height: 844 };
+  const page = await (await browser.newContext({ viewport })).newPage();
+  await page.goto(site);
+
+  const launcher = page.getByRole("button", { name: "Chat with us" });
+  await launcher.click();
+  const frame = page.locator("#hala-widget-frame");
+  await expect(
+    page
+      .frameLocator("#hala-widget-frame")
+      .getByRole("heading", { name: `Chat with ${business.name}` }),
+  ).toBeVisible();
+  expect(await frame.boundingBox()).toEqual({ x: 0, y: 0, ...viewport });
+  // The launcher steps aside while the chat is open: the chat's own button closes it.
+  await expect(launcher).toBeHidden();
+  await page
+    .frameLocator("#hala-widget-frame")
+    .getByRole("button", { name: "Close chat" })
+    .click();
+  await expect(frame).toBeHidden();
+  await expect(launcher).toBeFocused();
+  await expect(launcher).toHaveAttribute("aria-expanded", "false");
+  await page.context().close();
+});
+
+test("in an Arabic confirmation, the phone number reads left to right", async ({
+  browser,
+}) => {
+  const owner = await createConfirmedUser();
+  const business = await createSalonFor(owner);
+  await enableWidget(business.id);
+  const visitor = await (
+    await browser.newContext({ extraHTTPHeaders: asNewVisitor() })
+  ).newPage();
+  await visitor.goto(`/widget/${business.slug}?lang=ar`);
+  const tomorrow = addDays(todayIn("Asia/Riyadh"), 1);
+  await say(
+    visitor,
+    `book Haircut on ${tomorrow} at 11:00 for سارة القحطاني, +966 55 765 4321`,
+  );
+  const card = visitor.getByRole("log").getByRole("group", { name: "تأكيد" });
+  await expect(card).toContainText("باسم سارة القحطاني (+966 55 765 4321).");
+
+  // Where each part of the number is drawn: left to right, in order, inside the Arabic
+  // sentence. Without isolation it reads "(4321 765 55 966+)".
+  const lefts = await card.locator("bdi").evaluate((element) => {
+    const text = element.firstChild as Text;
+    return ["(", "+966", "55", "765", "4321", ")"].map((part) => {
+      const range = document.createRange();
+      const start = text.data.indexOf(part);
+      range.setStart(text, start);
+      range.setEnd(text, start + part.length);
+      return range.getBoundingClientRect().left;
+    });
+  });
+  expect(lefts).toEqual([...lefts].sort((a, b) => a - b));
+  expect(new Set(lefts).size).toBe(lefts.length);
+  await visitor.context().close();
 });
 
 test("the widget stays light on a device set to dark mode", async ({

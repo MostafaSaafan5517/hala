@@ -62,6 +62,7 @@
   --radius-surface: var(--hala-radius-surface);
   --radius-panel: var(--hala-radius-panel);
   --radius-bubble: var(--hala-radius-bubble);
+  --radius-bubble-tail: var(--hala-radius-bubble-tail);
   --radius-badge: var(--hala-radius-badge);
 
   --shadow-level-1: var(--hala-shadow-1);
@@ -97,6 +98,27 @@
   --text-small--line-height: var(--hala-text-small-line-height);
   --text-caption: var(--hala-text-caption);
   --text-caption--line-height: var(--hala-text-caption-line-height);
+
+  /* The chat's motion (DESIGN.md): a message arrives, rising 4px; three dots pulse while the
+     assistant replies. Used behind motion-safe:, so nothing moves for reduced motion. */
+  --animate-arrive: arrive var(--hala-duration-slow) var(--hala-ease);
+  --animate-typing: typing 1.2s var(--hala-ease) infinite both;
+  @keyframes arrive {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+  @keyframes typing {
+    0%,
+    60%,
+    100% {
+      opacity: 0.35;
+    }
+    30% {
+      opacity: 1;
+    }
+  }
 }
 
 :root {

@@ -5,6 +5,7 @@ export const widgetLabels: Record<
   CustomerLanguage,
   {
     title: (business: string) => string;
+    welcome: string;
     close: string;
     otherLanguage: { code: CustomerLanguage; name: string };
     waiting: string;
@@ -16,6 +17,7 @@ export const widgetLabels: Record<
 > = {
   en: {
     title: (business) => `Chat with ${business}`,
+    welcome: "How can we help?",
     close: "Close chat",
     otherLanguage: { code: "ar", name: "العربية" },
     waiting:
@@ -27,6 +29,7 @@ export const widgetLabels: Record<
   },
   ar: {
     title: (business) => `تحدّث مع ${business}`,
+    welcome: "كيف يمكننا مساعدتك؟",
     close: "إغلاق المحادثة",
     otherLanguage: { code: "en", name: "English" },
     waiting:

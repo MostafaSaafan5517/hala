@@ -1,5 +1,6 @@
-/* The preview's own motion samples. Its colors, type and shapes come from the app's design
-   tokens (src/styles/tokens.css), like every other page. */
+/* The preview's own motion sample: a button settling when pressed. Its colors, type, shapes
+   and the chat's motion come from the app's design tokens (src/styles/tokens.css), like every
+   other page. */
 
 @media (prefers-reduced-motion: no-preference) {
   .hp-press {
@@ -11,25 +12,5 @@
   }
   .hp-press:active {
     transform: translateY(1px);
-  }
-  .hp-typing span {
-    animation: hp-typing 1.2s var(--hala-ease) infinite;
-  }
-  .hp-typing span:nth-child(2) {
-    animation-delay: 0.15s;
-  }
-  .hp-typing span:nth-child(3) {
-    animation-delay: 0.3s;
-  }
-}
-
-@keyframes hp-typing {
-  0%,
-  60%,
-  100% {
-    opacity: 0.35;
-  }
-  30% {
-    opacity: 1;
   }
 }

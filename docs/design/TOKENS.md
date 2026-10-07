@@ -10,6 +10,7 @@ The design system ([DESIGN.md](DESIGN.md)) lives in code as one set of tokens th
 | [`tokens.json`](tokens.json)                                   | The same tokens as JSON, with a hex fallback for every color, for tools and projects that don't read CSS. Written by `pnpm tokens`; never edit it by hand.                |
 | [`src/app/globals.css`](../../src/app/globals.css)             | How this app wires the tokens into Tailwind CSS v4 and shadcn/ui: the color names the components use, the type scale utilities, the dark-mode rule and the focus outline. |
 | [`src/styles/tokens.test.ts`](../../src/styles/tokens.test.ts) | Fails if the two dark copies differ, if `tokens.json` is out of date, or if a change breaks WCAG AA for any text or outline pair the interface uses.                      |
+| [`src/lib/cn-tables.ts`](../../src/lib/cn-tables.ts)           | The tables `cn` merges class names with, built from the theme so it knows `text-body`, `rounded-control` and the rest. Written by `pnpm tokens`; never edit it by hand.   |
 
 ## Light, dark, and forcing one
 
@@ -49,7 +50,7 @@ Note the one trap: Tailwind's `accent` is the **soft** teal (shadcn's meaning: a
 
 **Type:** `text-display`, `text-h1`, `text-h2`, `text-h3`, `text-large`, `text-body`, `text-small`, `text-caption`. Each sets its size, line height and (for headings) weight and tracking; inside Arabic text (`lang="ar"`) the line heights grow and the tracking goes, automatically. Don't add `tracking-*` to Arabic.
 
-**Shape and depth:** `rounded-control`, `rounded-surface`, `rounded-panel`, `rounded-bubble`, `rounded-badge`; `shadow-level-1`, `shadow-level-2`, `shadow-level-3`. **Motion:** `ease-hala`, with `var(--hala-duration-fast)`, `var(--hala-duration)` and `var(--hala-duration-slow)`.
+**Shape and depth:** `rounded-control`, `rounded-surface`, `rounded-panel`, `rounded-bubble` (with `rounded-ee-bubble-tail` or `rounded-es-bubble-tail` for the speaker's corner), `rounded-badge`; `shadow-level-1`, `shadow-level-2`, `shadow-level-3`. **Motion:** `ease-hala`, with `var(--hala-duration-fast)`, `var(--hala-duration)` and `var(--hala-duration-slow)`; `motion-safe:animate-arrive` (a message arriving) and `motion-safe:animate-typing` (the typing dots).
 
 **Fonts:** `font-sans` is Readex Pro (Latin and Arabic) and `font-mono` is Geist Mono, both loaded with `next/font` in [`src/app/layout.tsx`](../../src/app/layout.tsx) as `--font-readex` and `--font-geist-mono`.
 
@@ -57,7 +58,7 @@ Note the one trap: Tailwind's `accent` is the **soft** teal (shadcn's meaning: a
 
 1. **Copy `src/styles/tokens.css`** into the project, unchanged, and import it from the global stylesheet.
 2. **Load the fonts** with `next/font/google`: `Readex_Pro({ variable: "--font-readex", subsets: ["latin", "arabic"] })` and, if it shows code, `Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] })`, and put their `variable` classes on `<html>`.
-3. **With Tailwind CSS v4 and shadcn/ui**, copy the `@custom-variant dark`, both `@theme` blocks, the `:root` radius line and the `@layer base` block from `src/app/globals.css`. Every name in the table above then works there too.
+3. **With Tailwind CSS v4 and shadcn/ui**, copy the `@custom-variant dark`, both `@theme` blocks, the `:root` radius line and the `@layer base` block from `src/app/globals.css`. Every name in the table above then works there too. If it merges classes with `cn`, build its tables from that stylesheet (`cn build --css <it> --full`) and use them as `src/lib/utils.ts` does.
 4. **Without Tailwind,** use the variables directly: `background: var(--hala-surface); color: var(--hala-ink); border-radius: var(--hala-radius-surface); box-shadow: var(--hala-shadow-1);`, and set the type scale from the `--hala-text-*` variables (with the `-arabic` line heights inside `:lang(ar)`).
 5. **Design tools** (Figma and the like) can read `tokens.json`, which also carries each color's hex.
 
@@ -66,5 +67,5 @@ When the tokens change here, copy `tokens.css` again; the version in this reposi
 ## Changing a token
 
 1. Edit `src/styles/tokens.css`. A dark color is written twice (inside the `prefers-color-scheme` query and in `.hala-dark`); change both.
-2. Run `pnpm tokens` to rewrite `tokens.json`, then `pnpm test`: it fails on a mismatch, a stale export, or a pair below WCAG AA.
+2. Run `pnpm tokens` to rewrite `tokens.json` and `cn`'s tables, then `pnpm test`: it fails on a mismatch, a stale export, stale tables, or a pair below WCAG AA.
 3. If the change is visible, update the value in DESIGN.md's tables and check `/design-preview` (in development) in both modes.
