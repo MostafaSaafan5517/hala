@@ -176,6 +176,10 @@ Calm, short and purposeful, CSS only (no animation library, in the widget least 
 
 It's a business's website, not Hala's, so it gets a salon identity of its own, built only from the seeded data (no invented reviews, prices or claims). The widget then appears on someone else's site, the way it does in real life.
 
+**As built.** Nour Salon has its own colors, scoped to the page: cream, espresso ink and brass (every text pair at least 4.8:1), so Hala's teal launcher stands out on it as it would on any client's site. Its type is Readex Pro, like Hala's, but in light weights at large sizes, with a wordmark in spaced capitals (the Latin only: spacing would break the Arabic's joins) and the Arabic word "نور" (light) large and soft as the one decoration. The page has a header, a hero, the services with their Arabic names, durations, prices and who performs them, and the salon's address, hours, parking and payment, all from the seeded salon (its services and staff from the database, the rest from its FAQs). Hala's own words stay apart, in Hala's colors: a one-line note at the top that this is a demo, and the "See the salon's side" card with the dashboard login.
+
+**Measured, then decided.** A display face of its own (El Messiri, Latin and Arabic) was tried and dropped: Lighthouse on the same machine scored the page 92 against the old page's 96, with the first and largest paints about 0.3 s later and a small layout shift from the font swap. Without it, first and largest paint match the old page and nothing shifts. A team section repeating who performs each service was dropped too. What remains costs a little main-thread time (the page has about twice the old one's text, laid out again when Readex arrives): over 9 alternating runs, a median of 94 against 95.
+
 ## Marks
 
 The wordmark is "Hala | هلا" in Readex Pro semibold. The app mark is "هلا" in `on-accent` on an `accent` rounded square; in step 7 it becomes the favicon and app icon. Neither appears inside the widget, which belongs to the business.
