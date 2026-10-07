@@ -25,6 +25,7 @@
     "@ai-sdk/provider": "4.0.21",
     "@ai-sdk/react": "^4.0.130",
     "@base-ui/react": "^1.8.0",
+    "@phosphor-icons/react": "2.1.10",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "ai": "^7.0.127",
