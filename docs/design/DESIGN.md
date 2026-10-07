@@ -1,6 +1,6 @@
 # Hala design system
 
-**Status:** proposed, step 2 of the redesign ([audit](audit.md)). Nothing in the app uses it yet: once approved, step 3 turns it into shared tokens, and steps 4 to 6 apply it to the widget, the demo page and the dashboard.
+**Status:** approved (step 2 of the redesign, after the [audit](audit.md)). Step 3 made it the app's tokens: [TOKENS.md](TOKENS.md) explains the files, the names used in code, and how another project uses them. Steps 4 to 6 apply it to the widget, the demo page and the dashboard.
 
 **See it:** `pnpm dev`, then http://localhost:3100/design-preview (development only: a production build answers 404). Screenshots are in [`preview/`](preview/).
 
@@ -45,6 +45,7 @@ One family of **stone** neutrals (a trace of warmth: hue 65 to 75, chroma at mos
 | `success` / `success-soft`     | 0.50 0.10 155 / 0.95 0.03 155 | `#2a7449` | 0.74 0.13 155 / 0.29 0.05 155 | `#5ec386` | Booked, confirmed                                        |
 | `warning-ink` / `warning-soft` | 0.47 0.10 60 / 0.95 0.045 85  | `#834b14` | 0.84 0.12 80 / 0.30 0.05 75   | `#f4c26a` | Waiting for the team                                     |
 | `danger` / `danger-soft`       | 0.52 0.17 27 / 0.955 0.02 25  | `#b6322d` | 0.72 0.16 25 / 0.30 0.06 25   | `#f97770` | Errors, cancelling                                       |
+| `on-danger`                    | 0.99 0.005 25                 | `#fffafa` | 0.18 0.020 25                 | `#1a0e0d` | Text on a solid danger button                            |
 
 **Contrast, computed** (OKLCH converted to sRGB, WCAG ratios rounded down; AA asks 4.5:1 for text and 3:1 for outlines and focus):
 
@@ -60,6 +61,7 @@ One family of **stone** neutrals (a trace of warmth: hue 65 to 75, chroma at mos
 | `danger` on `danger-soft`                      | 5.2:1  | 5.2:1  |
 | `line-input` on `surface`                      | 3.3:1  | 3.3:1  |
 | `success` on `success-soft` (badges)           | 4.9:1  | 6.3:1  |
+| `on-danger` on `danger`                        | 5.8:1  | 7.1:1  |
 
 **Dark mode.** The dashboard, sign-in and home pages follow the device's setting (`prefers-color-scheme`). The widget stays light: it sits on businesses' own websites, most of them light, and a dark widget on a light site looks like a mistake (a per-business setting would be a new feature, so it's a proposal). The demo salon is its own website, and light.
 
@@ -180,4 +182,4 @@ The wordmark is "Hala | هلا" in Readex Pro semibold. The app mark is "هلا"
 
 ## For the marketing site
 
-The marketing website will use exactly this system: step 3 writes the tokens once (CSS variables plus `docs/design/tokens.json`) with notes on using them in another project.
+The marketing website uses exactly this system: [TOKENS.md](TOKENS.md) shows how to bring the tokens (`src/styles/tokens.css`, or `tokens.json` for tools) into another project.

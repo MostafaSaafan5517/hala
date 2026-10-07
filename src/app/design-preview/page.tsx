@@ -17,12 +17,18 @@ import {
   X,
 } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
-import { Alexandria, Readex_Pro, Rubik } from "next/font/google";
+import {
+  Alexandria,
+  Geist,
+  IBM_Plex_Sans_Arabic,
+  Rubik,
+} from "next/font/google";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import tokens from "../../../docs/design/tokens.json";
 import "./preview.css";
 
-// The proposed design system (docs/design/DESIGN.md), shown with its tokens and key components
+// Hala's design system (docs/design/DESIGN.md), shown with its tokens and key components
 // in English and Arabic, light and dark. Development only: a production build answers 404.
 
 export const metadata: Metadata = {
@@ -31,11 +37,10 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-const readex = Readex_Pro({
-  variable: "--font-readex",
-  subsets: ["latin", "arabic"],
-});
-// Only for the "fonts considered" comparison.
+// Only for the "fonts considered" comparison: today's pair and two other candidates. Readex Pro
+// itself comes from the root layout.
+const geist = Geist({ subsets: ["latin"] });
+const plexArabic = IBM_Plex_Sans_Arabic({ subsets: ["arabic"], weight: "400" });
 const alexandria = Alexandria({ subsets: ["latin", "arabic"] });
 const rubik = Rubik({ subsets: ["latin", "arabic"] });
 
@@ -171,113 +176,68 @@ const words = {
   },
 } as const;
 
-const swatches: { name: string; role: string; light: string; dark: string }[] =
-  [
-    { name: "bg", role: "Page", light: "#f8f6f4", dark: "#120f0c" },
-    {
-      name: "surface",
-      role: "Cards, panels",
-      light: "#fefdfc",
-      dark: "#1b1815",
-    },
-    {
-      name: "surface-2",
-      role: "Fills, assistant bubble",
-      light: "#f2f0ec",
-      dark: "#25211d",
-    },
-    { name: "line", role: "Dividers", light: "#e1ddd8", dark: "#37322e" },
-    {
-      name: "line-input",
-      role: "Field borders (3:1)",
-      light: "#908b86",
-      dark: "#716a65",
-    },
-    { name: "ink", role: "Text", light: "#231e19", dark: "#f1eeea" },
-    {
-      name: "ink-2",
-      role: "Secondary text",
-      light: "#524c46",
-      dark: "#c1bdb8",
-    },
-    {
-      name: "ink-3",
-      role: "Muted text (4.6:1+)",
-      light: "#716a65",
-      dark: "#9c9792",
-    },
-    {
-      name: "accent",
-      role: "Actions, focus",
-      light: "#0e726e",
-      dark: "#52bfb9",
-    },
-    {
-      name: "accent-soft",
-      role: "Selected, highlights",
-      light: "#ddf4f2",
-      dark: "#0b3533",
-    },
-    {
-      name: "success",
-      role: "Booked, confirmed",
-      light: "#2a7449",
-      dark: "#5ec386",
-    },
-    { name: "warning", role: "Waiting", light: "#834b14", dark: "#f4c26a" },
-    {
-      name: "danger",
-      role: "Errors, cancel",
-      light: "#b6322d",
-      dark: "#f97770",
-    },
-  ];
+/** The colors shown as swatches, with what each is for; the values come from the tokens. */
+const swatches: { name: keyof typeof tokens.color; role: string }[] = [
+  { name: "bg", role: "Page" },
+  { name: "surface", role: "Cards, panels" },
+  { name: "surface-2", role: "Fills, assistant bubble" },
+  { name: "line", role: "Dividers" },
+  { name: "line-input", role: "Field borders (3:1)" },
+  { name: "ink", role: "Text" },
+  { name: "ink-2", role: "Secondary text" },
+  { name: "ink-3", role: "Muted text" },
+  { name: "accent", role: "Actions, focus" },
+  { name: "accent-soft", role: "Selected, highlights" },
+  { name: "success", role: "Booked, confirmed" },
+  { name: "warning-ink", role: "Waiting" },
+  { name: "danger", role: "Errors, cancel" },
+];
 
 const scale: { className: string; label: string; en: string; ar: string }[] = [
   {
-    className: "hp-display",
+    className: "text-display",
     label: "Display 44/52",
     en: "Welcome, we're here",
     ar: "أهلًا بك، نحن هنا",
   },
   {
-    className: "hp-h1",
+    className: "text-h1",
     label: "H1 32/40",
     en: "Nour Salon",
     ar: "صالون نور",
   },
   {
-    className: "hp-h2",
+    className: "text-h2",
     label: "H2 24/32",
     en: "Today's bookings",
     ar: "حجوزات اليوم",
   },
   {
-    className: "hp-h3",
+    className: "text-h3",
     label: "H3 19/28",
     en: "Booking rules",
     ar: "قواعد الحجز",
   },
   {
-    className: "hp-lg",
+    className: "text-large",
     label: "Large 17/28",
     en: "Haircut on Friday at 17:00, SAR 120.00.",
     ar: "قص شعر يوم الجمعة الساعة 17:00، بسعر 120.00 ر.س.",
   },
   {
-    className: "hp-body",
+    className: "text-body",
     label: "Body 15/24 (Arabic 15/28)",
     en: "Customers chat with the assistant on your website. It answers from your own information and books real appointments.",
     ar: "يتحدث العملاء مع المساعد على موقعك. يجيب من معلوماتك أنت ويحجز مواعيد حقيقية.",
   },
   {
-    className: "hp-sm",
+    className: "text-small",
     label: "Small 13/20",
     en: "Times are in Asia/Riyadh time.",
     ar: "الأوقات بتوقيت الرياض.",
   },
   {
-    className: "hp-xs",
+    className: "text-caption",
     label: "Caption 12/16",
     en: "Checked availability",
     ar: "تم التحقق من المواعيد المتاحة",
@@ -297,8 +257,12 @@ function Section({
   return (
     <section className="grid gap-5">
       <div className="grid gap-1">
-        <h2 className="hp-h2">{title}</h2>
-        {note && <p className="hp-sm max-w-[70ch] text-(--h-ink-2)">{note}</p>}
+        <h2 className="text-h2">{title}</h2>
+        {note && (
+          <p className="max-w-[70ch] text-small text-secondary-foreground">
+            {note}
+          </p>
+        )}
       </div>
       {children}
     </section>
@@ -319,11 +283,11 @@ function Frame({
 }) {
   return (
     <div className="grid content-start gap-2">
-      <p className="hp-xs font-medium text-(--h-ink-3)">{label}</p>
+      <p className="text-caption font-medium text-muted-foreground">{label}</p>
       <div
         lang={language}
         dir={language === "ar" ? "rtl" : "ltr"}
-        className={`${dark ? "hp-dark" : ""} grid content-start gap-6 rounded-(--h-radius-surface) bg-(--h-bg) p-5 text-(--h-ink) shadow-(--h-shadow-1)`}
+        className={`${dark ? "hala-dark" : "hala-light"} grid content-start gap-6 rounded-surface bg-background p-5 text-foreground shadow-level-1`}
       >
         {children}
       </div>
@@ -341,19 +305,18 @@ function Button({
   children: ReactNode;
 }) {
   const look = {
-    primary:
-      "bg-(--h-accent) text-(--h-on-accent) hover:bg-(--h-accent-strong)",
-    secondary: "bg-(--h-surface-2) text-(--h-ink) hover:bg-(--h-surface-3)",
+    primary: "bg-primary text-primary-foreground hover:bg-primary-strong",
+    secondary: "bg-muted text-foreground hover:bg-secondary-strong",
     outline:
-      "bg-(--h-surface) text-(--h-ink) shadow-[inset_0_0_0_1px_var(--h-line-input)] hover:bg-(--h-surface-2)",
-    ghost: "text-(--h-accent-ink) hover:bg-(--h-accent-soft)",
+      "bg-card text-foreground shadow-[inset_0_0_0_1px_var(--hala-line-input)] hover:bg-muted",
+    ghost: "text-accent-foreground hover:bg-accent",
     danger:
-      "bg-(--h-danger-soft) text-(--h-danger) hover:bg-(--h-danger) hover:text-(--h-on-accent)",
+      "bg-destructive-soft text-destructive hover:bg-destructive hover:text-destructive-foreground",
   }[kind];
   return (
     <button
       type="button"
-      className={`hp-press inline-flex h-10 items-center gap-2 rounded-(--h-radius-control) px-4 text-[14px] font-medium ${look}`}
+      className={`hp-press inline-flex h-10 items-center gap-2 rounded-control px-4 text-[14px] font-medium ${look}`}
     >
       {icon}
       {children}
@@ -371,15 +334,15 @@ function Badge({
   children: ReactNode;
 }) {
   const look = {
-    warning: "bg-(--h-warning-soft) text-(--h-warning-ink)",
-    accent: "bg-(--h-accent-soft) text-(--h-accent-ink)",
-    neutral: "bg-(--h-surface-2) text-(--h-ink-2)",
-    success: "bg-(--h-success-soft) text-(--h-success)",
-    danger: "bg-(--h-danger-soft) text-(--h-danger)",
+    warning: "bg-warning-soft text-warning",
+    accent: "bg-accent text-accent-foreground",
+    neutral: "bg-muted text-secondary-foreground",
+    success: "bg-success-soft text-success",
+    danger: "bg-destructive-soft text-destructive",
   }[tone];
   return (
     <span
-      className={`hp-xs inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium ${look}`}
+      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-caption font-medium ${look}`}
     >
       {icon}
       {children}
@@ -404,19 +367,21 @@ function Components({ language }: { language: Language }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="grid gap-1.5">
-          <span className="hp-sm font-medium">{t.businessName}</span>
+          <span className="text-small font-medium">{t.businessName}</span>
           <input
             defaultValue={t.businessValue}
-            className="h-10 rounded-(--h-radius-control) bg-(--h-surface) px-3 shadow-[inset_0_0_0_1px_var(--h-line-input)]"
+            className="h-10 rounded-control bg-card px-3 shadow-[inset_0_0_0_1px_var(--hala-line-input)]"
           />
-          <span className="hp-xs text-(--h-ink-3)">{t.businessHelp}</span>
+          <span className="text-caption text-muted-foreground">
+            {t.businessHelp}
+          </span>
         </label>
         <label className="grid gap-1.5">
-          <span className="hp-sm font-medium">{t.timeZone}</span>
+          <span className="text-small font-medium">{t.timeZone}</span>
           <span className="relative grid">
             <select
               defaultValue="Asia/Riyadh"
-              className="h-10 w-full appearance-none rounded-(--h-radius-control) bg-(--h-surface) ps-3 pe-9 shadow-[inset_0_0_0_1px_var(--h-line-input)]"
+              className="h-10 w-full appearance-none rounded-control bg-card ps-3 pe-9 shadow-[inset_0_0_0_1px_var(--hala-line-input)]"
             >
               <option>Asia/Riyadh</option>
               <option>Africa/Cairo</option>
@@ -424,19 +389,19 @@ function Components({ language }: { language: Language }) {
             <CaretDown
               size={16}
               aria-hidden="true"
-              className="pointer-events-none absolute end-3 top-3 text-(--h-ink-3)"
+              className="pointer-events-none absolute end-3 top-3 text-muted-foreground"
             />
           </span>
         </label>
         <label className="grid gap-1.5 sm:col-span-2">
-          <span className="hp-sm font-medium">{t.password}</span>
+          <span className="text-small font-medium">{t.password}</span>
           <input
             type="password"
             defaultValue="password"
             aria-invalid="true"
-            className="h-10 rounded-(--h-radius-control) bg-(--h-surface) px-3 shadow-[inset_0_0_0_2px_var(--h-danger)]"
+            className="h-10 rounded-control bg-card px-3 shadow-[inset_0_0_0_2px_var(--hala-danger)]"
           />
-          <span className="hp-xs inline-flex items-center gap-1 text-(--h-danger)">
+          <span className="inline-flex items-center gap-1 text-caption text-destructive">
             <WarningCircle size={16} aria-hidden="true" />
             {t.passwordError}
           </span>
@@ -450,10 +415,10 @@ function Components({ language }: { language: Language }) {
               key={tab}
               href="#components"
               aria-current={index === 2 ? "page" : undefined}
-              className={`hp-press hp-sm rounded-full px-3 py-1.5 ${
+              className={`hp-press rounded-full px-3 py-1.5 text-small ${
                 index === 2
-                  ? "bg-(--h-accent-soft) font-medium text-(--h-accent-ink)"
-                  : "text-(--h-ink-2) hover:bg-(--h-surface-2)"
+                  ? "bg-accent font-medium text-accent-foreground"
+                  : "text-secondary-foreground hover:bg-muted"
               }`}
             >
               {tab}
@@ -464,10 +429,10 @@ function Components({ language }: { language: Language }) {
           {t.periods.map((period, index) => (
             <span
               key={period}
-              className={`hp-sm rounded-full px-3 py-1.5 ${
+              className={`rounded-full px-3 py-1.5 text-small ${
                 index === 0
-                  ? "bg-(--h-accent-soft) font-medium text-(--h-accent-ink)"
-                  : "text-(--h-ink-2) shadow-[inset_0_0_0_1px_var(--h-line)]"
+                  ? "bg-accent font-medium text-accent-foreground"
+                  : "text-secondary-foreground shadow-[inset_0_0_0_1px_var(--hala-line)]"
               }`}
             >
               {period}
@@ -490,24 +455,26 @@ function Components({ language }: { language: Language }) {
         <Badge tone="danger">{t.badges.cancelled}</Badge>
       </div>
 
-      <div className="overflow-hidden rounded-(--h-radius-surface) bg-(--h-surface) shadow-(--h-shadow-1)">
-        <p className="hp-sm border-b border-(--h-line) px-4 py-3 font-medium">
+      <div className="overflow-hidden rounded-surface bg-card shadow-level-1">
+        <p className="border-b border-border px-4 py-3 text-small font-medium">
           {t.day}
         </p>
-        <ul className="divide-y divide-(--h-line)">
+        <ul className="divide-y divide-border">
           {t.bookings.map(([time, customer, what, reference]) => (
             <li
               key={reference}
               className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-3"
             >
-              <span dir="ltr" className="hp-sm font-medium tabular-nums">
+              <span dir="ltr" className="text-small font-medium tabular-nums">
                 {time}
               </span>
               <span className="grid">
-                <span className="hp-body font-medium">{customer}</span>
-                <span className="hp-sm text-(--h-ink-2)">{what}</span>
+                <span className="text-body font-medium">{customer}</span>
+                <span className="text-small text-secondary-foreground">
+                  {what}
+                </span>
               </span>
-              <span className="hp-xs font-mono text-(--h-ink-3)">
+              <span className="font-mono text-caption text-muted-foreground">
                 {reference}
               </span>
             </li>
@@ -519,14 +486,14 @@ function Components({ language }: { language: Language }) {
         role="region"
         aria-label={t.tableCaption}
         tabIndex={0}
-        className="overflow-x-auto rounded-(--h-radius-surface) bg-(--h-surface) shadow-(--h-shadow-1)"
+        className="overflow-x-auto rounded-surface bg-card shadow-level-1"
       >
         <table className="w-full border-collapse">
-          <caption className="hp-sm px-4 pt-3 text-start font-medium">
+          <caption className="px-4 pt-3 text-start text-small font-medium">
             {t.tableCaption}
           </caption>
           <thead>
-            <tr className="hp-xs text-(--h-ink-3)">
+            <tr className="text-caption text-muted-foreground">
               {t.tableHead.map((head, index) => (
                 <th
                   key={head}
@@ -537,11 +504,11 @@ function Components({ language }: { language: Language }) {
               ))}
             </tr>
           </thead>
-          <tbody className="hp-sm">
+          <tbody className="text-small">
             {t.tableRows.map((row) => (
               <tr
                 key={row[0]}
-                className="border-t border-(--h-line) hover:bg-(--h-surface-2)"
+                className="border-t border-border hover:bg-muted"
               >
                 {row.map((cell, index) => (
                   <td
@@ -557,12 +524,14 @@ function Components({ language }: { language: Language }) {
         </table>
       </div>
 
-      <div className="grid justify-items-center gap-3 rounded-(--h-radius-surface) bg-(--h-surface) px-6 py-8 text-center shadow-(--h-shadow-1)">
-        <span className="grid size-12 place-items-center rounded-full bg-(--h-accent-soft) text-(--h-accent-ink)">
+      <div className="grid justify-items-center gap-3 rounded-surface bg-card px-6 py-8 text-center shadow-level-1">
+        <span className="grid size-12 place-items-center rounded-full bg-accent text-accent-foreground">
           <Scissors size={24} aria-hidden="true" />
         </span>
-        <p className="hp-h3">{t.emptyTitle}</p>
-        <p className="hp-sm max-w-[42ch] text-(--h-ink-2)">{t.emptyBody}</p>
+        <p className="text-h3">{t.emptyTitle}</p>
+        <p className="max-w-[42ch] text-small text-secondary-foreground">
+          {t.emptyBody}
+        </p>
         <Button icon={<Plus size={18} />}>{t.newService}</Button>
       </div>
     </>
@@ -572,7 +541,7 @@ function Components({ language }: { language: Language }) {
 /** A process line: what the assistant looked up, quiet but legible. */
 function Step({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <p className="hp-xs inline-flex items-center gap-1.5 text-(--h-ink-3)">
+    <p className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
       {icon}
       {children}
     </p>
@@ -587,23 +556,23 @@ function Widget({ language }: { language: Language }) {
     <div
       lang={language}
       dir={language === "ar" ? "rtl" : "ltr"}
-      className="grid w-full max-w-[400px] min-w-0 content-start gap-3"
+      className="hala-light grid w-full max-w-[400px] min-w-0 content-start gap-3"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr_auto] overflow-hidden rounded-[20px] bg-(--h-surface) shadow-(--h-shadow-3)">
-        <header className="flex items-center gap-2 border-b border-(--h-line) px-3 py-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr_auto] overflow-hidden rounded-[20px] bg-card shadow-level-3">
+        <header className="flex items-center gap-2 border-b border-border px-3 py-2">
           <span
             aria-hidden="true"
-            className="grid size-9 shrink-0 place-items-center rounded-full bg-(--h-accent) text-[15px] font-semibold text-(--h-on-accent)"
+            className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-[15px] font-semibold text-primary-foreground"
           >
             {initial}
           </span>
-          <h3 className="hp-body min-w-0 flex-1 truncate font-semibold">
+          <h3 className="min-w-0 flex-1 truncate text-body font-semibold">
             {t.title}
           </h3>
           <button
             type="button"
             lang={language === "ar" ? "en" : "ar"}
-            className="hp-press hp-sm inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-(--h-ink-2) hover:bg-(--h-surface-2)"
+            className="hp-press inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-small text-secondary-foreground hover:bg-muted"
           >
             <Globe size={16} aria-hidden="true" />
             {t.other}
@@ -611,32 +580,32 @@ function Widget({ language }: { language: Language }) {
           <button
             type="button"
             aria-label={t.close}
-            className="hp-press grid size-11 place-items-center rounded-full text-(--h-ink-2) hover:bg-(--h-surface-2)"
+            className="hp-press grid size-11 place-items-center rounded-full text-secondary-foreground hover:bg-muted"
           >
             <X size={18} />
           </button>
         </header>
 
         <div className="grid grid-cols-[minmax(0,1fr)] content-start gap-3 px-4 py-4">
-          <p className="hp-body max-w-[85%] justify-self-end rounded-(--h-radius-bubble) rounded-ee-md bg-(--h-accent) px-3.5 py-2 text-(--h-on-accent)">
+          <p className="max-w-[85%] justify-self-end rounded-bubble rounded-ee-md bg-primary px-3.5 py-2 text-body text-primary-foreground">
             {t.parking}
           </p>
           <div className="grid max-w-[88%] justify-items-start gap-1.5">
             <Step icon={<MagnifyingGlass size={14} aria-hidden="true" />}>
               {t.lookedUp}
             </Step>
-            <p className="hp-body rounded-(--h-radius-bubble) rounded-es-md bg-(--h-surface-2) px-3.5 py-2">
+            <p className="rounded-bubble rounded-es-md bg-muted px-3.5 py-2 text-body">
               {t.parkingReply}{" "}
-              <span className="text-(--h-accent-ink)">[1]</span>
+              <span className="text-accent-foreground">[1]</span>
             </p>
-            <p className="hp-xs flex flex-wrap items-center gap-1.5 text-(--h-ink-3)">
+            <p className="flex flex-wrap items-center gap-1.5 text-caption text-muted-foreground">
               {t.sources}
-              <span className="rounded-full bg-(--h-surface-2) px-2 py-0.5 text-(--h-ink-2)">
+              <span className="rounded-full bg-muted px-2 py-0.5 text-secondary-foreground">
                 1 · {t.source}
               </span>
             </p>
           </div>
-          <p className="hp-body max-w-[85%] justify-self-end rounded-(--h-radius-bubble) rounded-ee-md bg-(--h-accent) px-3.5 py-2 text-(--h-on-accent)">
+          <p className="max-w-[85%] justify-self-end rounded-bubble rounded-ee-md bg-primary px-3.5 py-2 text-body text-primary-foreground">
             {t.bookAsk}
           </p>
           <div className="grid max-w-[92%] gap-1.5">
@@ -649,22 +618,22 @@ function Widget({ language }: { language: Language }) {
             <div
               role="group"
               aria-label={t.confirm}
-              className="grid gap-3 rounded-(--h-radius-surface) bg-(--h-surface) p-4 shadow-(--h-shadow-2)"
+              className="grid gap-3 rounded-surface bg-card p-4 shadow-level-2"
             >
-              <span className="grid size-9 place-items-center rounded-full bg-(--h-accent-soft) text-(--h-accent-ink)">
+              <span className="grid size-9 place-items-center rounded-full bg-accent text-accent-foreground">
                 <CalendarCheck size={20} aria-hidden="true" />
               </span>
-              <p className="hp-lg font-medium">{t.summary}</p>
+              <p className="text-large font-medium">{t.summary}</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  className="hp-press h-11 rounded-(--h-radius-control) bg-(--h-accent) font-medium text-(--h-on-accent) hover:bg-(--h-accent-strong)"
+                  className="hp-press h-11 rounded-control bg-primary font-medium text-primary-foreground hover:bg-primary-strong"
                 >
                   {t.confirm}
                 </button>
                 <button
                   type="button"
-                  className="hp-press h-11 rounded-(--h-radius-control) bg-(--h-surface-2) font-medium hover:bg-(--h-surface-3)"
+                  className="hp-press h-11 rounded-control bg-muted font-medium hover:bg-secondary-strong"
                 >
                   {t.notNow}
                 </button>
@@ -676,36 +645,36 @@ function Widget({ language }: { language: Language }) {
                   size={14}
                   weight="fill"
                   aria-hidden="true"
-                  className="text-(--h-success)"
+                  className="text-success"
                 />
               }
             >
-              <span className="font-medium text-(--h-success)">{t.booked}</span>
+              <span className="font-medium text-success">{t.booked}</span>
             </Step>
           </div>
-          <div className="grid max-w-[88%] gap-1 rounded-(--h-radius-bubble) rounded-es-md bg-(--h-surface) px-3.5 py-2 shadow-[inset_3px_0_0_var(--h-accent),var(--h-shadow-1)] rtl:shadow-[inset_-3px_0_0_var(--h-accent),var(--h-shadow-1)]">
-            <span className="hp-xs inline-flex items-center gap-1 font-medium text-(--h-accent-ink)">
+          <div className="grid max-w-[88%] gap-1 rounded-bubble rounded-es-md bg-card px-3.5 py-2 shadow-[inset_3px_0_0_var(--hala-accent),var(--hala-shadow-1)] rtl:shadow-[inset_-3px_0_0_var(--hala-accent),var(--hala-shadow-1)]">
+            <span className="inline-flex items-center gap-1 text-caption font-medium text-accent-foreground">
               <UserCircle size={14} aria-hidden="true" />
               {t.team}
             </span>
-            <p className="hp-body">{t.teamReply}</p>
+            <p className="text-body">{t.teamReply}</p>
           </div>
           <p
             aria-hidden="true"
-            className="hp-typing flex gap-1 justify-self-start rounded-(--h-radius-bubble) rounded-es-md bg-(--h-surface-2) px-3.5 py-3"
+            className="hp-typing flex gap-1 justify-self-start rounded-bubble rounded-es-md bg-muted px-3.5 py-3"
           >
-            <span className="size-1.5 rounded-full bg-(--h-ink-3)" />
-            <span className="size-1.5 rounded-full bg-(--h-ink-3)" />
-            <span className="size-1.5 rounded-full bg-(--h-ink-3)" />
+            <span className="size-1.5 rounded-full bg-muted-foreground" />
+            <span className="size-1.5 rounded-full bg-muted-foreground" />
+            <span className="size-1.5 rounded-full bg-muted-foreground" />
           </p>
         </div>
 
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-2 border-t border-(--h-line) p-3">
-          <p className="hp-xs inline-flex items-center gap-1.5 px-1 text-(--h-accent-ink)">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-2 border-t border-border p-3">
+          <p className="inline-flex items-center gap-1.5 px-1 text-caption text-accent-foreground">
             <UserCircle size={14} aria-hidden="true" />
             {t.withTeam}
           </p>
-          <div className="flex items-end gap-2 rounded-[14px] bg-(--h-surface-2) p-1.5 ps-3">
+          <div className="flex items-end gap-2 rounded-[14px] bg-muted p-1.5 ps-3">
             <label className="sr-only" htmlFor={`message-${language}`}>
               {t.message}
             </label>
@@ -713,12 +682,12 @@ function Widget({ language }: { language: Language }) {
               id={`message-${language}`}
               rows={1}
               placeholder={t.placeholder}
-              className="hp-body max-h-28 min-h-11 flex-1 resize-none bg-transparent py-2.5 outline-none placeholder:text-(--h-ink-3)"
+              className="max-h-28 min-h-11 flex-1 resize-none bg-transparent py-2.5 text-body outline-none placeholder:text-muted-foreground"
             />
             <button
               type="button"
               aria-label={t.send}
-              className="hp-press grid size-11 shrink-0 place-items-center rounded-[10px] bg-(--h-accent) text-(--h-on-accent) hover:bg-(--h-accent-strong)"
+              className="hp-press grid size-11 shrink-0 place-items-center rounded-[10px] bg-primary text-primary-foreground hover:bg-primary-strong"
             >
               <PaperPlaneRight
                 size={20}
@@ -731,7 +700,7 @@ function Widget({ language }: { language: Language }) {
       </div>
       <button
         type="button"
-        className="hp-press inline-flex h-12 items-center gap-2 justify-self-end rounded-full bg-(--h-accent) ps-4 pe-5 font-medium text-(--h-on-accent) shadow-(--h-shadow-2)"
+        className="hp-press inline-flex h-12 items-center gap-2 justify-self-end rounded-full bg-primary ps-4 pe-5 font-medium text-primary-foreground shadow-level-2"
       >
         <ChatCircleDots size={22} weight="fill" aria-hidden="true" />
         {t.launcher}
@@ -745,15 +714,15 @@ function DashboardSlice() {
   return (
     <div
       lang="en"
-      className="overflow-hidden rounded-(--h-radius-surface) bg-(--h-bg) shadow-(--h-shadow-1)"
+      className="overflow-hidden rounded-surface bg-background shadow-level-1"
     >
-      <div className="flex items-center gap-3 border-b border-(--h-line) bg-(--h-surface) px-5 py-3">
-        <span className="grid size-8 place-items-center rounded-[9px] bg-(--h-accent) text-[14px] font-semibold text-(--h-on-accent)">
+      <div className="flex items-center gap-3 border-b border-border bg-card px-5 py-3">
+        <span className="grid size-8 place-items-center rounded-[9px] bg-primary text-[14px] font-semibold text-primary-foreground">
           <span lang="ar">هلا</span>
         </span>
         <span className="font-semibold">Hala</span>
-        <span className="text-(--h-line-input)">/</span>
-        <span className="hp-sm inline-flex items-center gap-1 font-medium">
+        <span className="text-input">/</span>
+        <span className="inline-flex items-center gap-1 text-small font-medium">
           Nour Salon
           <CaretDown size={14} aria-hidden="true" />
         </span>
@@ -772,10 +741,10 @@ function DashboardSlice() {
                 key={label as string}
                 href="#dashboard"
                 aria-current={index === 3 ? "page" : undefined}
-                className={`hp-press hp-sm inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 ${
+                className={`hp-press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-small ${
                   index === 3
-                    ? "bg-(--h-accent-soft) font-medium text-(--h-accent-ink)"
-                    : "text-(--h-ink-2) hover:bg-(--h-surface-2)"
+                    ? "bg-accent font-medium text-accent-foreground"
+                    : "text-secondary-foreground hover:bg-muted"
                 }`}
               >
                 <Glyph size={16} aria-hidden="true" />
@@ -785,16 +754,16 @@ function DashboardSlice() {
           })}
         </nav>
         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-          <div className="grid gap-3 rounded-(--h-radius-surface) bg-(--h-surface) p-4 shadow-(--h-shadow-1)">
-            <p className="hp-sm text-(--h-ink-2)">Spent today</p>
-            <p className="hp-h1 tabular-nums">
+          <div className="grid gap-3 rounded-surface bg-card p-4 shadow-level-1">
+            <p className="text-small text-secondary-foreground">Spent today</p>
+            <p className="text-h1 tabular-nums">
               $0.04{" "}
-              <span className="hp-sm font-normal text-(--h-ink-3)">
+              <span className="text-small font-normal text-muted-foreground">
                 of $5.00
               </span>
             </p>
-            <div className="h-1.5 overflow-hidden rounded-full bg-(--h-surface-2)">
-              <div className="h-full w-[2%] rounded-full bg-(--h-accent)" />
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className="h-full w-[2%] rounded-full bg-primary" />
             </div>
           </div>
           {[
@@ -803,12 +772,14 @@ function DashboardSlice() {
             ["Asked for a person", "1"],
           ].map(([label, value]) => (
             <div key={label} className="grid content-start gap-1 pt-4">
-              <p className="hp-sm text-(--h-ink-2)">{label}</p>
-              <p className="hp-h2 tabular-nums">{value}</p>
+              <p className="text-small text-secondary-foreground">{label}</p>
+              <p className="text-h2 tabular-nums">{value}</p>
             </div>
           ))}
         </div>
-        <p className="hp-xs text-(--h-ink-3)">Sample values for the preview.</p>
+        <p className="text-caption text-muted-foreground">
+          Sample values for the preview.
+        </p>
       </div>
     </div>
   );
@@ -818,26 +789,27 @@ export default function DesignPreview() {
   if (process.env.NODE_ENV === "production") notFound();
 
   return (
-    <div className={`${readex.variable} hp flex-1`}>
+    <div className="flex-1 bg-background text-foreground">
       <main className="mx-auto grid max-w-[1320px] gap-14 px-4 py-10 sm:px-8">
         <header className="grid gap-4">
           <div className="flex items-center gap-3">
-            <span className="grid size-12 place-items-center rounded-[14px] bg-(--h-accent) text-[19px] font-semibold text-(--h-on-accent)">
+            <span className="grid size-12 place-items-center rounded-[14px] bg-primary text-[19px] font-semibold text-primary-foreground">
               <span lang="ar">هلا</span>
             </span>
-            <p className="hp-h2">
-              Hala <span className="text-(--h-line-input)">|</span>{" "}
+            <p className="text-h2">
+              Hala <span className="text-input">|</span>{" "}
               <span lang="ar">هلا</span>
             </p>
           </div>
-          <h1 className="hp-display max-w-[22ch]">
+          <h1 className="max-w-[22ch] text-display">
             A front desk that says welcome, in both languages
           </h1>
-          <p className="hp-lg max-w-[68ch] text-(--h-ink-2)">
-            The proposed design system, step 2 of the redesign: warm stone
-            neutrals, one deep teal for everything you can act on, and Readex
-            Pro setting Arabic and English together. Development only; the
-            reasoning is in docs/design/DESIGN.md.
+          <p className="max-w-[68ch] text-large text-secondary-foreground">
+            Hala&apos;s design system: warm stone neutrals, one deep teal for
+            everything you can act on, and Readex Pro setting Arabic and English
+            together. Everything here uses the app&apos;s own tokens.
+            Development only; the reasoning is in docs/design/DESIGN.md, the
+            tokens in docs/design/TOKENS.md.
           </p>
         </header>
 
@@ -849,21 +821,25 @@ export default function DesignPreview() {
             {(["light", "dark"] as const).map((mode) => (
               <div
                 key={mode}
-                className={`${mode === "dark" ? "hp-dark" : ""} grid gap-2 rounded-(--h-radius-surface) p-4 shadow-(--h-shadow-1)`}
+                className={`${mode === "dark" ? "hala-dark" : "hala-light"} grid gap-2 rounded-surface bg-background p-4 shadow-level-1`}
               >
-                <p className="hp-sm font-medium">
+                <p className="text-small font-medium">
                   {mode === "light" ? "Light" : "Dark"}
                 </p>
                 <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {swatches.map((swatch) => (
                     <li key={swatch.name} className="grid gap-1">
                       <span
-                        className="h-12 rounded-(--h-radius-control) shadow-[inset_0_0_0_1px_oklch(0.5_0_0/0.15)]"
-                        style={{ background: swatch[mode] }}
+                        className="h-12 rounded-control shadow-[inset_0_0_0_1px_oklch(0.5_0_0/0.15)]"
+                        style={{
+                          background: tokens.color[swatch.name][mode].hex,
+                        }}
                       />
-                      <span className="hp-xs font-medium">{swatch.name}</span>
-                      <span className="hp-xs text-(--h-ink-3)">
-                        {swatch[mode]} · {swatch.role}
+                      <span className="text-caption font-medium">
+                        {swatch.name}
+                      </span>
+                      <span className="text-caption text-muted-foreground">
+                        {tokens.color[swatch.name][mode].hex} · {swatch.role}
                       </span>
                     </li>
                   ))}
@@ -877,13 +853,15 @@ export default function DesignPreview() {
           title="Type"
           note="Readex Pro for both scripts: its Arabic was drawn alongside its Latin, so the two share weight, color and rhythm. Arabic keeps the sizes and gets more line height; only Latin display sizes tighten their tracking. Digits are Western in both languages."
         >
-          <div className="overflow-hidden rounded-(--h-radius-surface) bg-(--h-surface) shadow-(--h-shadow-1)">
+          <div className="overflow-hidden rounded-surface bg-card shadow-level-1">
             {scale.map((step) => (
               <div
                 key={step.label}
-                className="grid gap-x-8 gap-y-2 border-b border-(--h-line) px-5 py-4 last:border-b-0 lg:grid-cols-[140px_1fr_1fr]"
+                className="grid gap-x-8 gap-y-2 border-b border-border px-5 py-4 last:border-b-0 lg:grid-cols-[140px_1fr_1fr]"
               >
-                <p className="hp-xs pt-1.5 text-(--h-ink-3)">{step.label}</p>
+                <p className="pt-1.5 text-caption text-muted-foreground">
+                  {step.label}
+                </p>
                 <p lang="en" className={step.className}>
                   {step.en}
                 </p>
@@ -901,16 +879,18 @@ export default function DesignPreview() {
         >
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              ["Level 1: cards and lists", "--h-shadow-1"],
-              ["Level 2: the confirmation, popovers", "--h-shadow-2"],
-              ["Level 3: the widget over a website", "--h-shadow-3"],
+              ["Level 1: cards and lists", "--hala-shadow-1"],
+              ["Level 2: the confirmation, popovers", "--hala-shadow-2"],
+              ["Level 3: the widget over a website", "--hala-shadow-3"],
             ].map(([label, shadow]) => (
               <div
                 key={label}
-                className="grid h-28 place-items-center rounded-(--h-radius-surface) bg-(--h-surface) px-4 text-center"
+                className="grid h-28 place-items-center rounded-surface bg-card px-4 text-center"
                 style={{ boxShadow: `var(${shadow})` }}
               >
-                <span className="hp-sm text-(--h-ink-2)">{label}</span>
+                <span className="text-small text-secondary-foreground">
+                  {label}
+                </span>
               </div>
             ))}
           </div>
@@ -918,10 +898,12 @@ export default function DesignPreview() {
             {[4, 8, 12, 16, 24, 32, 48, 64].map((size) => (
               <div key={size} className="grid justify-items-center gap-1">
                 <span
-                  className="block rounded-[3px] bg-(--h-accent-soft)"
+                  className="block rounded-[3px] bg-accent"
                   style={{ width: size, height: size }}
                 />
-                <span className="hp-xs text-(--h-ink-3)">{size}</span>
+                <span className="text-caption text-muted-foreground">
+                  {size}
+                </span>
               </div>
             ))}
           </div>
@@ -968,19 +950,19 @@ export default function DesignPreview() {
 
         <Section
           title="Fonts considered"
-          note="The same line in each candidate. Readex Pro is the proposal; IBM Plex Sans Arabic is what Hala uses for Arabic today."
+          note="The same line in each candidate. Readex Pro was chosen; Hala used Geist with IBM Plex Sans Arabic before the redesign."
         >
           <div className="grid gap-3 sm:grid-cols-2">
             {[
               [
-                "Readex Pro (proposed)",
-                readex.style.fontFamily,
-                readex.style.fontFamily,
+                "Readex Pro (chosen)",
+                "var(--font-readex)",
+                "var(--font-readex)",
               ],
               [
-                "Geist with IBM Plex Sans Arabic (today)",
-                "var(--font-geist-sans)",
-                "var(--font-arabic)",
+                "Geist with IBM Plex Sans Arabic (before)",
+                geist.style.fontFamily,
+                plexArabic.style.fontFamily,
               ],
               [
                 "Alexandria",
@@ -991,9 +973,9 @@ export default function DesignPreview() {
             ].map(([label, latin, arabic]) => (
               <div
                 key={label}
-                className="grid gap-2 rounded-(--h-radius-surface) bg-(--h-surface) p-4 shadow-(--h-shadow-1)"
+                className="grid gap-2 rounded-surface bg-card p-4 shadow-level-1"
               >
-                <p className="hp-xs text-(--h-ink-3)">{label}</p>
+                <p className="text-caption text-muted-foreground">{label}</p>
                 <p
                   lang="en"
                   className="text-[17px] leading-7"

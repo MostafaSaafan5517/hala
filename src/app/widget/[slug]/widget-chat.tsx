@@ -191,7 +191,8 @@ export function WidgetChat({
     <div
       lang={language}
       dir={language === "ar" ? "rtl" : "ltr"}
-      className="flex h-dvh flex-col bg-background"
+      // Light on every website, whatever the visitor's device prefers (DESIGN.md).
+      className="hala-light flex h-dvh flex-col bg-background"
     >
       <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
         <h1 className="truncate text-sm font-semibold" dir="auto">

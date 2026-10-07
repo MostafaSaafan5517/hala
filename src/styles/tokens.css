@@ -1,0 +1,157 @@
+/* Hala's design tokens (docs/design/DESIGN.md) as plain CSS custom properties: the one source
+   for this app and any other Hala project, with Tailwind or without (docs/design/TOKENS.md).
+   `pnpm tokens` exports them to docs/design/tokens.json, and a unit test keeps the two in step
+   and checks every text pair still meets WCAG AA.
+
+   Colors are light by default and dark when the device asks for it. The classes .hala-light
+   and .hala-dark force one mode for everything inside them (the widget stays light on every
+   website). The dark values are written twice, for the media query and for .hala-dark; the
+   unit test fails if the two drift apart. */
+
+:root,
+.hala-light {
+  color-scheme: light;
+  /* The text color too: inherited text would otherwise keep the outer mode's color. */
+  color: var(--hala-ink);
+  --hala-bg: oklch(0.975 0.004 75);
+  --hala-surface: oklch(0.995 0.002 75);
+  --hala-surface-2: oklch(0.955 0.005 75);
+  --hala-surface-3: oklch(0.925 0.007 75);
+  --hala-line: oklch(0.9 0.008 75);
+  --hala-line-input: oklch(0.64 0.01 75);
+  --hala-ink: oklch(0.24 0.012 65);
+  --hala-ink-2: oklch(0.42 0.012 65);
+  --hala-ink-3: oklch(0.53 0.012 65);
+  --hala-accent: oklch(0.5 0.083 190);
+  --hala-accent-strong: oklch(0.43 0.073 190);
+  --hala-accent-soft: oklch(0.95 0.025 190);
+  --hala-accent-ink: oklch(0.38 0.063 190);
+  --hala-on-accent: oklch(0.99 0.005 190);
+  --hala-success: oklch(0.5 0.1 155);
+  --hala-success-soft: oklch(0.95 0.03 155);
+  --hala-warning-ink: oklch(0.47 0.1 60);
+  --hala-warning-soft: oklch(0.95 0.045 85);
+  --hala-danger: oklch(0.52 0.17 27);
+  --hala-danger-soft: oklch(0.955 0.02 25);
+  --hala-on-danger: oklch(0.99 0.005 25);
+  --hala-shadow-1:
+    0 1px 2px oklch(0.3 0.02 65 / 0.06), 0 0 0 1px oklch(0.3 0.02 65 / 0.07);
+  --hala-shadow-2:
+    0 12px 28px -12px oklch(0.3 0.03 65 / 0.22),
+    0 0 0 1px oklch(0.3 0.02 65 / 0.07);
+  --hala-shadow-3:
+    0 28px 60px -18px oklch(0.25 0.04 65 / 0.32),
+    0 0 0 1px oklch(0.3 0.02 65 / 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --hala-bg: oklch(0.17 0.008 65);
+    --hala-surface: oklch(0.21 0.008 65);
+    --hala-surface-2: oklch(0.25 0.009 65);
+    --hala-surface-3: oklch(0.3 0.01 65);
+    --hala-line: oklch(0.32 0.01 65);
+    --hala-line-input: oklch(0.53 0.012 65);
+    --hala-ink: oklch(0.95 0.006 75);
+    --hala-ink-2: oklch(0.8 0.008 75);
+    --hala-ink-3: oklch(0.68 0.01 75);
+    --hala-accent: oklch(0.74 0.1 190);
+    --hala-accent-strong: oklch(0.8 0.1 190);
+    --hala-accent-soft: oklch(0.3 0.045 190);
+    --hala-accent-ink: oklch(0.86 0.08 190);
+    --hala-on-accent: oklch(0.18 0.02 190);
+    --hala-success: oklch(0.74 0.13 155);
+    --hala-success-soft: oklch(0.29 0.05 155);
+    --hala-warning-ink: oklch(0.84 0.12 80);
+    --hala-warning-soft: oklch(0.3 0.05 75);
+    --hala-danger: oklch(0.72 0.16 25);
+    --hala-danger-soft: oklch(0.3 0.06 25);
+    --hala-on-danger: oklch(0.18 0.02 25);
+    --hala-shadow-1:
+      0 1px 2px oklch(0 0 0 / 0.3), 0 0 0 1px oklch(1 0 0 / 0.06);
+    --hala-shadow-2:
+      0 12px 28px -12px oklch(0 0 0 / 0.55), 0 0 0 1px oklch(1 0 0 / 0.07);
+    --hala-shadow-3:
+      0 28px 60px -18px oklch(0 0 0 / 0.65), 0 0 0 1px oklch(1 0 0 / 0.08);
+  }
+}
+
+.hala-dark {
+  color-scheme: dark;
+  color: var(--hala-ink);
+  --hala-bg: oklch(0.17 0.008 65);
+  --hala-surface: oklch(0.21 0.008 65);
+  --hala-surface-2: oklch(0.25 0.009 65);
+  --hala-surface-3: oklch(0.3 0.01 65);
+  --hala-line: oklch(0.32 0.01 65);
+  --hala-line-input: oklch(0.53 0.012 65);
+  --hala-ink: oklch(0.95 0.006 75);
+  --hala-ink-2: oklch(0.8 0.008 75);
+  --hala-ink-3: oklch(0.68 0.01 75);
+  --hala-accent: oklch(0.74 0.1 190);
+  --hala-accent-strong: oklch(0.8 0.1 190);
+  --hala-accent-soft: oklch(0.3 0.045 190);
+  --hala-accent-ink: oklch(0.86 0.08 190);
+  --hala-on-accent: oklch(0.18 0.02 190);
+  --hala-success: oklch(0.74 0.13 155);
+  --hala-success-soft: oklch(0.29 0.05 155);
+  --hala-warning-ink: oklch(0.84 0.12 80);
+  --hala-warning-soft: oklch(0.3 0.05 75);
+  --hala-danger: oklch(0.72 0.16 25);
+  --hala-danger-soft: oklch(0.3 0.06 25);
+  --hala-on-danger: oklch(0.18 0.02 25);
+  --hala-shadow-1: 0 1px 2px oklch(0 0 0 / 0.3), 0 0 0 1px oklch(1 0 0 / 0.06);
+  --hala-shadow-2:
+    0 12px 28px -12px oklch(0 0 0 / 0.55), 0 0 0 1px oklch(1 0 0 / 0.07);
+  --hala-shadow-3:
+    0 28px 60px -18px oklch(0 0 0 / 0.65), 0 0 0 1px oklch(1 0 0 / 0.08);
+}
+
+/* Everything that doesn't change with the mode. */
+:root {
+  --hala-radius-control: 10px;
+  --hala-radius-surface: 16px;
+  --hala-radius-panel: 20px;
+  --hala-radius-bubble: 18px;
+  --hala-radius-bubble-tail: 6px;
+  --hala-radius-badge: 6px;
+
+  --hala-ease: cubic-bezier(0.2, 0, 0, 1);
+  --hala-duration-fast: 120ms;
+  --hala-duration: 200ms;
+  --hala-duration-slow: 280ms;
+
+  /* The type scale: size, line height, Arabic line height, weight and Latin tracking. */
+  --hala-text-display: 44px;
+  --hala-text-display-line-height: 52px;
+  --hala-text-display-line-height-arabic: 68px;
+  --hala-text-display-weight: 600;
+  --hala-text-display-tracking: -0.02em;
+  --hala-text-h1: 32px;
+  --hala-text-h1-line-height: 40px;
+  --hala-text-h1-line-height-arabic: 52px;
+  --hala-text-h1-weight: 600;
+  --hala-text-h1-tracking: -0.02em;
+  --hala-text-h2: 24px;
+  --hala-text-h2-line-height: 32px;
+  --hala-text-h2-line-height-arabic: 40px;
+  --hala-text-h2-weight: 600;
+  --hala-text-h2-tracking: -0.01em;
+  --hala-text-h3: 19px;
+  --hala-text-h3-line-height: 28px;
+  --hala-text-h3-line-height-arabic: 32px;
+  --hala-text-h3-weight: 600;
+  --hala-text-large: 17px;
+  --hala-text-large-line-height: 28px;
+  --hala-text-large-line-height-arabic: 32px;
+  --hala-text-body: 15px;
+  --hala-text-body-line-height: 24px;
+  --hala-text-body-line-height-arabic: 28px;
+  --hala-text-small: 13px;
+  --hala-text-small-line-height: 20px;
+  --hala-text-small-line-height-arabic: 24px;
+  --hala-text-caption: 12px;
+  --hala-text-caption-line-height: 16px;
+  --hala-text-caption-line-height-arabic: 20px;
+}

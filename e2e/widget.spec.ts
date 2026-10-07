@@ -213,3 +213,59 @@ test("the widget shows only for businesses that turned it on, and only on their 
     elsewhere.frameLocator("#hala-widget-frame").getByRole("heading"),
   ).toHaveCount(0);
 });
+
+test("the widget stays light on a device set to dark mode", async ({
+  browser,
+}) => {
+  const owner = await createConfirmedUser();
+  const business = await createSalonFor(owner);
+  await enableWidget(business.id);
+  const context = await browser.newContext({
+    colorScheme: "dark",
+    extraHTTPHeaders: asNewVisitor(),
+  });
+  const page = await context.newPage();
+  await page.goto(`/widget/${business.slug}`);
+  const heading = page.getByRole("heading", { level: 1 });
+  await expect(heading).toBeVisible();
+
+  // Relative luminance (WCAG) of the colors as drawn: the page around the widget follows the
+  // device, the widget keeps its light background and dark text.
+  const luminance = await heading.evaluate((element) => {
+    const of = (color: string) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 1;
+      const context = canvas.getContext("2d")!;
+      context.fillStyle = color;
+      context.fillRect(0, 0, 1, 1);
+      const linear = [...context.getImageData(0, 0, 1, 1).data.slice(0, 3)].map(
+        (channel) => {
+          const value = channel / 255;
+          return value <= 0.04045
+            ? value / 12.92
+            : ((value + 0.055) / 1.055) ** 2.4;
+        },
+      );
+      return 0.2126 * linear[0]! + 0.7152 * linear[1]! + 0.0722 * linear[2]!;
+    };
+    /** The first ancestor that paints a background. */
+    const background = (from: Element) => {
+      for (let node: Element | null = from; node; node = node.parentElement) {
+        const color = getComputedStyle(node).backgroundColor;
+        if (color !== "rgba(0, 0, 0, 0)" && color !== "transparent")
+          return color;
+      }
+      return "white";
+    };
+    return {
+      page: of(getComputedStyle(document.body).backgroundColor),
+      widget: of(background(element)),
+      text: of(getComputedStyle(element).color),
+    };
+  });
+  expect(luminance.page).toBeLessThan(0.05);
+  expect(luminance.widget).toBeGreaterThan(0.8);
+  expect(luminance.text).toBeLessThan(0.05);
+  expect(await accessibilityViolations(page)).toEqual([]);
+  await context.close();
+});

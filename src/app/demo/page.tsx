@@ -30,7 +30,8 @@ export default async function DemoWebsite() {
   if (error) throw new Error(`Could not load the services: ${error.message}`);
 
   return (
-    <div className="flex flex-1 flex-col">
+    // A business's own website, light like most of them, whatever the device prefers.
+    <div className="hala-light flex flex-1 flex-col bg-background text-foreground">
       <header className="border-b px-4 py-4 sm:px-6">
         <div className="mx-auto flex max-w-3xl flex-wrap items-baseline justify-between gap-2">
           {/* A gap, not a margin: a start margin on the Arabic name would land on its right. */}
