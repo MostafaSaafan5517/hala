@@ -1,0 +1,82 @@
+{
+  "demo-mobile": {
+    "performance": 90,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 1706,
+    "largestContentfulPaintMs": 2695,
+    "totalBlockingTimeMs": 254,
+    "cumulativeLayoutShift": 0
+  },
+  "demo-desktop": {
+    "performance": 100,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 441,
+    "largestContentfulPaintMs": 672,
+    "totalBlockingTimeMs": 25,
+    "cumulativeLayoutShift": 0
+  },
+  "widget-mobile": {
+    "performance": 78,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 840,
+    "largestContentfulPaintMs": 3291,
+    "totalBlockingTimeMs": 568,
+    "cumulativeLayoutShift": 0
+  },
+  "widget-desktop": {
+    "performance": 100,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 233,
+    "largestContentfulPaintMs": 660,
+    "totalBlockingTimeMs": 56,
+    "cumulativeLayoutShift": 0
+  },
+  "login-mobile": {
+    "performance": 86,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 849,
+    "largestContentfulPaintMs": 3092,
+    "totalBlockingTimeMs": 322,
+    "cumulativeLayoutShift": 0
+  },
+  "login-desktop": {
+    "performance": 100,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 245,
+    "largestContentfulPaintMs": 675,
+    "totalBlockingTimeMs": 9,
+    "cumulativeLayoutShift": 0
+  },
+  "inbox-mobile": {
+    "performance": 91,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 809,
+    "largestContentfulPaintMs": 3185,
+    "totalBlockingTimeMs": 166,
+    "cumulativeLayoutShift": 0
+  },
+  "inbox-desktop": {
+    "performance": 100,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaintMs": 247,
+    "largestContentfulPaintMs": 670,
+    "totalBlockingTimeMs": 8,
+    "cumulativeLayoutShift": 0
+  }
+}

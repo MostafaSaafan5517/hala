@@ -1,6 +1,6 @@
 # Hala design system
 
-**Status:** approved (step 2 of the redesign, after the [audit](audit.md)). Step 3 made it the app's tokens: [TOKENS.md](TOKENS.md) explains the files, the names used in code, and how another project uses them. Steps 4 to 6 apply it to the widget, the demo page and the dashboard.
+**Status:** approved (step 2 of the redesign, after the [audit](audit.md)). Step 3 made it the app's tokens: [TOKENS.md](TOKENS.md) explains the files, the names used in code, and how another project uses them. Steps 4 to 6 apply it to the widget, the demo page and the dashboard; step 7 adds the icons, the 404 page and reduced motion everywhere, and measures the result: [results.md](results.md).
 
 **See it:** `pnpm dev`, then http://localhost:3100/design-preview (development only: a production build answers 404). Screenshots are in [`preview/`](preview/).
 
@@ -184,7 +184,7 @@ It's a business's website, not Hala's, so it gets a salon identity of its own, b
 
 ## Marks
 
-The wordmark is "Hala | هلا" in Readex Pro semibold. The app mark is "هلا" in `on-accent` on an `accent` rounded square; in step 7 it becomes the favicon and app icon. Neither appears inside the widget, which belongs to the business.
+The wordmark is "Hala | هلا" in Readex Pro semibold. The app mark is "هلا" in `on-accent` on an `accent` rounded square; it is also the favicon and app icons (`src/app/favicon.ico`, `icon.png`, and `apple-icon.png` as a full square, since iOS rounds the corners itself), drawn from Readex Pro and scaled down so small sizes stay clean. Neither appears inside the widget, which belongs to the business.
 
 ## For the marketing site
 
