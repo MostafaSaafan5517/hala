@@ -70,6 +70,16 @@ function setTokenFor(slug: string, token: string | null) {
   }
 }
 
+// The message being sent, per business, settled with whether the server took its turn. The
+// server saves the message before replying, so once it's taken, it stays even if the reply then
+// fails.
+const pendingSends = new Map<string, (accepted: boolean) => void>();
+
+function settleSend(slug: string, accepted: boolean) {
+  pendingSends.get(slug)?.(accepted);
+  pendingSends.delete(slug);
+}
+
 // Inside the frame the embed script adds (on a business's site, or the demo's), which it names,
 // the widget offers to close itself: on phones the chat fills the screen and this is the way
 // out. Not in the dashboard's preview, where nothing closes.
@@ -138,6 +148,16 @@ export function WidgetChat({
         body: turnRequestBody(current),
         headers: { Authorization: `Bearer ${tokenFor(slug)}` },
       }),
+      fetch: async (input, init) => {
+        try {
+          const response = await globalThis.fetch(input, init);
+          settleSend(slug, response.ok);
+          return response;
+        } catch (error) {
+          settleSend(slug, false);
+          throw error;
+        }
+      },
     }),
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     // The turn may have changed the conversation (a request for a person): pick that up.
@@ -195,7 +215,12 @@ export function WidgetChat({
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages]);
 
-  /** Sends a message, starting the conversation first if there isn't one. Says if it went. */
+  /**
+   * Sends a message, starting the conversation first if there isn't one. Says whether it went,
+   * that is whether the server took it: if not (no connection, a refusal), the message box
+   * keeps the text to send again, while the log, reloaded after the failure, shows only what
+   * the server has.
+   */
   async function send(text: string) {
     setStartError(null);
     if (!tokenFor(slug)) {
@@ -209,8 +234,12 @@ export function WidgetChat({
       const { token } = (await response.json()) as { token: string };
       setTokenFor(slug, token);
     }
-    void sendMessage({ text });
-    return true;
+    const accepted = new Promise<boolean>((resolve) => {
+      pendingSends.set(slug, resolve);
+    });
+    // If the request never went out at all, it wasn't taken either.
+    void sendMessage({ text }).finally(() => settleSend(slug, false));
+    return accepted;
   }
 
   function startOver() {
