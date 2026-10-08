@@ -45,11 +45,15 @@ export async function ensureUser(user: { email: string; fullName: string }) {
   });
   if (created.data.user) return created.data.user.id;
   if (created.error?.code !== "email_exists") throw created.error;
-  const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  // The profile has the id (its email follows the account's), however many accounts there are.
+  const { data: profile, error } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", user.email)
+    .maybeSingle();
   if (error) throw error;
-  const found = data.users.find((candidate) => candidate.email === user.email);
-  if (!found) throw new Error(`${user.email} exists but wasn't listed`);
-  return found.id;
+  if (!profile) throw new Error(`${user.email} exists but has no profile`);
+  return profile.id as string;
 }
 
 export async function businessId(slug: string) {

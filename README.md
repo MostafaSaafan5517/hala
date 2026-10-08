@@ -101,14 +101,14 @@ Hala runs on Vercel with a Supabase project; the AI calls go through the Vercel 
 
 ## Tests
 
-| Suite          | Command                 | Notes                                                                                    |
-| -------------- | ----------------------- | ---------------------------------------------------------------------------------------- |
-| Unit           | `pnpm test`             | Vitest                                                                                   |
-| Database / RLS | `pnpm test:db`          | pgTAP; needs `pnpm supabase start` first                                                 |
-| Concurrency    | `pnpm test:concurrency` | Many connections booking the same slot at once; needs Supabase running                   |
-| Integration    | `pnpm test:integration` | The assistant's tools and turns against the full local stack, with a scripted model      |
-| End-to-end     | `pnpm test:e2e`         | Playwright with accessibility checks; first run: `pnpm exec playwright install chromium` |
-| Evaluation     | `pnpm eval`             | On demand, never in CI: the real assistant, scored; reports in `evals/reports/`          |
+| Suite          | Command                 | Notes                                                                                     |
+| -------------- | ----------------------- | ----------------------------------------------------------------------------------------- |
+| Unit           | `pnpm test`             | Vitest                                                                                    |
+| Database / RLS | `pnpm test:db`          | pgTAP; needs `pnpm supabase start` first                                                  |
+| Concurrency    | `pnpm test:concurrency` | Many connections booking the same slot at once; needs Supabase running                    |
+| Integration    | `pnpm test:integration` | The assistant's tools and turns, and the demo's nightly job, against the full local stack |
+| End-to-end     | `pnpm test:e2e`         | Playwright with accessibility checks; first run: `pnpm exec playwright install chromium`  |
+| Evaluation     | `pnpm eval`             | On demand, never in CI: the real assistant, scored; reports in `evals/reports/`           |
 
 `pnpm lint`, `pnpm typecheck` and `pnpm format:check` run in CI alongside every suite. No test calls a real AI model.
 
