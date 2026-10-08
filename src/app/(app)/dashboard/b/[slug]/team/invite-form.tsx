@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import type { InviteFormState } from "@/app/(app)/dashboard/b/[slug]/team/actions";
+import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,8 +46,8 @@ export function InviteForm({
 
   return (
     <div className="grid gap-4">
-      <form action={formAction} className="flex flex-wrap items-end gap-3">
-        <div className="grid min-w-0 flex-1 gap-2">
+      <form action={formAction} className="grid gap-3">
+        <div className="grid gap-2">
           <Label htmlFor="invite-role">Role</Label>
           <NativeSelect
             id="invite-role"
@@ -61,19 +62,18 @@ export function InviteForm({
             ))}
           </NativeSelect>
         </div>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending} className="justify-self-start">
           {pending ? "Creating..." : "Create invite link"}
         </Button>
       </form>
 
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
 
       {state.link && (
-        <div className="grid gap-2 rounded-lg border p-4" role="status">
+        <div
+          className="grid gap-2 rounded-surface bg-accent p-4 text-foreground"
+          role="status"
+        >
           <Label htmlFor="invite-link">
             Invite link for a new {state.role}
           </Label>
@@ -83,7 +83,7 @@ export function InviteForm({
               readOnly
               value={state.link}
               onFocus={(event) => event.currentTarget.select()}
-              className="font-mono text-xs"
+              className="font-mono text-small md:text-small"
             />
             <Button
               type="button"
@@ -93,7 +93,7 @@ export function InviteForm({
               {copied === state.link ? "Copied" : "Copy"}
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-small text-secondary-foreground">
             Send it to the person you&apos;re inviting. It works once, for{" "}
             {lifetimeDays} days. We don&apos;t keep a copy, so this is the only
             time you&apos;ll see it.

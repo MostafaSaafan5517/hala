@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
 import { ReadOnlyNotice } from "@/app/(app)/read-only-notice";
+import { HalaMark } from "@/components/hala-mark";
 import { Button } from "@/components/ui/button";
-import { appConfig } from "@/config/app";
 import { SIGNED_IN_HOME } from "@/lib/auth";
 
 // The signed-in part of the app, where businesses set up their assistant. Each page checks the
@@ -11,28 +11,42 @@ import { SIGNED_IN_HOME } from "@/lib/auth";
 export default function SignedInLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:gap-x-6 sm:px-6">
-        <div className="flex items-center gap-4 sm:gap-6">
-          <Link href={SIGNED_IN_HOME} className="font-semibold tracking-tight">
-            {appConfig.name}
-          </Link>
-          <nav aria-label="Main" className="flex gap-3 text-sm sm:gap-4">
-            <Link
-              href="/dashboard"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Businesses
+      {/* For keyboard users: past the header and a business's tabs, straight to the page. */}
+      <a
+        href="#main"
+        className="sr-only rounded-control bg-card px-4 py-2 font-medium shadow-level-2 focus:not-sr-only focus:fixed focus:start-4 focus:top-3 focus:z-50"
+      >
+        Skip to content
+      </a>
+      <header className="border-b bg-card">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <Link href={SIGNED_IN_HOME} className="rounded-control">
+              <HalaMark />
             </Link>
-          </nav>
+            <nav aria-label="Main" className="flex gap-1 text-small">
+              <Link
+                href="/dashboard"
+                className="rounded-full px-3 py-1.5 font-medium text-secondary-foreground hover:bg-muted hover:text-foreground"
+              >
+                Businesses
+              </Link>
+            </nav>
+          </div>
+          <form action={signOut}>
+            <Button type="submit" variant="ghost" size="sm">
+              Sign out
+            </Button>
+          </form>
         </div>
-        <form action={signOut}>
-          <Button type="submit" variant="outline" size="sm">
-            Sign out
-          </Button>
-        </form>
       </header>
       <ReadOnlyNotice />
-      <main className="mx-auto grid w-full max-w-3xl gap-8 p-4 sm:p-6">
+      {/* Data pages use the full width; forms keep to their own narrower column. */}
+      <main
+        id="main"
+        tabIndex={-1}
+        className="mx-auto grid w-full max-w-6xl content-start gap-10 px-4 py-6 outline-none sm:px-6 sm:py-8"
+      >
         {children}
       </main>
     </div>

@@ -30,6 +30,8 @@ const pairs: [foreground: string, background: string, needs: number][] = [
   ["accent", "bg", 4.5],
   ["accent", "surface", 4.5],
   ["accent-ink", "accent-soft", 4.5],
+  ["ink", "accent-soft", 4.5],
+  ["ink-2", "accent-soft", 4.5],
   ["accent-ink", "surface", 4.5],
   ["accent-ink", "bg", 4.5],
   ["success", "success-soft", 4.5],

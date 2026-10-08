@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { ArrowLeft, CheckCircle, XCircle } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -11,8 +12,12 @@ import { MoveBookingForm } from "@/app/(app)/dashboard/b/[slug]/bookings/booking
 import { freeTimes } from "@/app/(app)/dashboard/b/[slug]/bookings/free-times";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
 import { ActionButton } from "@/components/action-button";
+import { Badge } from "@/components/badge";
+import { FormDone } from "@/components/form-feedback";
+import { SectionHeader } from "@/components/section-header";
 import { ServiceName } from "@/components/service-name";
-import { Button } from "@/components/ui/button";
+import { surface } from "@/components/surface";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,7 +41,7 @@ export const metadata: Metadata = { title: "Booking" };
 function Detail({ term, children }: { term: string; children: ReactNode }) {
   return (
     <div className="contents">
-      <dt className="text-muted-foreground">{term}</dt>
+      <dt className="text-small text-muted-foreground sm:pt-0.5">{term}</dt>
       <dd>{children}</dd>
     </div>
   );
@@ -119,151 +124,177 @@ export default async function BookingPage({
     <>
       <BusinessHeader business={business} role={role} current="bookings" />
 
-      <section className="grid gap-3" aria-labelledby="booking-heading">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 id="booking-heading" className="text-lg font-semibold">
-            Booking {booking.reference}
-          </h2>
-          <Link
-            href={`${bookingsPath}?day=${bookingDay}`}
-            className="text-sm underline-offset-4 hover:underline"
-          >
-            All bookings on {formatDay(bookingDay)}
-          </Link>
-        </div>
-        {(query.booked || query.moved) && booking.status === "confirmed" && (
-          <p role="status" className="text-sm text-muted-foreground">
-            {query.moved ? "Moved." : "Booked."}
-          </p>
-        )}
-        <dl className="grid gap-x-6 gap-y-2 rounded-lg border p-4 text-sm sm:grid-cols-[auto_1fr]">
-          <Detail term="When">
-            {formatLocalDateTime(booking.starts_at, timeZone)} to{" "}
-            {formatLocalTime(booking.ends_at, timeZone)}
-          </Detail>
-          <Detail term="Service">
-            <ServiceName service={booking.services} />
-          </Detail>
-          <Detail term="With">
-            <span dir="auto">{booking.staff.name}</span>
-          </Detail>
-          <Detail term="Customer">
-            <span dir="auto">{booking.customers.name}</span>
-          </Detail>
-          <Detail term="Phone">
-            <a
-              href={`tel:${booking.customers.phone}`}
-              dir="ltr"
-              className="underline-offset-4 hover:underline"
-            >
-              {formatPhone(booking.customers.phone)}
-            </a>
-          </Detail>
-          {booking.customers.email && (
-            <Detail term="Email">
-              <span dir="ltr">{booking.customers.email}</span>
-            </Detail>
-          )}
-          <Detail term="Speaks">
-            <span lang={booking.customers.language}>
-              {languageNames[booking.customers.language]}
-            </span>
-          </Detail>
-          <Detail term="Price">
-            {formatAmount(booking.price, booking.currency)}
-          </Detail>
-          <Detail term="Status">
-            {booking.cancelled_at
-              ? `Cancelled on ${formatLocalDateTime(booking.cancelled_at, timeZone)}`
-              : "Confirmed"}
-          </Detail>
-          {booking.notes && (
-            <Detail term="Notes">
-              <span dir="auto">{booking.notes}</span>
-            </Detail>
-          )}
-        </dl>
-      </section>
-
-      {changeable && (
-        <section className="grid gap-3" aria-labelledby="move-heading">
-          <h2 id="move-heading" className="text-lg font-semibold">
-            Move booking
-          </h2>
-          <form className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1fr_auto_auto] sm:items-end">
-            <div className="grid gap-2">
-              <Label htmlFor="staff">With</Label>
-              <NativeSelect
-                id="staff"
-                name="staff"
-                className="w-full"
-                defaultValue={moveStaffId}
-              >
-                {performers.map((person) => (
-                  <NativeSelectOption key={person.id} value={person.id}>
-                    {person.name}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="day">Day</Label>
-              <Input
-                id="day"
-                name="day"
-                type="date"
-                min={todayIn(timeZone)}
-                defaultValue={moveDay}
-                required
-              />
-            </div>
-            <Button
-              type="submit"
-              variant="outline"
-              className="justify-self-start"
-            >
-              Show free times
-            </Button>
-          </form>
-          {moveTimes.length === 0 ? (
-            <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-              No other free times on {formatDay(moveDay)}. Try another day.
-            </p>
-          ) : (
-            <MoveBookingForm
-              key={`${moveStaffId}-${moveDay}`}
-              action={moveBooking.bind(null, business.slug, booking.id)}
-              times={moveTimes}
-              staffId={moveStaffId}
-              idempotencyKey={randomUUID()}
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <div className="grid min-w-0 gap-10">
+          <section className="grid gap-4" aria-labelledby="booking-heading">
+            <SectionHeader
+              id="booking-heading"
+              title={`Booking ${booking.reference}`}
+              action={
+                <Link
+                  href={`${bookingsPath}?day=${bookingDay}`}
+                  className={buttonVariants({ variant: "ghost", size: "sm" })}
+                >
+                  <ArrowLeft aria-hidden="true" className="rtl:-scale-x-100" />
+                  All bookings on {formatDay(bookingDay)}
+                </Link>
+              }
             />
-          )}
-        </section>
-      )}
+            {(query.booked || query.moved) &&
+              booking.status === "confirmed" && (
+                <FormDone>{query.moved ? "Moved." : "Booked."}</FormDone>
+              )}
+            <dl
+              className={`${surface} grid gap-x-8 gap-y-3 p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:p-6`}
+            >
+              <Detail term="Status">
+                {booking.cancelled_at ? (
+                  <Badge tone="danger" icon={<XCircle aria-hidden="true" />}>
+                    Cancelled on{" "}
+                    {formatLocalDateTime(booking.cancelled_at, timeZone)}
+                  </Badge>
+                ) : (
+                  <Badge
+                    tone="success"
+                    icon={<CheckCircle aria-hidden="true" weight="fill" />}
+                  >
+                    Confirmed
+                  </Badge>
+                )}
+              </Detail>
+              <Detail term="When">
+                <span className="tabular-nums">
+                  {formatLocalDateTime(booking.starts_at, timeZone)} to{" "}
+                  {formatLocalTime(booking.ends_at, timeZone)}
+                </span>
+              </Detail>
+              <Detail term="Service">
+                <ServiceName service={booking.services} />
+              </Detail>
+              <Detail term="With">
+                <span dir="auto">{booking.staff.name}</span>
+              </Detail>
+              <Detail term="Customer">
+                <span dir="auto">{booking.customers.name}</span>
+              </Detail>
+              <Detail term="Phone">
+                <a
+                  href={`tel:${booking.customers.phone}`}
+                  dir="ltr"
+                  className="text-accent-foreground underline-offset-4 hover:underline"
+                >
+                  {formatPhone(booking.customers.phone)}
+                </a>
+              </Detail>
+              {booking.customers.email && (
+                <Detail term="Email">
+                  <span dir="ltr">{booking.customers.email}</span>
+                </Detail>
+              )}
+              <Detail term="Speaks">
+                <span lang={booking.customers.language}>
+                  {languageNames[booking.customers.language]}
+                </span>
+              </Detail>
+              <Detail term="Price">
+                <span className="tabular-nums">
+                  {formatAmount(booking.price, booking.currency)}
+                </span>
+              </Detail>
+              {booking.notes && (
+                <Detail term="Notes">
+                  <span dir="auto">{booking.notes}</span>
+                </Detail>
+              )}
+            </dl>
+          </section>
 
-      {changeable && (
-        <section className="grid gap-3" aria-labelledby="cancel-heading">
-          <div className="grid gap-1">
-            <h2 id="cancel-heading" className="text-lg font-semibold">
+          {changeable && (
+            <section className="grid gap-4" aria-labelledby="move-heading">
+              <SectionHeader
+                id="move-heading"
+                title="Move booking"
+                description="Free times only, as if this booking weren't there."
+              />
+              <form
+                className={`${surface} grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end sm:p-6`}
+              >
+                <div className="grid gap-2">
+                  <Label htmlFor="staff">With</Label>
+                  <NativeSelect
+                    id="staff"
+                    name="staff"
+                    className="w-full"
+                    defaultValue={moveStaffId}
+                  >
+                    {performers.map((person) => (
+                      <NativeSelectOption key={person.id} value={person.id}>
+                        {person.name}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="day">Day</Label>
+                  <Input
+                    id="day"
+                    name="day"
+                    type="date"
+                    min={todayIn(timeZone)}
+                    defaultValue={moveDay}
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="justify-self-start"
+                >
+                  Show free times
+                </Button>
+              </form>
+              {moveTimes.length === 0 ? (
+                <p className="text-secondary-foreground">
+                  No other free times on {formatDay(moveDay)}. Try another day.
+                </p>
+              ) : (
+                <MoveBookingForm
+                  key={`${moveStaffId}-${moveDay}`}
+                  action={moveBooking.bind(null, business.slug, booking.id)}
+                  times={moveTimes}
+                  staffId={moveStaffId}
+                  idempotencyKey={randomUUID()}
+                />
+              )}
+            </section>
+          )}
+        </div>
+
+        {changeable && (
+          <section
+            className={`${surface} grid gap-3 p-5 sm:p-6 lg:sticky lg:top-6`}
+            aria-labelledby="cancel-heading"
+          >
+            <h2 id="cancel-heading" className="text-h3">
               Cancel booking
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-secondary-foreground">
               Cancelling frees the time for other customers.
             </p>
-          </div>
-          <ActionButton
-            action={cancelBooking.bind(
-              null,
-              business.slug,
-              booking.id,
-              randomUUID(),
-            )}
-            label="Cancel booking"
-            pendingLabel="Cancelling..."
-            variant="outline"
-          />
-        </section>
-      )}
+            <ActionButton
+              action={cancelBooking.bind(
+                null,
+                business.slug,
+                booking.id,
+                randomUUID(),
+              )}
+              label="Cancel booking"
+              pendingLabel="Cancelling..."
+              variant="destructive"
+            />
+          </section>
+        )}
+      </div>
     </>
   );
 }

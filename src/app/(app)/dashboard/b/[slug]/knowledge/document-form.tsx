@@ -5,6 +5,7 @@ import type {
   DocumentFormFields,
   DocumentFormState,
 } from "@/app/(app)/dashboard/b/[slug]/knowledge/actions";
+import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,15 +95,11 @@ export function DocumentForm({
           aria-describedby="body-hint"
           required
         />
-        <p id="body-hint" className="text-xs text-muted-foreground">
+        <p id="body-hint" className="text-caption text-muted-foreground">
           {hint}
         </p>
       </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
       <div>
         <Button type="submit" disabled={pending}>
           {pending ? pendingLabel : submitLabel}

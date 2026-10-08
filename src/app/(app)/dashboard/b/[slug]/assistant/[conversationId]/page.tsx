@@ -1,3 +1,4 @@
+import { ArrowLeft, Info } from "@phosphor-icons/react/ssr";
 import type { UIMessage } from "ai";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -5,6 +6,8 @@ import { notFound } from "next/navigation";
 import { AssistantChat } from "@/app/(app)/dashboard/b/[slug]/assistant/assistant-chat";
 import { conversationStatusLabels } from "@/app/(app)/dashboard/b/[slug]/conversation-status";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
+import { SectionHeader } from "@/components/section-header";
+import { buttonVariants } from "@/components/ui/button";
 import { chatModelId } from "@/lib/ai/chat-model";
 import { requireMemberBusiness } from "@/lib/business";
 
@@ -48,26 +51,36 @@ export default async function TestConversationPage({
     <>
       <BusinessHeader business={business} role={role} current="assistant" />
 
-      <section className="grid gap-3" aria-labelledby="conversation-heading">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="conversation-heading" className="text-lg font-semibold">
-            Test conversation
-          </h2>
-          <Link
-            href={`/dashboard/b/${business.slug}/assistant`}
-            className="text-sm underline-offset-4 hover:underline"
-          >
-            All test conversations
-          </Link>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          You&apos;re the customer here. Bookings you confirm are real. Model:{" "}
-          {model}. {modelNotes[model]}
-        </p>
+      <section
+        className="grid max-w-3xl gap-4"
+        aria-labelledby="conversation-heading"
+      >
+        <SectionHeader
+          id="conversation-heading"
+          title="Test conversation"
+          description={`You're the customer here. Bookings you confirm are real. Model: ${model}. ${modelNotes[model] ?? ""}`}
+          action={
+            <Link
+              href={`/dashboard/b/${business.slug}/assistant`}
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
+            >
+              <ArrowLeft aria-hidden="true" className="rtl:-scale-x-100" />
+              All test conversations
+            </Link>
+          }
+        />
         {conversation.status !== "open" && (
-          <p role="status" className="rounded-lg border p-3 text-sm">
-            {conversationStatusLabels[conversation.status]}: the assistant has
-            handed this conversation to the team.
+          <p
+            role="status"
+            className="flex items-start gap-2 rounded-surface bg-warning-soft px-4 py-3 text-warning"
+          >
+            <span className="flex h-lh shrink-0 items-center">
+              <Info aria-hidden="true" className="size-4" />
+            </span>
+            <span>
+              {conversationStatusLabels[conversation.status]}: the assistant has
+              handed this conversation to the team.
+            </span>
           </p>
         )}
         <AssistantChat

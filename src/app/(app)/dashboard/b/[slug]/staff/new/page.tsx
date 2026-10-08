@@ -1,6 +1,9 @@
+import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { createStaffMember } from "@/app/(app)/dashboard/b/[slug]/staff/actions";
 import { StaffForm } from "@/app/(app)/dashboard/b/[slug]/staff/staff-form";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -31,23 +34,36 @@ export default async function NewStaffMemberPage({
   if (error) throw new Error(`Could not load services: ${error.message}`);
 
   return (
-    <Card className="mx-auto w-full max-w-xl">
-      <CardHeader>
-        <CardTitle>New staff member</CardTitle>
-        <CardDescription>
-          Someone customers can book at {business.name}. They don&apos;t need an
-          account.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <StaffForm
-          action={createStaffMember.bind(null, business.slug)}
-          initial={{ serviceIds: [] }}
-          services={services}
-          submitLabel="Add staff member"
-          pendingLabel="Adding..."
-        />
-      </CardContent>
-    </Card>
+    <div className="mx-auto grid w-full max-w-2xl gap-4">
+      <Link
+        href={`/dashboard/b/${business.slug}/staff`}
+        className={buttonVariants({
+          variant: "ghost",
+          size: "sm",
+          className: "justify-self-start",
+        })}
+      >
+        <ArrowLeft aria-hidden="true" className="rtl:-scale-x-100" />
+        Staff
+      </Link>
+      <Card>
+        <CardHeader>
+          <CardTitle as="h1">New staff member</CardTitle>
+          <CardDescription>
+            Someone customers can book at {business.name}. They don&apos;t need
+            an account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <StaffForm
+            action={createStaffMember.bind(null, business.slug)}
+            initial={{ serviceIds: [] }}
+            services={services}
+            submitLabel="Add staff member"
+            pendingLabel="Adding..."
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -17,23 +17,25 @@ export function formatCount(count: number) {
   return new Intl.NumberFormat("en-US").format(count);
 }
 
-/** A duration in milliseconds as people read it: "850 ms", "4.2 s", or "–" when there's none. */
+/** A duration in milliseconds as people read it: "850 ms", "4.2 s", or "None" when there's none. */
 export function formatDuration(ms: number | null) {
-  if (ms === null) return "–";
+  if (ms === null) return "None";
   if (ms < 1000) return `${ms} ms`;
   return `${(ms / 1000).toFixed(1)} s`;
 }
 
-/** A plain date (YYYY-MM-DD) as a table row's label: "Mon 5 Oct". */
+/** A plain date (YYYY-MM-DD) as a table row's label: "Mon, 5 Oct", as the app writes days. */
 export function formatRowDay(date: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+  // Built from its parts: without the year, en-GB drops the comma ("Mon 5 Oct").
+  const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "UTC",
     weekday: "short",
     day: "numeric",
     month: "short",
-  })
-    .format(new Date(`${date}T00:00:00Z`))
-    .replace(",", "");
+  }).formatToParts(new Date(`${date}T00:00:00Z`));
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((each) => each.type === type)?.value ?? "";
+  return `${part("weekday")}, ${part("day")} ${part("month")}`;
 }
 
 /** A plain date (YYYY-MM-DD) as a short axis label: "5 Oct". */

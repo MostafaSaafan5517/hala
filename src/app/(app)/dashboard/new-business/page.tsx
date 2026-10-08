@@ -16,9 +16,9 @@ export default async function NewBusinessPage() {
   await requireUser("/dashboard/new-business");
 
   return (
-    <Card className="mx-auto w-full max-w-md">
+    <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>Create a business</CardTitle>
+        <CardTitle as="h1">Create a business</CardTitle>
         <CardDescription>
           You&apos;ll be its owner. Next you&apos;ll add your services, staff
           and opening hours.

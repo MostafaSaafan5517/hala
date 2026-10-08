@@ -1,8 +1,10 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react/ssr";
 import { useActionState, useState } from "react";
 import type { HoursFormState } from "@/app/(app)/dashboard/b/[slug]/hours/actions";
+import { FormDone, FormError } from "@/components/form-feedback";
+import { surfaceList } from "@/components/surface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type Span, WEEKDAYS } from "@/lib/hours";
@@ -62,10 +64,10 @@ export function WeekEditor({
   );
 
   return (
-    <form action={formAction} className="grid gap-4">
+    <form action={formAction} className="grid max-w-2xl gap-4">
       <input type="hidden" name="spans" value={JSON.stringify(submitted)} />
       {isStaff && (
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2">
           <input
             type="checkbox"
             name="useBusinessHours"
@@ -81,7 +83,7 @@ export function WeekEditor({
 
       <fieldset
         disabled={useBusinessHours}
-        className="grid gap-3 disabled:opacity-60"
+        className={`${surfaceList} disabled:opacity-60`}
       >
         <legend className="sr-only">Hours for each day</legend>
         {WEEKDAYS.map((dayName, weekday) => {
@@ -89,19 +91,17 @@ export function WeekEditor({
           return (
             <div
               key={dayName}
-              className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[7rem_1fr] sm:items-start"
+              className="grid gap-2 px-4 py-3 sm:grid-cols-[8rem_minmax(0,1fr)] sm:items-start sm:px-5"
             >
-              <span className="pt-1.5 text-sm font-medium">{dayName}</span>
+              <span className="pt-2 font-medium">{dayName}</span>
               <div className="grid gap-2">
                 {daySpans.length === 0 && (
-                  <span className="pt-1.5 text-sm text-muted-foreground">
-                    Closed
-                  </span>
+                  <span className="pt-2 text-muted-foreground">Closed</span>
                 )}
                 {daySpans.map((span, index) => (
                   <div
                     key={index}
-                    className="grid grid-cols-[minmax(0,9rem)_auto_minmax(0,9rem)_auto] items-center gap-2"
+                    className="grid grid-cols-[minmax(0,9rem)_auto_minmax(0,9rem)_auto] items-center justify-start gap-2"
                   >
                     <Input
                       type="time"
@@ -120,7 +120,7 @@ export function WeekEditor({
                       }
                       required
                     />
-                    <span className="text-sm text-muted-foreground">to</span>
+                    <span className="text-small text-muted-foreground">to</span>
                     <Input
                       type="time"
                       step={300}
@@ -152,7 +152,7 @@ export function WeekEditor({
                         )
                       }
                     >
-                      <X aria-hidden />
+                      <X aria-hidden="true" />
                     </Button>
                   </div>
                 ))}
@@ -180,19 +180,13 @@ export function WeekEditor({
         })}
       </fieldset>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-caption text-muted-foreground">
         Closing at 00:00 (12:00 AM) means open until midnight.
       </p>
       {state.error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
+        <FormError>{state.error}</FormError>
       ) : (
-        state.saved && (
-          <p role="status" className="text-sm text-muted-foreground">
-            Saved.
-          </p>
-        )
+        state.saved && <FormDone>Saved.</FormDone>
       )}
       <div>
         <Button type="submit" disabled={pending}>

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import type { StaffFormState } from "@/app/(app)/dashboard/b/[slug]/staff/actions";
 import { ServiceName } from "@/components/service-name";
+import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,18 +54,18 @@ export function StaffForm({
         />
       </div>
       <fieldset className="grid gap-2">
-        <legend className="mb-2 text-sm font-medium">
+        <legend className="mb-2 text-small font-medium">
           Services they perform
         </legend>
         {services.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-small text-secondary-foreground">
             No services yet. Add some on the Services tab, then come back.
           </p>
         ) : (
           services.map((service) => (
             <label
               key={`${service.id}-${chosen.has(service.id)}`}
-              className="flex items-center gap-2 text-sm"
+              className="flex min-h-10 items-center gap-2.5 rounded-control px-2 hover:bg-muted"
             >
               <input
                 type="checkbox"
@@ -75,7 +76,7 @@ export function StaffForm({
               />
               <ServiceName service={service} />
               {!service.active && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-caption text-muted-foreground">
                   (archived)
                 </span>
               )}
@@ -83,12 +84,13 @@ export function StaffForm({
           ))
         )}
       </fieldset>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
-      <Button type="submit" size="lg" disabled={pending}>
+      {state.error && <FormError>{state.error}</FormError>}
+      <Button
+        type="submit"
+        size="lg"
+        disabled={pending}
+        className="justify-self-start"
+      >
         {pending ? pendingLabel : submitLabel}
       </Button>
     </form>

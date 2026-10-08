@@ -5,6 +5,7 @@ import type {
   ServiceFormFields,
   ServiceFormState,
 } from "@/app/(app)/dashboard/b/[slug]/services/actions";
+import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,7 +68,7 @@ export function ServiceForm({
           />
         </div>
       </div>
-      <p className="-mt-2 text-xs text-muted-foreground">
+      <p className="-mt-2 text-caption text-muted-foreground">
         Fill in one or both: the assistant uses the name in the customer&apos;s
         language when there is one.
       </p>
@@ -101,7 +102,7 @@ export function ServiceForm({
             defaultValue={fields.buffer}
             aria-describedby="buffer-hint"
           />
-          <p id="buffer-hint" className="text-xs text-muted-foreground">
+          <p id="buffer-hint" className="text-caption text-muted-foreground">
             Kept free after each appointment, to clean up or reset a room.
           </p>
         </div>
@@ -134,12 +135,13 @@ export function ServiceForm({
           </NativeSelect>
         </div>
       </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
-      <Button type="submit" size="lg" disabled={pending}>
+      {state.error && <FormError>{state.error}</FormError>}
+      <Button
+        type="submit"
+        size="lg"
+        disabled={pending}
+        className="justify-self-start"
+      >
         {pending ? pendingLabel : submitLabel}
       </Button>
     </form>

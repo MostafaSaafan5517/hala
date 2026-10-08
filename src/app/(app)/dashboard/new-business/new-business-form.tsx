@@ -5,6 +5,7 @@ import {
   createBusiness,
   type NewBusinessFormState,
 } from "@/app/(app)/dashboard/new-business/actions";
+import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,7 +80,7 @@ export function NewBusinessForm({ timeZones }: { timeZones: string[] }) {
           maxLength={MAX_SLUG_LENGTH}
           required
         />
-        <p id="slug-hint" className="text-xs text-muted-foreground">
+        <p id="slug-hint" className="text-caption text-muted-foreground">
           Identifies your business in links. Lowercase letters, numbers and
           dashes; it can&apos;t change later.
         </p>
@@ -100,7 +101,7 @@ export function NewBusinessForm({ timeZones }: { timeZones: string[] }) {
             </NativeSelectOption>
           ))}
         </NativeSelect>
-        <p id="timezone-hint" className="text-xs text-muted-foreground">
+        <p id="timezone-hint" className="text-caption text-muted-foreground">
           Where your business is: opening hours and appointments are in this
           time zone.
         </p>
@@ -121,17 +122,18 @@ export function NewBusinessForm({ timeZones }: { timeZones: string[] }) {
             </NativeSelectOption>
           ))}
         </NativeSelect>
-        <p id="language-hint" className="text-xs text-muted-foreground">
+        <p id="language-hint" className="text-caption text-muted-foreground">
           It greets customers in this language and switches when they write in
           the other one.
         </p>
       </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
-      <Button type="submit" size="lg" disabled={pending}>
+      {state.error && <FormError>{state.error}</FormError>}
+      <Button
+        type="submit"
+        size="lg"
+        disabled={pending}
+        className="justify-self-start"
+      >
         {pending ? "Creating business..." : "Create business"}
       </Button>
     </form>

@@ -1,8 +1,13 @@
+import { ChatsCircle, Tray } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
-import { conversationStatusLabels } from "@/app/(app)/dashboard/b/[slug]/conversation-status";
+import { ConversationStatusBadge } from "@/app/(app)/dashboard/b/[slug]/conversation-status";
 import { AutoRefresh } from "@/app/(app)/dashboard/b/[slug]/inbox/auto-refresh";
+import { EmptyState } from "@/components/empty-state";
+import { SectionHeader } from "@/components/section-header";
+import { surfaceLinkRow, surfaceList } from "@/components/surface";
 import { requireMemberBusiness } from "@/lib/business";
 import { formatLocalDateTime } from "@/lib/dates";
 import type { Enums } from "@/lib/supabase/database.types";
@@ -25,35 +30,33 @@ function ConversationList({
   conversations: ConversationRow[];
   slug: string;
   timeZone: string;
-  empty: string;
+  empty: { icon: ReactNode; title: string; text: string };
 }) {
   if (conversations.length === 0) {
     return (
-      <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-        {empty}
-      </p>
+      <EmptyState icon={empty.icon} title={empty.title}>
+        {empty.text}
+      </EmptyState>
     );
   }
   return (
-    <ul className="grid gap-2">
+    <ul className={surfaceList}>
       {conversations.map((conversation) => (
         <li key={conversation.id}>
           <Link
             href={`/dashboard/b/${slug}/inbox/${conversation.id}`}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm hover:bg-muted/50"
+            className={`${surfaceLinkRow} flex flex-wrap items-center justify-between gap-3`}
           >
-            <span className="grid gap-0.5">
+            <span className="grid min-w-0 gap-0.5">
               <span className="font-medium" dir="auto">
                 {conversation.customer?.name ?? "Website visitor"}
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-small text-muted-foreground tabular-nums">
                 Last activity{" "}
                 {formatLocalDateTime(conversation.updated_at, timeZone)}
               </span>
             </span>
-            <span className="text-muted-foreground">
-              {conversationStatusLabels[conversation.status]}
-            </span>
+            <ConversationStatusBadge status={conversation.status} />
           </Link>
         </li>
       ))}
@@ -100,33 +103,35 @@ export default async function InboxPage({
       <BusinessHeader business={business} role={role} current="inbox" />
       <AutoRefresh />
 
-      <section className="grid gap-3" aria-labelledby="waiting-heading">
-        <div className="grid gap-1">
-          <h2 id="waiting-heading" className="text-lg font-semibold">
-            Waiting for the team
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Customers the assistant handed over, and conversations someone has
-            taken over.
-          </p>
-        </div>
+      <section className="grid gap-4" aria-labelledby="waiting-heading">
+        <SectionHeader
+          id="waiting-heading"
+          title="Waiting for the team"
+          description="Customers the assistant handed over, and conversations someone has taken over."
+        />
         <ConversationList
           conversations={waiting.data ?? []}
           slug={business.slug}
           timeZone={business.timezone}
-          empty="Nobody is waiting."
+          empty={{
+            icon: <Tray aria-hidden="true" />,
+            title: "Nobody is waiting.",
+            text: "When the assistant hands a customer over, they appear here first.",
+          }}
         />
       </section>
 
-      <section className="grid gap-3" aria-labelledby="recent-heading">
-        <h2 id="recent-heading" className="text-lg font-semibold">
-          Recent conversations
-        </h2>
+      <section className="grid gap-4" aria-labelledby="recent-heading">
+        <SectionHeader id="recent-heading" title="Recent conversations" />
         <ConversationList
           conversations={recent.data ?? []}
           slug={business.slug}
           timeZone={business.timezone}
-          empty="No conversations from your website yet."
+          empty={{
+            icon: <ChatsCircle aria-hidden="true" />,
+            title: "No conversations from your website yet.",
+            text: "Turn the widget on in the Widget tab, and customers' chats appear here.",
+          }}
         />
       </section>
     </>

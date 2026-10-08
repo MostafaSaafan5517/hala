@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 import type { BookingFormState } from "@/app/(app)/dashboard/b/[slug]/bookings/actions";
 import type { ActionState } from "@/components/action-button";
+import { FormError } from "@/components/form-feedback";
+import { surface } from "@/components/surface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,13 +25,15 @@ function TimeChoices({
   chosen?: string;
 }) {
   return (
+    // Choices as pills (DESIGN.md, Choosing one); the radio inside each keeps the keyboard and
+    // screen reader behavior of a radio group.
     <fieldset className="grid gap-2">
-      <legend className="mb-2 text-sm font-medium">Time</legend>
+      <legend className="mb-2 text-small font-medium">Time</legend>
       <div className="flex flex-wrap gap-2">
         {times.map((time) => (
           <label
             key={time.value}
-            className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-sm tabular-nums has-checked:border-foreground has-checked:font-medium"
+            className="flex h-10 cursor-pointer items-center gap-2 rounded-full border border-input bg-card px-3.5 text-small tabular-nums hover:bg-muted has-checked:border-transparent has-checked:bg-accent has-checked:font-medium has-checked:text-accent-foreground has-focus-visible:ring-2 has-focus-visible:ring-ring has-focus-visible:ring-offset-2 has-focus-visible:ring-offset-background"
           >
             <input
               type="radio"
@@ -37,7 +41,7 @@ function TimeChoices({
               value={time.value}
               defaultChecked={time.value === chosen}
               required
-              className="accent-foreground"
+              className="size-4 accent-primary focus-visible:outline-none"
             />
             {time.label}
           </label>
@@ -45,14 +49,6 @@ function TimeChoices({
       </div>
     </fieldset>
   );
-}
-
-function FormError({ error }: { error: string | null }) {
-  return error ? (
-    <p role="alert" className="text-sm text-destructive">
-      {error}
-    </p>
-  ) : null;
 }
 
 export function NewBookingForm({
@@ -79,12 +75,12 @@ export function NewBookingForm({
   });
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-lg border p-4">
+    <form action={formAction} className={`${surface} grid gap-5 p-5 sm:p-6`}>
       <input type="hidden" name="serviceId" value={serviceId} />
       <input type="hidden" name="staffId" value={staffId ?? ""} />
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       <TimeChoices times={times} chosen={state.fields.startsAt} />
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="name">Customer name</Label>
           <Input
@@ -111,7 +107,7 @@ export function NewBookingForm({
           />
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="email">Email (optional)</Label>
           <Input
@@ -149,7 +145,7 @@ export function NewBookingForm({
           defaultValue={state.fields.notes}
         />
       </div>
-      <FormError error={state.error} />
+      {state.error && <FormError>{state.error}</FormError>}
       <div>
         <Button type="submit" disabled={pending}>
           {pending ? "Booking..." : "Book appointment"}
@@ -175,11 +171,11 @@ export function MoveBookingForm({
   });
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-lg border p-4">
+    <form action={formAction} className={`${surface} grid gap-5 p-5 sm:p-6`}>
       <input type="hidden" name="staffId" value={staffId} />
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       <TimeChoices times={times} />
-      <FormError error={state.error} />
+      {state.error && <FormError>{state.error}</FormError>}
       <div>
         <Button type="submit" disabled={pending}>
           {pending ? "Moving..." : "Move booking"}

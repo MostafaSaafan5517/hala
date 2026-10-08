@@ -14,15 +14,18 @@ export default function CheckEmailPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Check your email</CardTitle>
+        <CardTitle as="h1">Check your email</CardTitle>
         <CardDescription>
           We sent you a link. Open it on any device to continue.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-small text-secondary-foreground">
           Nothing arrived after a few minutes? Check your spam folder, or{" "}
-          <Link href="/signup" className="text-foreground underline">
+          <Link
+            href="/signup"
+            className="font-medium text-accent-foreground underline underline-offset-4"
+          >
             try again
           </Link>
           .

@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import type { SettingsFormState } from "@/app/(app)/dashboard/b/[slug]/actions";
+import { FormDone, FormError } from "@/components/form-feedback";
+import { surface } from "@/components/surface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,18 +40,12 @@ function Feedback({
   return (
     <>
       {state.error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
+        <FormError>{state.error}</FormError>
       ) : (
-        state.saved && (
-          <p role="status" className="text-sm text-muted-foreground">
-            Saved.
-          </p>
-        )
+        state.saved && <FormDone>Saved.</FormDone>
       )}
       <div>
-        <Button type="submit" variant="outline" disabled={pending}>
+        <Button type="submit" disabled={pending}>
           {pending ? "Saving..." : label}
         </Button>
       </div>
@@ -69,7 +65,7 @@ export function DetailsForm({
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-lg border p-4">
+    <form action={formAction} className={`${surface} grid gap-5 p-5 sm:p-6`}>
       <div className="grid gap-2">
         <Label htmlFor="name">Business name</Label>
         <Input
@@ -140,7 +136,7 @@ export function RulesForm({
     <form
       key={JSON.stringify(rules)}
       action={formAction}
-      className="grid gap-4 rounded-lg border p-4"
+      className={`${surface} grid gap-5 p-5 sm:p-6`}
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">

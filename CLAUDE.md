@@ -37,6 +37,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 
 - Prettier formats everything (Tailwind classes are sorted automatically). ESLint must pass with zero warnings.
 - Import app code through the `@/` alias, which maps to `src/`.
+- Pages are built from the shared pieces in `src/components/` (docs/design/DESIGN.md): `SectionHeader` for a section's heading, description and action; `EmptyState`; `Badge` for statuses (never color alone); `FormError` and `FormDone` for what a form says after it's sent; the surface classes in `surface.ts` instead of borders; and `HalaMark`. Destructive actions use the `destructive` button.
 - UI primitives come from shadcn/ui. Add one with `pnpm dlx shadcn@latest add <name>`; it is copied into `src/components/ui/` and becomes our code to edit. Merge class names with `cn` (`@/lib/utils`), never the `cn` package directly: ours uses merge tables built from the theme (`src/lib/cn-tables.ts`, written by `pnpm tokens`), without which `text-body` counts as a color and drops the text color beside it.
 - Layouts must work right-to-left for Arabic: use logical classes (`ms-`/`me-`, `ps-`/`pe-`, `start-`/`end-`, `text-start`), never `left`/`right` ones. shadcn generates logical classes because `rtl` is on in `components.json`.
 - Anything that navigates is a `<Link>`, even when it looks like a button: style it with `buttonVariants()`, which merges its classes like `<Button>` does. Never `<Button render={<Link />}>`, which gives the link `role="button"`.
@@ -195,7 +196,7 @@ src/
     auth/confirm/    The email confirmation link's route
     (app)/dashboard/ Signed-in pages: the user's businesses, and b/[slug]/ for one business
   app/widget/        The widget's page, shown in the frame on a business's site
-  components/        Shared components (ActionButton, ServiceName)
+  components/        Shared components (ActionButton, ServiceName, SectionHeader, EmptyState, Badge, form feedback, surfaces, HalaMark)
   components/chat/   The chat shared by the widget and the dashboard's test chat
   components/ui/     shadcn/ui components (owned code, edited freely)
   embed/             The embed script's source (`pnpm widget` minifies it to public/widget.js)

@@ -11,6 +11,8 @@ import {
   TimeOffForm,
 } from "@/app/(app)/dashboard/b/[slug]/time-off/time-off-forms";
 import { ActionButton } from "@/components/action-button";
+import { SectionHeader } from "@/components/section-header";
+import { surfaceList, surfaceRow } from "@/components/surface";
 import { requireMemberBusiness } from "@/lib/business";
 import { formatDay, formatLocalDateTime, nowIso, todayIn } from "@/lib/dates";
 
@@ -58,106 +60,109 @@ export default async function TimeOffPage({
     <>
       <BusinessHeader business={business} role={role} current="time-off" />
 
-      <section className="grid gap-3" aria-labelledby="closures-heading">
-        <div className="grid gap-1">
-          <h2 id="closures-heading" className="text-lg font-semibold">
-            Closures
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Whole days the business is closed, such as public holidays.
-          </p>
-        </div>
-        {closures.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No closures coming up.
-          </p>
-        ) : (
-          <ul className="grid gap-2">
-            {closures.map((closure) => (
-              <li
-                key={closure.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm"
-              >
-                <span>
-                  {closure.starts_on === closure.ends_on
-                    ? formatDay(closure.starts_on)
-                    : `${formatDay(closure.starts_on)} to ${formatDay(closure.ends_on)}`}
-                  {closure.reason && (
-                    <span className="text-muted-foreground" dir="auto">
-                      {" "}
-                      · {closure.reason}
-                    </span>
+      <section className="grid gap-4" aria-labelledby="closures-heading">
+        <SectionHeader
+          id="closures-heading"
+          title="Closures"
+          description="Whole days the business is closed, such as public holidays."
+        />
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          {closures.length === 0 ? (
+            <p className="text-secondary-foreground">No closures coming up.</p>
+          ) : (
+            <ul className={surfaceList}>
+              {closures.map((closure) => (
+                <li
+                  key={closure.id}
+                  className={`${surfaceRow} flex flex-wrap items-center justify-between gap-3`}
+                >
+                  <span>
+                    {closure.starts_on === closure.ends_on
+                      ? formatDay(closure.starts_on)
+                      : `${formatDay(closure.starts_on)} to ${formatDay(closure.ends_on)}`}
+                    {closure.reason && (
+                      <span className="text-muted-foreground" dir="auto">
+                        {" "}
+                        · {closure.reason}
+                      </span>
+                    )}
+                  </span>
+                  {canManage && (
+                    <ActionButton
+                      action={removeClosure.bind(
+                        null,
+                        business.slug,
+                        closure.id,
+                      )}
+                      label="Remove"
+                      pendingLabel="Removing..."
+                      variant="destructive"
+                      size="sm"
+                    />
                   )}
-                </span>
-                {canManage && (
-                  <ActionButton
-                    action={removeClosure.bind(null, business.slug, closure.id)}
-                    label="Remove"
-                    pendingLabel="Removing..."
-                    variant="outline"
-                  />
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-        {canManage && (
-          <ClosureForm action={addClosure.bind(null, business.slug)} />
-        )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {canManage && (
+            <ClosureForm action={addClosure.bind(null, business.slug)} />
+          )}
+        </div>
       </section>
 
-      <section className="grid gap-3" aria-labelledby="time-off-heading">
-        <div className="grid gap-1">
-          <h2 id="time-off-heading" className="text-lg font-semibold">
-            Staff time off
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            When someone is away. Times are in {zone} time.
-          </p>
-        </div>
-        {timeOff.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No time off coming up.
-          </p>
-        ) : (
-          <ul className="grid gap-2">
-            {timeOff.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm"
-              >
-                <span className="grid gap-0.5">
-                  <span className="font-medium" dir="auto">
-                    {entry.staff.name}
-                  </span>
-                  <span>
-                    {formatLocalDateTime(entry.starts_at, business.timezone)} to{" "}
-                    {formatLocalDateTime(entry.ends_at, business.timezone)}
-                  </span>
-                  {entry.reason && (
-                    <span className="text-muted-foreground" dir="auto">
-                      {entry.reason}
+      <section className="grid gap-4" aria-labelledby="time-off-heading">
+        <SectionHeader
+          id="time-off-heading"
+          title="Staff time off"
+          description={`When someone is away. Times are in ${zone} time.`}
+        />
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          {timeOff.length === 0 ? (
+            <p className="text-secondary-foreground">No time off coming up.</p>
+          ) : (
+            <ul className={surfaceList}>
+              {timeOff.map((entry) => (
+                <li
+                  key={entry.id}
+                  className={`${surfaceRow} flex flex-wrap items-center justify-between gap-3`}
+                >
+                  <span className="grid gap-0.5">
+                    <span className="font-medium" dir="auto">
+                      {entry.staff.name}
                     </span>
+                    <span className="text-small tabular-nums">
+                      {formatLocalDateTime(entry.starts_at, business.timezone)}{" "}
+                      to {formatLocalDateTime(entry.ends_at, business.timezone)}
+                    </span>
+                    {entry.reason && (
+                      <span
+                        className="text-small text-muted-foreground"
+                        dir="auto"
+                      >
+                        {entry.reason}
+                      </span>
+                    )}
+                  </span>
+                  {canManage && (
+                    <ActionButton
+                      action={removeTimeOff.bind(null, business.slug, entry.id)}
+                      label="Remove"
+                      pendingLabel="Removing..."
+                      variant="destructive"
+                      size="sm"
+                    />
                   )}
-                </span>
-                {canManage && (
-                  <ActionButton
-                    action={removeTimeOff.bind(null, business.slug, entry.id)}
-                    label="Remove"
-                    pendingLabel="Removing..."
-                    variant="outline"
-                  />
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-        {canManage && (
-          <TimeOffForm
-            action={addTimeOff.bind(null, business.slug)}
-            staff={staffResult.data ?? []}
-          />
-        )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {canManage && (
+            <TimeOffForm
+              action={addTimeOff.bind(null, business.slug)}
+              staff={staffResult.data ?? []}
+            />
+          )}
+        </div>
       </section>
     </>
   );
