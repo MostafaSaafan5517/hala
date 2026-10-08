@@ -70,6 +70,9 @@
   --shadow-level-3: var(--hala-shadow-3);
 
   --ease-hala: var(--hala-ease);
+  /* Hover and press take the short duration and Hala's easing (DESIGN.md, Motion). */
+  --default-transition-duration: var(--hala-duration-fast);
+  --default-transition-timing-function: var(--hala-ease);
 }
 
 /* The type scale as text-display ... text-caption. Not inline, so the utilities read variables
@@ -144,6 +147,18 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+  /* Reduced motion: nothing moves (DESIGN.md, Motion). Components already ask with motion-safe:;
+     this catches whatever doesn't, transitions included. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
   /* Readex Pro sets both scripts. Arabic keeps the sizes, gets more line height, and is never
      letter-spaced (spacing breaks its joins). */
