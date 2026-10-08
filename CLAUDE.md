@@ -182,7 +182,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 - Before committing, run E2E the way CI does: `pnpm build` then `CI=1 pnpm test:e2e`. The dev server compiles each route on its first visit, which makes parallel runs against `pnpm dev` time out at random.
 - Every page gets an accessibility check: `accessibilityViolations(page)` (`e2e/support/accessibility.ts`) runs axe's WCAG 2.1 A and AA rules and must return `[]`.
 - Tests never call a real model. `playwright.config.ts` and `vitest.integration.config.mts` set `EMBEDDING_MODEL` and `CHAT_MODEL` to `offline` before loading `.env.local`, so they win over whatever the file says (and the app under test inherits them); the chat route and tools are tested with the offline model or a scripted `MockLanguageModelV4`. Only the evaluation suite, run on demand, uses real models, and it reports what it cost.
-- The integration suite (`integration/`, `pnpm test:integration`) runs app code (the assistant's tools and turns) against the full local stack with the offline models. A scripted `MockLanguageModelV4` plays exactly the tool calls a test needs, including a misbehaving model's. Its Vitest config loads `.env.local` and aliases `server-only` to its empty module.
+- The integration suite (`integration/`, `pnpm test:integration`) runs app code (the assistant's tools and turns, and the demo's nightly job) against the full local stack with the offline models. A scripted `MockLanguageModelV4` plays exactly the tool calls a test needs, including a misbehaving model's. Its Vitest config loads `.env.local` and aliases `server-only` to its empty module.
 - In pgTAP, build embeddings with exact geometry (unit vectors along chosen dimensions) so similarities are known in advance; see `knowledge_search.test.sql`.
 - Widget specs give each browser context its own visitor address (`asNewVisitor()`, `e2e/support/visitors.ts`), since per-visitor limits count by IP and every local request shares one. Integration tests do the same with random `10.x` addresses.
 - The embed test serves its fake business sites from small HTTP servers on loopback ports, not routed public domains: Chrome blocks a public page from loading a script from localhost (Private Network Access), where the app under test runs.
@@ -216,7 +216,7 @@ public/widget.js     The embed script businesses add to their sites (minified fr
 scripts/             Dev tooling (writing .env.local)
 e2e/                 Playwright end-to-end specs (*.spec.ts)
   support/           E2E helpers (accessibility, users, businesses, knowledge, forms, visitors, sites, Mailpit)
-integration/         Vitest against the full local stack: the assistant's tools and turns
+integration/         Vitest against the full local stack: the assistant's tools and turns, the demo's nightly job
 evals/               The evaluation suite: scripted conversations and retrieval, scored (on demand)
 docs/                How it works, for reviewers, with screenshots (docs/images/)
 supabase/

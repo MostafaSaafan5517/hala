@@ -45,16 +45,18 @@ async function demoOwner(admin: Admin) {
   if (created.error?.code !== "email_exists") {
     fail("Creating the demo account", created.error ?? { message: "no user" });
   }
-  // A demo deployment has few accounts, so one page finds it.
-  const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  // Its profile has its id: triggers keep a profile's email the same as its account's, and one
+  // query finds it however many accounts there are (auth's own list comes a page at a time).
+  const { data: profile, error } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", demoConfig.email)
+    .maybeSingle();
   if (error) fail("Finding the demo account", error);
-  const user = data.users.find(
-    (candidate) => candidate.email === demoConfig.email,
-  );
-  if (!user) fail("Finding the demo account", { message: "not found" });
-  const updated = await admin.auth.admin.updateUserById(user.id, account);
+  if (!profile) fail("Finding the demo account", { message: "not found" });
+  const updated = await admin.auth.admin.updateUserById(profile.id, account);
   if (updated.error) fail("Updating the demo account", updated.error);
-  return user.id;
+  return profile.id;
 }
 
 async function createSalon(admin: Admin, ownerId: string) {
