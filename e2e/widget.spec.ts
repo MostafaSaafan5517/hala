@@ -283,6 +283,11 @@ test("on a phone the chat fills the screen, and closes from its own button", asy
       .frameLocator("#hala-widget-frame")
       .getByRole("heading", { name: `Chat with ${business.name}` }),
   ).toBeVisible();
+  // Measured once it has arrived: it fades in and rises 8px as it opens, and the chat inside can
+  // load before that ends.
+  await frame.evaluate(async (element) => {
+    await Promise.all(element.getAnimations().map((motion) => motion.finished));
+  });
   expect(await frame.boundingBox()).toEqual({ x: 0, y: 0, ...viewport });
   // The launcher steps aside while the chat is open: the chat's own button closes it.
   await expect(launcher).toBeHidden();
