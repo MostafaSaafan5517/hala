@@ -1,7 +1,10 @@
+import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateStaffMember } from "@/app/(app)/dashboard/b/[slug]/staff/actions";
 import { StaffForm } from "@/app/(app)/dashboard/b/[slug]/staff/staff-form";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -56,22 +59,35 @@ export default async function EditStaffMemberPage({
   );
 
   return (
-    <Card className="mx-auto w-full max-w-xl">
-      <CardHeader>
-        <CardTitle>Edit staff member</CardTitle>
-        <CardDescription>
-          Changes apply to new bookings; existing ones stay as booked.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <StaffForm
-          action={updateStaffMember.bind(null, business.slug, staffId)}
-          initial={{ name: person.name, serviceIds: chosen }}
-          services={services}
-          submitLabel="Save staff member"
-          pendingLabel="Saving..."
-        />
-      </CardContent>
-    </Card>
+    <div className="mx-auto grid w-full max-w-2xl gap-4">
+      <Link
+        href={`/dashboard/b/${business.slug}/staff`}
+        className={buttonVariants({
+          variant: "ghost",
+          size: "sm",
+          className: "justify-self-start",
+        })}
+      >
+        <ArrowLeft aria-hidden="true" className="rtl:-scale-x-100" />
+        Staff
+      </Link>
+      <Card>
+        <CardHeader>
+          <CardTitle as="h1">Edit staff member</CardTitle>
+          <CardDescription>
+            Changes apply to new bookings; existing ones stay as booked.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <StaffForm
+            action={updateStaffMember.bind(null, business.slug, staffId)}
+            initial={{ name: person.name, serviceIds: chosen }}
+            services={services}
+            submitLabel="Save staff member"
+            pendingLabel="Saving..."
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

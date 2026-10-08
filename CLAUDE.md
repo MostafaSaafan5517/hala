@@ -37,12 +37,14 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 
 - Prettier formats everything (Tailwind classes are sorted automatically). ESLint must pass with zero warnings.
 - Import app code through the `@/` alias, which maps to `src/`.
-- UI primitives come from shadcn/ui. Add one with `pnpm dlx shadcn@latest add <name>`; it is copied into `src/components/ui/` and becomes our code to edit. Merge class names with `cn` (`@/lib/utils`).
+- Pages are built from the shared pieces in `src/components/` (docs/design/DESIGN.md): `SectionHeader` for a section's heading, description and action; `EmptyState`; `Badge` for statuses (never color alone); `FormError` and `FormDone` for what a form says after it's sent; the surface classes in `surface.ts` instead of borders; and `HalaMark`. Destructive actions use the `destructive` button.
+- UI primitives come from shadcn/ui. Add one with `pnpm dlx shadcn@latest add <name>`; it is copied into `src/components/ui/` and becomes our code to edit. Merge class names with `cn` (`@/lib/utils`), never the `cn` package directly: ours uses merge tables built from the theme (`src/lib/cn-tables.ts`, written by `pnpm tokens`), without which `text-body` counts as a color and drops the text color beside it.
 - Layouts must work right-to-left for Arabic: use logical classes (`ms-`/`me-`, `ps-`/`pe-`, `start-`/`end-`, `text-start`), never `left`/`right` ones. shadcn generates logical classes because `rtl` is on in `components.json`.
-- Anything that navigates is a `<Link>`, even when it looks like a button: style it with `buttonVariants()`, which merges its classes like `<Button>` does. Never `<Button render={<Link />}>`, which gives the link `role="button"`.
-- Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors, so the palette can change in one place (`src/app/globals.css`).
+- Anything that navigates is a `<Link>`, even when it looks like a button: style it with `buttonVariants()`, which merges its classes like `<Button>` does. Never `<Button render={<Link />}>`, which gives the link `role="button"`. The one exception is the root 404 (`src/app/not-found.tsx`): it is in every page's bundle, so it uses plain links to keep `next/link`'s code out of the widget's frame.
+- Use theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, ...) instead of raw colors. The design system is docs/design/DESIGN.md; its tokens live in `src/styles/tokens.css` (`--hala-*`, light and dark), and `src/app/globals.css` maps shadcn's names onto them (the table is in docs/design/TOKENS.md; note that `primary` is the solid teal and `accent` the soft one). Text sizes are `text-display` ... `text-caption`; Arabic line heights adjust automatically, and Arabic text never gets `tracking-*`. Colors follow the device's light or dark setting; `.hala-light` and `.hala-dark` force one (the widget and the demo salon are `.hala-light`). After changing a token or a theme name, run `pnpm tokens`; `src/styles/tokens.test.ts` checks the export, the two dark copies and WCAG AA contrast, and `src/lib/utils.test.ts` checks the merge tables. Icons are Phosphor (`@phosphor-icons/react`, `/ssr` in server components).
+- Motion moves only `transform` and `opacity`, behind `motion-safe:` (DESIGN.md, Motion); a `prefers-reduced-motion` rule in `globals.css` stops whatever forgets. The favicon and app icons in `src/app/` are the app mark (DESIGN.md, Marks).
 - Money is always an integer in the currency's smallest unit. Convert only for display, with `src/lib/money.ts`: the number of decimals comes from the currency (`minorUnitDigits`: 2 for EGP, 3 for KWD, 0 for JPY), never a hard-coded 100, and `parseAmount` accepts Arabic-Indic digits and separators.
-- Arabic text is always marked `lang="ar"` (plus `dir="rtl"` on blocks). The Arabic font is applied by a `:lang(ar)` rule in `globals.css`, because a font list alone falls back to Arial for Arabic. Text whose language we don't know (names, typed input) gets `dir="auto"`. `ServiceName` (`src/components/service-name.tsx`) shows a service's names this way.
+- Arabic text is always marked `lang="ar"` (plus `dir="rtl"` on blocks). Readex Pro sets both scripts, so Arabic needs no font of its own; `globals.css` gives `:lang(ar)` its line heights. Text whose language we don't know (names, typed input) gets `dir="auto"`. `ServiceName` (`src/components/service-name.tsx`) shows a service's names this way.
 - Times: moments are stored in UTC (`timestamptz`) and shown in the business's time zone with `formatLocalDateTime` (`src/lib/dates.ts`); never in the browser's or the server's zone. Weekly hours are local wall-clock times, and whole days (closures) are plain dates. Local times are converted to UTC in Postgres (`local at time zone businesses.timezone`), so daylight saving comes from the time zone database, not from our code.
 - Forms are Server Actions validated with Zod. A failed validation returns the form's values and one plain message; success redirects or shows "Saved." in a `role="status"` region.
 - No `console.log` in app code, no commented-out code, no unused code. Unexpected server-side failures are logged with `console.error("What failed", { code, status })`; users get a plain message, never raw provider errors. Handle errors explicitly; no empty `catch` blocks.
@@ -122,7 +124,7 @@ The product name is a working name. In code it lives only in `src/config/app.ts`
 
 ## The website widget
 
-- **Embedding**: `public/widget.js` is the one script tag a business adds (`data-business="<slug>"`, optional `data-language` and `data-label`). It adds a launcher button and, on first open, an iframe of `/widget/[slug]`, so the chat is isolated from the site's styles and scripts. The frame asks to be closed with a `hala:close` message, which the script accepts only from Hala's origin.
+- **Embedding**: `public/widget.js` is the one script tag a business adds (`data-business="<slug>"`, optional `data-language` and `data-label`). It adds a launcher button and, on first open, an iframe of `/widget/[slug]`, so the chat is isolated from the site's styles and scripts; the site gets only the button and the frame, styled inline. The frame asks to be closed with a `hala:close` message, which the script accepts only from Hala's origin. The file is minified from `src/embed/widget.js` by `pnpm widget` (`src/embed/widget.test.ts` fails when it's stale or over its 2,917-byte limit): edit the source, never the output.
 - **Where it may show**: the proxy gives `/widget/[slug]` a `Content-Security-Policy: frame-ancestors 'self' <allowed origins>` header, read per request (`src/lib/widget/frame-policy.ts`) so a newly allowed site works at once; if the lookup fails, it falls back to `'self'` only. Every other page gets `frame-ancestors 'none'` from `next.config.ts`. Browsers enforce it, so the widget can't be shown on someone else's site.
 - **Visitors** have no account. `POST /api/widget/[slug]/conversations` returns a random token, kept in the visitor's browser (localStorage, else memory); only its SHA-256 is stored. `chat` and `messages` take it as a bearer token. All three routes answer only requests from Hala's own pages (`fromOwnPages` checks `Origin` and `Sec-Fetch-Site`), so a script on another site can't use a visitor's browser.
 - **Per-visitor limits** (`src/lib/widget/server.ts`, from `visitor_usage`): new conversations per hour and chat calls per minute, counted by a keyed hash of the IP address a conversation started from (HMAC with a key derived from `TOOL_APPROVAL_SECRET`), never the address itself. On Vercel the platform sets `x-real-ip` from the connection and ignores a client's own header (checked on the live deployment). The business's own limits apply too.
@@ -195,9 +197,11 @@ src/
     auth/confirm/    The email confirmation link's route
     (app)/dashboard/ Signed-in pages: the user's businesses, and b/[slug]/ for one business
   app/widget/        The widget's page, shown in the frame on a business's site
-  components/        Shared components (ActionButton, ServiceName)
+  components/        Shared components (ActionButton, ServiceName, SectionHeader, EmptyState, Badge, form feedback, surfaces, HalaMark)
   components/chat/   The chat shared by the widget and the dashboard's test chat
   components/ui/     shadcn/ui components (owned code, edited freely)
+  embed/             The embed script's source (`pnpm widget` minifies it to public/widget.js)
+  styles/            The design tokens (tokens.css), shared with other Hala projects
   config/            App-wide constants (the product name lives here)
   lib/               Helpers: auth, business access, money, dates, hours, booking rules, ...
   lib/ai/            Model catalog, the offline embedding model, logged embedding calls
@@ -208,7 +212,7 @@ src/
   app/api/           Route handlers (the assistant's chat, and the widget's)
   lib/supabase/      Supabase clients (user, and the admin client for the usage log) and types
   proxy.ts           Session refresh on every request
-public/widget.js     The embed script businesses add to their sites
+public/widget.js     The embed script businesses add to their sites (minified from src/embed/widget.js)
 scripts/             Dev tooling (writing .env.local)
 e2e/                 Playwright end-to-end specs (*.spec.ts)
   support/           E2E helpers (accessibility, users, businesses, knowledge, forms, visitors, sites, Mailpit)
@@ -227,23 +231,26 @@ supabase/
 
 ## Commands
 
-| Command                             | What it does                                             |
-| ----------------------------------- | -------------------------------------------------------- |
-| `pnpm dev`                          | Dev server at http://localhost:3100                      |
-| `pnpm build` / `pnpm start`         | Production build / serve that build (port 3100)          |
-| `pnpm lint`                         | ESLint; fails on any warning                             |
-| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`           |
-| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)     |
-| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode               |
-| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running      |
-| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)          |
-| `pnpm test:concurrency`             | Parallel-connection booking tests (Supabase running)     |
-| `pnpm test:integration`             | The assistant against the full local stack               |
-| `pnpm eval`                         | The evaluation suite (real models cost money; on demand) |
-| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)       |
-| `pnpm env:local`                    | Write the local Supabase URL and keys into `.env.local`  |
-| `pnpm supabase db reset`            | Rebuild the local database from migrations               |
-| `pnpm db:types`                     | Regenerate TypeScript types from the local database      |
+| Command                             | What it does                                                                                                                                       |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                          | Dev server at http://localhost:3100                                                                                                                |
+| `pnpm build` / `pnpm start`         | Production build / serve that build (port 3100)                                                                                                    |
+| `pnpm lint`                         | ESLint; fails on any warning                                                                                                                       |
+| `pnpm typecheck`                    | Generates Next.js route types, then runs `tsc`                                                                                                     |
+| `pnpm format` / `pnpm format:check` | Prettier: rewrite files / check only (CI uses check)                                                                                               |
+| `pnpm test` / `pnpm test:watch`     | Vitest unit tests: single run / watch mode                                                                                                         |
+| `pnpm test:e2e`                     | Playwright; starts `pnpm dev` itself if not running                                                                                                |
+| `pnpm test:db`                      | pgTAP database tests (Supabase must be running)                                                                                                    |
+| `pnpm test:concurrency`             | Parallel-connection booking tests (Supabase running)                                                                                               |
+| `pnpm test:integration`             | The assistant against the full local stack                                                                                                         |
+| `pnpm eval`                         | The evaluation suite (real models cost money; on demand)                                                                                           |
+| `SCREENS_DIR=<dir> pnpm screens`    | Screenshots of every screen and state at desktop and mobile, with axe (`pnpm build` first; `LIGHTHOUSE=1` adds Lighthouse, from a normal terminal) |
+| `pnpm tokens`                       | Export the design tokens to `docs/design/tokens.json` and rebuild `cn`'s merge tables from the theme                                               |
+| `pnpm widget`                       | Minify the embed script (`src/embed/widget.js`) to `public/widget.js`                                                                              |
+| `pnpm supabase start` / `stop`      | Start / stop local Supabase (needs Docker running)                                                                                                 |
+| `pnpm env:local`                    | Write the local Supabase URL and keys into `.env.local`                                                                                            |
+| `pnpm supabase db reset`            | Rebuild the local database from migrations                                                                                                         |
+| `pnpm db:types`                     | Regenerate TypeScript types from the local database                                                                                                |
 
 First Playwright run on a machine: `pnpm exec playwright install chromium`. With `CI=1`, Playwright serves the production build (`pnpm build` first) instead of the dev server, exactly like CI.
 

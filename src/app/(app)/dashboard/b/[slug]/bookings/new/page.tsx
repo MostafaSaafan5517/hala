@@ -1,11 +1,15 @@
 import { randomUUID } from "node:crypto";
+import { ArrowLeft, Tag } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createBooking } from "@/app/(app)/dashboard/b/[slug]/bookings/actions";
 import { NewBookingForm } from "@/app/(app)/dashboard/b/[slug]/bookings/booking-forms";
 import { freeTimes } from "@/app/(app)/dashboard/b/[slug]/bookings/free-times";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
-import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/empty-state";
+import { SectionHeader } from "@/components/section-header";
+import { surface } from "@/components/surface";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -75,30 +79,44 @@ export default async function NewBookingPage({
     <>
       <BusinessHeader business={business} role={role} current="bookings" />
 
-      <section className="grid gap-4" aria-labelledby="new-booking-heading">
-        <div className="grid gap-1">
-          <h2 id="new-booking-heading" className="text-lg font-semibold">
-            New booking
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Only free times are shown, in{" "}
-            {business.timezone.replaceAll("_", " ")} time.
-          </p>
-        </div>
+      <section
+        className="grid max-w-3xl gap-5"
+        aria-labelledby="new-booking-heading"
+      >
+        <SectionHeader
+          id="new-booking-heading"
+          title="New booking"
+          description={`Only free times are shown, in ${business.timezone.replaceAll("_", " ")} time.`}
+          action={
+            <Link
+              href={`/dashboard/b/${business.slug}/bookings?day=${day}`}
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
+            >
+              <ArrowLeft aria-hidden="true" className="rtl:-scale-x-100" />
+              Bookings
+            </Link>
+          }
+        />
 
         {services.length === 0 ? (
-          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-            There&apos;s nothing to book yet. Add a service on the{" "}
-            <Link
-              href={`/dashboard/b/${business.slug}/services`}
-              className="underline underline-offset-4"
-            >
-              Services
-            </Link>{" "}
-            tab first.
-          </p>
+          <EmptyState
+            icon={<Tag aria-hidden="true" />}
+            title="There's nothing to book yet."
+            action={
+              <Link
+                href={`/dashboard/b/${business.slug}/services`}
+                className={buttonVariants()}
+              >
+                Go to Services
+              </Link>
+            }
+          >
+            Add a service on the Services tab first.
+          </EmptyState>
         ) : (
-          <form className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <form
+            className={`${surface} grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end sm:p-6`}
+          >
             <div className="grid gap-2">
               <Label htmlFor="service">Service</Label>
               <NativeSelect
@@ -151,17 +169,19 @@ export default async function NewBookingPage({
                 required
               />
             </div>
-            <div className="sm:col-span-3">
-              <Button type="submit" variant="outline">
-                Show free times
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              variant="outline"
+              className="justify-self-start"
+            >
+              Show free times
+            </Button>
           </form>
         )}
 
         {service &&
           (times.length === 0 ? (
-            <p className="rounded-lg border p-4 text-sm text-muted-foreground">
+            <p className="text-secondary-foreground">
               No free times on {formatDay(day)}. Try another day
               {staffId ? ", or anyone available" : ""}.
             </p>

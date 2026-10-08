@@ -62,7 +62,7 @@ export function SpendChart({ days }: { days: DaySpend[] }) {
             className="absolute inset-x-0 flex items-center"
             style={{ top: `${(index / (ticks.length - 1)) * 100}%` }}
           >
-            <span className="w-16 -translate-y-1/2 pe-2 text-end text-xs text-muted-foreground tabular-nums">
+            <span className="w-16 -translate-y-1/2 pe-2 text-end text-caption text-muted-foreground tabular-nums">
               {formatUsd(tick)}
             </span>
             <span className="h-px flex-1 -translate-y-1/2 bg-border" />
@@ -81,7 +81,7 @@ export function SpendChart({ days }: { days: DaySpend[] }) {
               >
                 <div
                   className={cn(
-                    "w-full max-w-6 rounded-t bg-chart-1 transition-opacity",
+                    "w-full max-w-8 rounded-t bg-chart-1 transition-opacity",
                     active === index && "opacity-70",
                   )}
                   style={{
@@ -96,7 +96,7 @@ export function SpendChart({ days }: { days: DaySpend[] }) {
             <div
               aria-hidden="true"
               className={cn(
-                "pointer-events-none absolute bottom-full z-10 mb-2 grid gap-0.5 rounded-md border bg-popover px-2.5 py-1.5 text-xs whitespace-nowrap text-popover-foreground shadow-md",
+                "pointer-events-none absolute bottom-full z-10 mb-2 grid gap-0.5 rounded-control bg-popover px-3 py-2 text-caption whitespace-nowrap text-popover-foreground shadow-level-2",
                 active < days.length * 0.2
                   ? "translate-x-0"
                   : active > days.length * 0.8
@@ -105,7 +105,7 @@ export function SpendChart({ days }: { days: DaySpend[] }) {
               )}
               style={{ left: `${((active + 0.5) / days.length) * 100}%` }}
             >
-              <span className="text-sm font-semibold tabular-nums">
+              <span className="text-small font-semibold tabular-nums">
                 {formatUsd(shown.cost)}
               </span>
               <span className="text-muted-foreground">
@@ -119,7 +119,7 @@ export function SpendChart({ days }: { days: DaySpend[] }) {
 
       <div
         aria-hidden="true"
-        className="flex justify-between ps-16 text-xs text-muted-foreground"
+        className="flex justify-between ps-16 text-caption text-muted-foreground"
       >
         {[
           days[0],

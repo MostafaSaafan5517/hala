@@ -19,6 +19,10 @@ const eslintConfig = defineConfig([
     "playwright-report/**",
     "test-results/**",
     "blob-report/**",
+    // Minified from src/embed/widget.js, which is linted.
+    "public/widget.js",
+    // Written by `pnpm tokens` (`cn build`).
+    "src/lib/cn-tables.ts",
   ]),
 ]);
 

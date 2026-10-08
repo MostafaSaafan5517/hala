@@ -1,6 +1,20 @@
 "use client";
 
+import {
+  CalendarBlank,
+  CalendarCheck,
+  CalendarX,
+  CheckCircle,
+  Clock,
+  type Icon,
+  MagnifyingGlass,
+  Storefront,
+  UserCircle,
+  WarningCircle,
+  X,
+} from "@phosphor-icons/react";
 import { getToolName, isToolUIPart, type UIMessage } from "ai";
+import type { ReactNode } from "react";
 import Markdown from "react-markdown";
 import type { ChatLabels } from "@/components/chat/labels";
 import { Button } from "@/components/ui/button";
@@ -9,7 +23,8 @@ import { cn } from "@/lib/utils";
 
 // The conversation as the customer (or a member testing it) sees it: their messages, the
 // assistant's and staff's replies, what the assistant looked up, the passages it cited, and a
-// card to confirm or decline each booking, move or cancellation.
+// card to confirm or decline each booking, move or cancellation (docs/design/DESIGN.md, "The
+// chat").
 
 type ToolPart = Extract<
   UIMessage["parts"][number],
@@ -59,19 +74,78 @@ export function Reply({ text }: { text: string }) {
   );
 }
 
+/**
+ * A phone number, with its brackets if it has them. Inside Arabic it would otherwise reorder
+ * itself ("(+966 50 123 4567)" turning into "(4567 123 50 966+)"), so it's isolated as one
+ * left-to-right run that doesn't break across lines.
+ */
+const PHONE = /(\(\+?\d[\d ]*\d\)|\+?\d(?: ?\d){6,})/;
+
+function withIsolatedPhones(text: string) {
+  return text.split(PHONE).map((piece, index) =>
+    index % 2 === 1 ? (
+      <bdi key={index} dir="ltr" className="whitespace-nowrap">
+        {piece}
+      </bdi>
+    ) : (
+      piece
+    ),
+  );
+}
+
 /** What a person typed, as typed: never Markdown. */
-export function Typed({ text }: { text: string }) {
+export function Typed({
+  text,
+  className,
+}: {
+  text: string;
+  className?: string;
+}) {
   const language = languageOfText(text);
   return (
     <p
       lang={language}
       dir={language === "ar" ? "rtl" : "auto"}
-      className="whitespace-pre-wrap"
+      className={cn("whitespace-pre-wrap", className)}
     >
-      {text}
+      {withIsolatedPhones(text)}
     </p>
   );
 }
+
+/** A quiet line about what the assistant did, with an icon in its tone. */
+function ProcessLine({
+  icon: Glyph,
+  className,
+  children,
+}: {
+  icon: Icon;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <p
+      className={cn(
+        "flex items-start gap-1.5 text-caption text-muted-foreground",
+        className,
+      )}
+    >
+      <span className="flex h-lh shrink-0 items-center">
+        <Glyph size={14} aria-hidden="true" />
+      </span>
+      <span>{children}</span>
+    </p>
+  );
+}
+
+/** The icon beside each kind of lookup. */
+const lookupIcons: Record<string, Icon> = {
+  search_knowledge: MagnifyingGlass,
+  business_info: Storefront,
+  check_availability: CalendarBlank,
+  find_bookings: MagnifyingGlass,
+  request_human: UserCircle,
+};
 
 function ToolStatus({
   part,
@@ -83,30 +157,36 @@ function ToolStatus({
   onAnswer: (id: string, approved: boolean) => void;
 }) {
   const name = toolNameOf(part);
-  const note = "text-xs text-muted-foreground";
   const approval = "approval" in part ? part.approval : undefined;
 
   if (part.state === "approval-requested" && approval) {
     if (approval.isAutomatic) return null;
+    const Calendar = name === "cancel_booking" ? CalendarX : CalendarCheck;
     return (
       <div
         role="group"
         aria-label={labels.confirm}
-        className="grid gap-3 rounded-lg border border-foreground/20 bg-muted/40 p-3"
+        className="my-1 grid w-full gap-3 justify-self-stretch rounded-surface bg-card p-4 shadow-level-2"
       >
-        <Typed text={approval.requestReason ?? labels.confirm} />
-        <div className="flex flex-wrap gap-2">
+        <span className="grid size-9 place-items-center rounded-full bg-accent text-accent-foreground">
+          <Calendar size={20} aria-hidden="true" />
+        </span>
+        <Typed
+          text={approval.requestReason ?? labels.confirm}
+          className="text-large font-medium"
+        />
+        <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
-            size="sm"
+            className="h-11 text-body"
             onClick={() => onAnswer(approval.id, true)}
           >
             {labels.confirm}
           </Button>
           <Button
             type="button"
-            size="sm"
-            variant="outline"
+            variant="secondary"
+            className="h-11 text-body text-foreground"
             onClick={() => onAnswer(approval.id, false)}
           >
             {labels.notNow}
@@ -116,13 +196,13 @@ function ToolStatus({
     );
   }
   if (part.state === "approval-responded") {
-    return <p className={note}>{labels.confirming}</p>;
+    return <ProcessLine icon={Clock}>{labels.confirming}</ProcessLine>;
   }
   if (part.state === "output-denied") {
     return (
-      <p className={note}>
+      <ProcessLine icon={X}>
         {approval?.isAutomatic ? labels.couldNotGoAhead : labels.notConfirmed}
-      </p>
+      </ProcessLine>
     );
   }
   if (part.state === "output-available" && "output" in part) {
@@ -133,14 +213,20 @@ function ToolStatus({
       cancel_booking: labels.cancelled,
     }[name];
     if (done) {
-      return (
-        <p className={note}>
-          {output.ok ? done(String(output.reference)) : labels.couldNotComplete}
-        </p>
+      return output.ok ? (
+        <ProcessLine icon={CheckCircle} className="font-medium text-success">
+          {done(String(output.reference))}
+        </ProcessLine>
+      ) : (
+        <ProcessLine icon={WarningCircle} className="text-destructive">
+          {labels.couldNotComplete}
+        </ProcessLine>
       );
     }
     return labels.lookups[name] ? (
-      <p className={note}>{labels.lookups[name]}</p>
+      <ProcessLine icon={lookupIcons[name] ?? MagnifyingGlass}>
+        {labels.lookups[name]}
+      </ProcessLine>
     ) : null;
   }
   return null;
@@ -158,16 +244,20 @@ function Sources({ parts, label }: { parts: ToolPart[]; label: string }) {
   );
   if (passages.length === 0) return null;
   return (
-    <div className="text-xs text-muted-foreground">
+    <div className="flex max-w-full flex-wrap items-center gap-1.5 text-caption text-muted-foreground">
       <span>{label} </span>
-      <ol className="inline">
+      <ol className="flex min-w-0 flex-wrap gap-1.5">
         {passages.map((passage) => (
           <li
             key={passage.source}
-            className="inline after:content-[',_'] last:after:content-none"
+            className="flex max-w-full min-w-0 gap-1 rounded-full bg-muted px-2 py-0.5 text-secondary-foreground"
           >
-            [{passage.source}]{" "}
-            <span dir="auto" lang={languageOfText(passage.title)}>
+            <span className="shrink-0">[{passage.source}] </span>
+            <span
+              dir="auto"
+              lang={languageOfText(passage.title)}
+              className="truncate"
+            >
               {passage.title}
             </span>
           </li>
@@ -177,48 +267,115 @@ function Sources({ parts, label }: { parts: ToolPart[]; label: string }) {
   );
 }
 
+/** Three dots in an assistant bubble while a reply is on its way. Seen, not read: the chat's
+ * status line says it to screen readers. */
+function Typing() {
+  return (
+    <div
+      aria-hidden="true"
+      className="flex gap-1 justify-self-start rounded-bubble rounded-es-bubble-tail bg-muted px-3.5 py-3"
+    >
+      {[0, 150, 300].map((delay) => (
+        <span
+          key={delay}
+          className="size-1.5 rounded-full bg-muted-foreground motion-safe:animate-typing"
+          style={{ animationDelay: `${delay}ms` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** A message's arrival: it fades in and rises 4px, unless the visitor prefers less motion. */
+const arrives = "motion-safe:animate-arrive";
+
 export function ChatMessages({
   messages,
   labels,
+  replying = false,
   onAnswer,
 }: {
   messages: UIMessage[];
   labels: ChatLabels;
+  /** Whether a reply is on its way: shows the typing dots until its first words arrive. */
+  replying?: boolean;
   onAnswer: (id: string, approved: boolean) => void;
 }) {
+  const last = messages.at(-1);
+  const writing =
+    last?.role === "assistant" && last.parts.at(-1)?.type === "text";
   return (
-    messages
-      // A reply with nothing in it yet (or none at all, while a person has the conversation).
-      .filter((message) => message.parts.length > 0)
-      .map((message) => {
+    <>
+      {messages.map((message, index) => {
+        // A reply with nothing in it yet (or none at all, while a person has the conversation).
+        if (message.parts.length === 0) return null;
+        // Keyed by position: the server gives a message its own id once a turn ends, and a new
+        // key would replay its arrival.
+        const key = index;
         const fromStaff =
           (message.metadata as { from?: string } | undefined)?.from === "staff";
+
+        if (message.role === "user") {
+          return (
+            <div
+              key={key}
+              className={cn(
+                "grid max-w-[85%] justify-self-end rounded-bubble rounded-ee-bubble-tail bg-primary px-3.5 py-2 text-body text-primary-foreground",
+                arrives,
+              )}
+            >
+              <span className="sr-only">{labels.you}</span>
+              {message.parts.map((part, partIndex) =>
+                part.type === "text" ? (
+                  <Typed key={partIndex} text={part.text} />
+                ) : null,
+              )}
+            </div>
+          );
+        }
+
+        if (fromStaff) {
+          return (
+            <div
+              key={key}
+              className={cn(
+                "grid max-w-[88%] gap-1 justify-self-start rounded-bubble rounded-es-bubble-tail bg-card px-3.5 py-2 text-body shadow-[inset_3px_0_0_var(--hala-accent),var(--hala-shadow-1)] rtl:shadow-[inset_-3px_0_0_var(--hala-accent),var(--hala-shadow-1)]",
+                arrives,
+              )}
+            >
+              <span className="sr-only">{labels.assistant}</span>
+              <span className="flex items-center gap-1 text-caption font-medium text-accent-foreground">
+                <UserCircle size={14} aria-hidden="true" />
+                {labels.team}
+              </span>
+              {message.parts.map((part, partIndex) =>
+                part.type === "text" ? (
+                  <Typed key={partIndex} text={part.text} />
+                ) : null,
+              )}
+            </div>
+          );
+        }
+
         const toolParts = message.parts.filter(isToolUIPart) as ToolPart[];
         return (
           <div
-            key={message.id}
+            key={key}
             className={cn(
-              "grid max-w-[85%] gap-2 text-sm",
-              message.role === "user"
-                ? "justify-self-end rounded-lg bg-muted px-3 py-2"
-                : "justify-self-start",
-              fromStaff && "rounded-lg border px-3 py-2",
+              "grid max-w-[92%] justify-items-start gap-1.5 justify-self-start",
+              arrives,
             )}
           >
-            <span className="sr-only">
-              {message.role === "user" ? labels.you : labels.assistant}
-            </span>
-            {fromStaff && (
-              <span className="text-xs font-medium text-muted-foreground">
-                {labels.team}
-              </span>
-            )}
-            {message.parts.map((part, index) => {
+            <span className="sr-only">{labels.assistant}</span>
+            {message.parts.map((part, partIndex) => {
               if (part.type === "text") {
-                return message.role === "user" || fromStaff ? (
-                  <Typed key={index} text={part.text} />
-                ) : (
-                  <Reply key={index} text={part.text} />
+                return (
+                  <div
+                    key={partIndex}
+                    className="max-w-full rounded-bubble rounded-es-bubble-tail bg-muted px-3.5 py-2 text-body"
+                  >
+                    <Reply text={part.text} />
+                  </div>
                 );
               }
               if (isToolUIPart(part)) {
@@ -236,6 +393,8 @@ export function ChatMessages({
             <Sources parts={toolParts} label={labels.sources} />
           </div>
         );
-      })
+      })}
+      {replying && !writing && <Typing />}
+    </>
   );
 }

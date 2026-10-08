@@ -138,6 +138,6 @@ test("staff see the hours but can't change them", async ({ page }) => {
   await signInAs(page, staff);
   await page.goto(`/dashboard/b/${business.slug}/hours`);
   await expect(page.getByText("Saturday")).toBeVisible();
-  await expect(page.getByText("11:00–19:00")).toBeVisible();
+  await expect(page.getByText("11:00-19:00")).toBeVisible();
   await expect(page.getByRole("button", { name: "Save hours" })).toHaveCount(0);
 });

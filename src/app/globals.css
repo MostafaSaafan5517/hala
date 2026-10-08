@@ -1,44 +1,56 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "../styles/tokens.css";
 
-@custom-variant dark (&:is(.dark *));
+/* dark: utilities follow the tokens' rule: the device's setting, unless the element sits inside
+   .hala-light (the widget, the demo salon) or .hala-dark. */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(:not(.hala-light, .hala-light *)) {
+      @slot;
+    }
+  }
+  &:where(.hala-dark, .hala-dark *) {
+    @slot;
+  }
+}
 
+/* The components keep shadcn/ui's names; each points at a Hala token (docs/design/TOKENS.md
+   has the full table). */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--hala-bg);
+  --color-foreground: var(--hala-ink);
+  --color-card: var(--hala-surface);
+  --color-card-foreground: var(--hala-ink);
+  --color-popover: var(--hala-surface);
+  --color-popover-foreground: var(--hala-ink);
+  --color-primary: var(--hala-accent);
+  --color-primary-foreground: var(--hala-on-accent);
+  --color-primary-strong: var(--hala-accent-strong);
+  --color-secondary: var(--hala-surface-2);
+  --color-secondary-foreground: var(--hala-ink-2);
+  --color-secondary-strong: var(--hala-surface-3);
+  --color-muted: var(--hala-surface-2);
+  --color-muted-foreground: var(--hala-ink-3);
+  --color-accent: var(--hala-accent-soft);
+  --color-accent-foreground: var(--hala-accent-ink);
+  --color-destructive: var(--hala-danger);
+  --color-destructive-foreground: var(--hala-on-danger);
+  --color-destructive-soft: var(--hala-danger-soft);
+  --color-success: var(--hala-success);
+  --color-success-soft: var(--hala-success-soft);
+  --color-warning: var(--hala-warning-ink);
+  --color-warning-soft: var(--hala-warning-soft);
+  --color-border: var(--hala-line);
+  --color-input: var(--hala-line-input);
+  --color-ring: var(--hala-accent);
+  --color-chart-1: var(--hala-accent);
+
+  --font-sans: var(--font-readex), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -46,81 +58,85 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-control: var(--hala-radius-control);
+  --radius-surface: var(--hala-radius-surface);
+  --radius-panel: var(--hala-radius-panel);
+  --radius-bubble: var(--hala-radius-bubble);
+  --radius-bubble-tail: var(--hala-radius-bubble-tail);
+  --radius-badge: var(--hala-radius-badge);
+
+  --shadow-level-1: var(--hala-shadow-1);
+  --shadow-level-2: var(--hala-shadow-2);
+  --shadow-level-3: var(--hala-shadow-3);
+
+  --ease-hala: var(--hala-ease);
+  /* Hover and press take the short duration and Hala's easing (DESIGN.md, Motion). */
+  --default-transition-duration: var(--hala-duration-fast);
+  --default-transition-timing-function: var(--hala-ease);
+}
+
+/* The type scale as text-display ... text-caption. Not inline, so the utilities read variables
+   that Arabic text can override below. */
+@theme {
+  --text-display: var(--hala-text-display);
+  --text-display--line-height: var(--hala-text-display-line-height);
+  --text-display--font-weight: var(--hala-text-display-weight);
+  --text-display--letter-spacing: var(--hala-text-display-tracking);
+  --text-h1: var(--hala-text-h1);
+  --text-h1--line-height: var(--hala-text-h1-line-height);
+  --text-h1--font-weight: var(--hala-text-h1-weight);
+  --text-h1--letter-spacing: var(--hala-text-h1-tracking);
+  --text-h2: var(--hala-text-h2);
+  --text-h2--line-height: var(--hala-text-h2-line-height);
+  --text-h2--font-weight: var(--hala-text-h2-weight);
+  --text-h2--letter-spacing: var(--hala-text-h2-tracking);
+  --text-h3: var(--hala-text-h3);
+  --text-h3--line-height: var(--hala-text-h3-line-height);
+  --text-h3--font-weight: var(--hala-text-h3-weight);
+  --text-large: var(--hala-text-large);
+  --text-large--line-height: var(--hala-text-large-line-height);
+  --text-body: var(--hala-text-body);
+  --text-body--line-height: var(--hala-text-body-line-height);
+  --text-small: var(--hala-text-small);
+  --text-small--line-height: var(--hala-text-small-line-height);
+  --text-caption: var(--hala-text-caption);
+  --text-caption--line-height: var(--hala-text-caption-line-height);
+
+  /* The chat's motion (DESIGN.md): a message arrives, rising 4px; three dots pulse while the
+     assistant replies. Used behind motion-safe:, so nothing moves for reduced motion. */
+  --animate-arrive: arrive var(--hala-duration-slow) var(--hala-ease);
+  --animate-typing: typing 1.2s var(--hala-ease) infinite both;
+  @keyframes arrive {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+  @keyframes typing {
+    0%,
+    60%,
+    100% {
+      opacity: 0.35;
+    }
+    30% {
+      opacity: 1;
+    }
+  }
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  /* One accent hue for single-series charts, checked for contrast on each surface. */
-  --chart-1: #2a78d6;
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: #3987e5;
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --radius: var(--hala-radius-control);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+  }
+  /* A visible focus for everything (DESIGN.md); components that draw their own ring turn the
+     outline off. */
+  :focus-visible {
+    outline: 2px solid var(--hala-accent);
+    outline-offset: 2px;
   }
   body {
     @apply bg-background text-foreground;
@@ -132,9 +148,32 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-  /* Arabic text is always marked lang="ar". A font list alone can't pick the Arabic font
-     reliably: Geist's fallback face is the system's Arial, which has Arabic letters too. */
+  /* Reduced motion: nothing moves (DESIGN.md, Motion). Components already ask with motion-safe:;
+     this catches whatever doesn't, transitions included. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  /* Readex Pro sets both scripts. Arabic keeps the sizes, gets more line height, and is never
+     letter-spaced (spacing breaks its joins). */
   :lang(ar) {
-    font-family: var(--font-arabic), var(--font-sans);
+    --text-display--line-height: var(--hala-text-display-line-height-arabic);
+    --text-display--letter-spacing: 0;
+    --text-h1--line-height: var(--hala-text-h1-line-height-arabic);
+    --text-h1--letter-spacing: 0;
+    --text-h2--line-height: var(--hala-text-h2-line-height-arabic);
+    --text-h2--letter-spacing: 0;
+    --text-h3--line-height: var(--hala-text-h3-line-height-arabic);
+    --text-large--line-height: var(--hala-text-large-line-height-arabic);
+    --text-body--line-height: var(--hala-text-body-line-height-arabic);
+    --text-small--line-height: var(--hala-text-small-line-height-arabic);
+    --text-caption--line-height: var(--hala-text-caption-line-height-arabic);
+    letter-spacing: 0;
   }
 }

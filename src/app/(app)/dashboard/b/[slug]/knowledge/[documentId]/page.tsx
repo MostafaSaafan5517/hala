@@ -1,7 +1,10 @@
+import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { saveKnowledgeDocument } from "@/app/(app)/dashboard/b/[slug]/knowledge/actions";
 import { DocumentForm } from "@/app/(app)/dashboard/b/[slug]/knowledge/document-form";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -37,32 +40,47 @@ export default async function EditDocumentPage({
   if (!document) notFound();
 
   return (
-    <Card className="mx-auto w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle>{knowledgeKinds[document.kind].editLabel}</CardTitle>
-        <CardDescription>
-          Saving re-indexes it, so the assistant answers from the new version
-          straight away.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <DocumentForm
-          action={saveKnowledgeDocument.bind(
-            null,
-            business.slug,
-            document.kind,
-            document.id,
-          )}
-          kind={document.kind}
-          initial={{
-            language: document.language,
-            title: document.title,
-            body: document.body,
-          }}
-          submitLabel="Save"
-          pendingLabel="Saving..."
-        />
-      </CardContent>
-    </Card>
+    <div className="mx-auto grid w-full max-w-2xl gap-4">
+      <Link
+        href={`/dashboard/b/${business.slug}/knowledge`}
+        className={buttonVariants({
+          variant: "ghost",
+          size: "sm",
+          className: "justify-self-start",
+        })}
+      >
+        <ArrowLeft aria-hidden="true" className="rtl:-scale-x-100" />
+        Knowledge
+      </Link>
+      <Card>
+        <CardHeader>
+          <CardTitle as="h1">
+            {knowledgeKinds[document.kind].editLabel}
+          </CardTitle>
+          <CardDescription>
+            Saving re-indexes it, so the assistant answers from the new version
+            straight away.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DocumentForm
+            action={saveKnowledgeDocument.bind(
+              null,
+              business.slug,
+              document.kind,
+              document.id,
+            )}
+            kind={document.kind}
+            initial={{
+              language: document.language,
+              title: document.title,
+              body: document.body,
+            }}
+            submitLabel="Save"
+            pendingLabel="Saving..."
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

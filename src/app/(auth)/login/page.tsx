@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FormDone, FormError } from "@/components/form-feedback";
 import { demoConfig, demoEnabled } from "@/config/demo";
 import { SIGNED_IN_HOME } from "@/lib/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
@@ -32,26 +33,20 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign in</CardTitle>
+        <CardTitle as="h1">Sign in</CardTitle>
         <CardDescription>Welcome back.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        {error === "link" && (
-          <p role="alert" className="text-sm text-destructive">
-            {linkErrorMessage}
-          </p>
-        )}
+        {error === "link" && <FormError>{linkErrorMessage}</FormError>}
         {confirmed === "1" && (
-          <p role="status" className="text-sm">
-            Your email is confirmed. Sign in to continue.
-          </p>
+          <FormDone>Your email is confirmed. Sign in to continue.</FormDone>
         )}
         <LoginForm next={nextPath} />
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-small text-secondary-foreground">
           New here?{" "}
           <Link
             href={withNext("/signup", nextPath)}
-            className="text-foreground underline"
+            className="font-medium text-accent-foreground underline underline-offset-4"
           >
             Create an account
           </Link>
@@ -59,12 +54,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         {demoEnabled() && (
           <aside
             aria-labelledby="demo-heading"
-            className="grid gap-1 rounded-lg border bg-muted/40 p-3 text-sm"
+            className="grid gap-1 rounded-control bg-muted p-4 text-small"
           >
             <h2 id="demo-heading" className="font-medium">
               Trying the demo?
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-secondary-foreground">
               Sign in as the demo salon&apos;s owner: email{" "}
               <code dir="ltr" className="whitespace-nowrap">
                 {demoConfig.email}
@@ -74,7 +69,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
                 {demoConfig.password}
               </code>{" "}
               (read-only). Or chat with its assistant on{" "}
-              <Link href="/demo" className="text-foreground underline">
+              <Link
+                href="/demo"
+                className="font-medium text-accent-foreground underline underline-offset-4"
+              >
                 the salon&apos;s website
               </Link>
               .

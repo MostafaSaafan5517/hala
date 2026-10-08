@@ -4,3 +4,10 @@ AGENTS.md
 # Written by the Supabase CLI (`supabase link`), and ignored by Git.
 supabase/.temp
 supabase/.branches
+# Written by `pnpm screens`.
+docs/design/before/
+docs/design/after/
+# Minified from src/embed/widget.js by `pnpm widget`.
+public/widget.js
+# Written by `pnpm tokens` (`cn build`).
+src/lib/cn-tables.ts

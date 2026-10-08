@@ -1,0 +1,16 @@
+/* The preview's own motion sample: a button settling when pressed. Its colors, type, shapes
+   and the chat's motion come from the app's design tokens (src/styles/tokens.css), like every
+   other page. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .hp-press {
+    transition:
+      background-color var(--hala-duration-fast) var(--hala-ease),
+      color var(--hala-duration-fast) var(--hala-ease),
+      box-shadow var(--hala-duration-fast) var(--hala-ease),
+      transform var(--hala-duration-fast) var(--hala-ease);
+  }
+  .hp-press:active {
+    transform: translateY(1px);
+  }
+}

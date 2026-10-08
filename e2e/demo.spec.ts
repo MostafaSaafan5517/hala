@@ -65,6 +65,11 @@ test("the nightly job sets the demo up, and a visitor tries it on the website an
   await expect(chat.getByRole("log")).toContainText(
     "free parking behind the building",
   );
+  // The chat on Hala's own demo closes from inside too, as it does on a business's site.
+  await chat.getByRole("button", { name: "Close chat" }).click();
+  await expect(
+    visitor.getByRole("button", { name: "Chat with us" }),
+  ).toBeFocused();
 
   // The salon's side, with the demo's public, read-only login.
   await page.goto("/login");

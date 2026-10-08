@@ -1,9 +1,14 @@
+import { Archive, Plus, UserList } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
 import { setStaffActive } from "@/app/(app)/dashboard/b/[slug]/staff/actions";
 import { ActionButton } from "@/components/action-button";
+import { Badge } from "@/components/badge";
+import { EmptyState } from "@/components/empty-state";
+import { SectionHeader } from "@/components/section-header";
 import { ServiceName } from "@/components/service-name";
+import { surfaceList, surfaceRow } from "@/components/surface";
 import { buttonVariants } from "@/components/ui/button";
 import { requireMemberBusiness } from "@/lib/business";
 
@@ -30,51 +35,58 @@ export default async function StaffPage({
   if (error) throw new Error(`Could not load staff: ${error.message}`);
 
   const canManage = role !== "staff";
+  const newStaffMember = canManage && (
+    <Link
+      href={`/dashboard/b/${business.slug}/staff/new`}
+      className={buttonVariants()}
+    >
+      <Plus aria-hidden="true" />
+      New staff member
+    </Link>
+  );
 
   return (
     <>
       <BusinessHeader business={business} role={role} current="staff" />
 
-      <section className="grid gap-3" aria-labelledby="staff-heading">
-        <div className="flex items-center justify-between gap-4">
-          <h2 id="staff-heading" className="text-lg font-semibold">
-            Staff
-          </h2>
-          {canManage && (
-            <Link
-              href={`/dashboard/b/${business.slug}/staff/new`}
-              className={buttonVariants({ variant: "outline" })}
-            >
-              New staff member
-            </Link>
-          )}
-        </div>
+      <section className="grid gap-4" aria-labelledby="staff-heading">
+        <SectionHeader
+          id="staff-heading"
+          title="Staff"
+          description="The people customers book with, and what each of them does."
+          // When the list is empty, its empty state offers the action instead.
+          action={staff.length > 0 && newStaffMember}
+        />
 
         {staff.length === 0 ? (
-          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-            No staff yet. Add the people customers book with, and the services
-            each of them performs.
-          </p>
+          <EmptyState
+            icon={<UserList aria-hidden="true" />}
+            title="No staff yet."
+            action={newStaffMember}
+          >
+            Add the people customers book with, and the services each of them
+            performs.
+          </EmptyState>
         ) : (
-          <ul className="grid gap-3">
+          <ul className={surfaceList}>
             {staff.map((person) => (
               <li
                 key={person.id}
-                className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1fr_auto] sm:items-start"
+                className={`${surfaceRow} grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center`}
               >
-                <div className="grid min-w-0 gap-1">
+                <div className="grid min-w-0 gap-2">
                   <p className="flex flex-wrap items-center gap-2">
                     <span className="font-medium" dir="auto">
                       {person.name}
                     </span>
                     {!person.active && (
-                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                      <Badge icon={<Archive aria-hidden="true" />}>
                         Archived
-                      </span>
+                      </Badge>
                     )}
                   </p>
                   {person.staff_services.length === 0 ? (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-small text-muted-foreground">
                       No services yet
                     </span>
                   ) : (
@@ -91,7 +103,7 @@ export default async function StaffPage({
                         .map((service) => (
                           <li
                             key={service.id}
-                            className="rounded-full bg-muted px-2.5 py-1 text-xs"
+                            className="rounded-full bg-muted px-2.5 py-0.5 text-small text-secondary-foreground"
                           >
                             <ServiceName service={service} />
                           </li>
@@ -103,7 +115,10 @@ export default async function StaffPage({
                   <div className="flex flex-wrap gap-2">
                     <Link
                       href={`/dashboard/b/${business.slug}/staff/${person.id}`}
-                      className={buttonVariants({ variant: "outline" })}
+                      className={buttonVariants({
+                        variant: "outline",
+                        size: "sm",
+                      })}
                     >
                       Edit
                     </Link>
@@ -119,7 +134,8 @@ export default async function StaffPage({
                       pendingLabel={
                         person.active ? "Archiving..." : "Restoring..."
                       }
-                      variant="outline"
+                      variant="ghost"
+                      size="sm"
                     />
                   </div>
                 )}

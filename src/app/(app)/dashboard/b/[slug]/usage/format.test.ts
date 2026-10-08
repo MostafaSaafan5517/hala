@@ -27,14 +27,14 @@ describe("formatCount and formatDuration", () => {
     expect(formatCount(12480)).toBe("12,480");
     expect(formatDuration(850)).toBe("850 ms");
     expect(formatDuration(4210)).toBe("4.2 s");
-    expect(formatDuration(null)).toBe("–");
+    expect(formatDuration(null)).toBe("None");
   });
 });
 
 describe("formatShortDay", () => {
   it("writes a plain date as day and month, whatever the server's time zone", () => {
     expect(formatShortDay("2026-10-05")).toBe("5 Oct");
-    expect(formatRowDay("2026-10-05")).toBe("Mon 5 Oct");
+    expect(formatRowDay("2026-10-05")).toBe("Mon, 5 Oct");
   });
 });
 

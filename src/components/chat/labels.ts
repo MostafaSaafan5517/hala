@@ -19,6 +19,8 @@ export type ChatLabels = {
   replying: string;
   error: string;
   message: string;
+  /** What the empty message box shows; its label is for screen readers. */
+  placeholder: string;
   send: string;
   empty: string;
 };
@@ -48,6 +50,7 @@ export const chatLabels: Record<CustomerLanguage, ChatLabels> = {
     replying: "Replying...",
     error: "Something went wrong. Please try again.",
     message: "Message",
+    placeholder: "Write a message",
     send: "Send",
     empty: "Ask a question, or ask to book.",
   },
@@ -75,6 +78,7 @@ export const chatLabels: Record<CustomerLanguage, ChatLabels> = {
     replying: "جارٍ الرد...",
     error: "حدث خطأ. يُرجى المحاولة مرة أخرى.",
     message: "رسالتك",
+    placeholder: "اكتب رسالتك",
     send: "إرسال",
     empty: "اسأل سؤالًا، أو اطلب حجز موعد.",
   },

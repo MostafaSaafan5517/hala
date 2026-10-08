@@ -50,7 +50,7 @@ function Json({ label, value }: { label: string; value: unknown }) {
       <p className="font-medium">{label}</p>
       <pre
         dir="ltr"
-        className="overflow-x-auto rounded-md bg-muted p-2 break-all whitespace-pre-wrap"
+        className="overflow-x-auto rounded-control bg-card p-2 font-mono break-all whitespace-pre-wrap"
       >
         {JSON.stringify(value, null, 2)}
       </pre>
@@ -62,8 +62,8 @@ function ToolStep({ part }: { part: ToolPart }) {
   const name = getToolName(part as Parameters<typeof getToolName>[0]);
   const approval = "approval" in part ? part.approval : undefined;
   return (
-    <details className="rounded-md border px-3 py-2 text-xs">
-      <summary className="cursor-pointer text-muted-foreground">
+    <details className="rounded-control bg-muted px-3 py-2 text-caption">
+      <summary className="cursor-pointer text-secondary-foreground">
         {toolLabels[name] ?? name}: {stateOf(part)}
       </summary>
       <div className="mt-2 grid gap-2">
@@ -102,26 +102,27 @@ export function Transcript({
 }) {
   const shown = messages.filter(({ message }) => message.parts.length > 0);
   if (shown.length === 0) {
-    return (
-      <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-        No messages yet.
-      </p>
-    );
+    return <p className="text-secondary-foreground">No messages yet.</p>;
   }
   return (
-    <ol className="grid gap-3">
+    // As a thread from the team's side: the customer at the start, the assistant and the team at
+    // the end, each in their own bubble, with the steps the assistant took under its words.
+    <ol className="grid grid-cols-[minmax(0,1fr)] gap-4">
       {shown.map(({ message, sender }) => {
         const fromStaff =
           (message.metadata as { from?: string } | undefined)?.from === "staff";
+        const fromCustomer = message.role === "user";
         return (
           <li
             key={message.id}
             className={cn(
-              "grid gap-2 rounded-lg border p-3 text-sm",
-              message.role === "user" && "bg-muted/40",
+              "grid max-w-[88%] gap-1.5",
+              fromCustomer
+                ? "justify-items-start justify-self-start"
+                : "justify-items-end justify-self-end",
             )}
           >
-            <p className="text-xs font-medium text-muted-foreground">
+            <p className="px-1 text-caption font-medium text-muted-foreground">
               {message.role === "user" ? (
                 "Customer"
               ) : fromStaff ? (
@@ -140,10 +141,24 @@ export function Transcript({
             </p>
             {message.parts.map((part, index) => {
               if (part.type === "text") {
-                return message.role === "assistant" && !fromStaff ? (
-                  <Reply key={index} text={part.text} />
-                ) : (
-                  <Typed key={index} text={part.text} />
+                return (
+                  <div
+                    key={index}
+                    className={cn(
+                      "max-w-full rounded-bubble px-3.5 py-2.5",
+                      fromCustomer
+                        ? "rounded-es-bubble-tail bg-muted"
+                        : fromStaff
+                          ? "rounded-ee-bubble-tail bg-accent"
+                          : "rounded-ee-bubble-tail bg-card shadow-level-1",
+                    )}
+                  >
+                    {message.role === "assistant" && !fromStaff ? (
+                      <Reply text={part.text} />
+                    ) : (
+                      <Typed text={part.text} />
+                    )}
+                  </div>
                 );
               }
               if (isToolUIPart(part)) {

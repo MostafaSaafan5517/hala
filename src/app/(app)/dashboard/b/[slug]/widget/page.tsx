@@ -6,6 +6,7 @@ import {
   EmbedCode,
   WidgetSettingsForm,
 } from "@/app/(app)/dashboard/b/[slug]/widget/widget-forms";
+import { SectionHeader } from "@/components/section-header";
 import { requireMemberBusiness } from "@/lib/business";
 
 export const metadata: Metadata = { title: "Widget" };
@@ -37,50 +38,55 @@ export default async function WidgetSettingsPage({
     <>
       <BusinessHeader business={business} role={role} current="widget" />
 
-      <section className="grid gap-3" aria-labelledby="widget-heading">
-        <div className="grid gap-1">
-          <h2 id="widget-heading" className="text-lg font-semibold">
-            Website widget
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Customers chat with the assistant from a button on your website. It
-            answers from your knowledge base, books for real, and hands over to
-            your team in the inbox.
-          </p>
+      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="grid min-w-0 gap-10">
+          <section className="grid gap-4" aria-labelledby="widget-heading">
+            <SectionHeader
+              id="widget-heading"
+              title="Website widget"
+              description="Customers chat with the assistant from a button on your website. It answers from your knowledge base, books for real, and hands over to your team in the inbox."
+            />
+            <WidgetSettingsForm
+              action={saveWidgetSettings.bind(null, business.slug)}
+              enabled={settings.widget_enabled}
+              origins={settings.widget_origins}
+            />
+          </section>
+
+          <section className="grid gap-4" aria-labelledby="install-heading">
+            <SectionHeader
+              id="install-heading"
+              title="Add it to your site"
+              description={
+                <>
+                  Paste this before the closing &lt;/body&gt; tag of every page
+                  that should show it. Add data-language=&quot;ar&quot; to start
+                  in Arabic.
+                </>
+              }
+            />
+            <EmbedCode code={embedCode} />
+          </section>
         </div>
-        <WidgetSettingsForm
-          action={saveWidgetSettings.bind(null, business.slug)}
-          enabled={settings.widget_enabled}
-          origins={settings.widget_origins}
-        />
-      </section>
 
-      <section className="grid gap-3" aria-labelledby="install-heading">
-        <h2 id="install-heading" className="text-lg font-semibold">
-          Add it to your site
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Paste this before the closing &lt;/body&gt; tag of every page that
-          should show it. Add data-language=&quot;ar&quot; to start in Arabic.
-        </p>
-        <EmbedCode code={embedCode} />
-      </section>
-
-      {settings.widget_enabled && (
-        <section className="grid gap-3" aria-labelledby="preview-heading">
-          <h2 id="preview-heading" className="text-lg font-semibold">
-            Preview
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            This is the real widget: conversations here appear in the inbox.
-          </p>
-          <iframe
-            src={`/widget/${business.slug}`}
-            title="Widget preview"
-            className="h-[600px] w-full max-w-[380px] rounded-lg border"
-          />
-        </section>
-      )}
+        {settings.widget_enabled && (
+          <section
+            className="grid gap-4 lg:sticky lg:top-6"
+            aria-labelledby="preview-heading"
+          >
+            <SectionHeader
+              id="preview-heading"
+              title="Preview"
+              description="This is the real widget: conversations here appear in the inbox."
+            />
+            <iframe
+              src={`/widget/${business.slug}`}
+              title="Widget preview"
+              className="h-[640px] w-full max-w-[400px] rounded-panel shadow-level-2"
+            />
+          </section>
+        )}
+      </div>
     </>
   );
 }

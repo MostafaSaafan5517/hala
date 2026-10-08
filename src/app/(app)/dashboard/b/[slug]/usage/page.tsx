@@ -8,7 +8,8 @@ import {
   formatUsd,
 } from "@/app/(app)/dashboard/b/[slug]/usage/format";
 import { SpendChart } from "@/app/(app)/dashboard/b/[slug]/usage/spend-chart";
-import { buttonVariants } from "@/components/ui/button";
+import { SectionHeader } from "@/components/section-header";
+import { surface } from "@/components/surface";
 import { businessDailyBudgetUsd } from "@/lib/assistant/limits";
 import { requireMemberBusiness } from "@/lib/business";
 import { addDays, todayIn } from "@/lib/dates";
@@ -24,14 +25,21 @@ const purposeLabels: Record<string, string> = {
   index: "Indexing documents",
 };
 
-function StatTile({ label, value }: { label: string; value: string }) {
+/** One of the period's counts, as a plain figure (DESIGN.md: no row of equal tiles). */
+function Figure({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid gap-1 rounded-lg border p-3">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="text-2xl font-semibold">{value}</dd>
+    <div className="grid gap-0.5">
+      <dt className="text-small text-muted-foreground">{label}</dt>
+      <dd className="text-h2 tabular-nums">{value}</dd>
     </div>
   );
 }
+
+/** A table's surface, scrolling sideways on a phone: a named region the keyboard can scroll. */
+const tableSurface = `${surface} overflow-x-auto`;
+const headCell =
+  "px-3 py-2.5 align-bottom text-caption font-medium text-muted-foreground";
+const bodyCell = "px-3 py-2.5 whitespace-nowrap tabular-nums";
 
 export default async function UsagePage({
   params,
@@ -74,57 +82,43 @@ export default async function UsagePage({
     <>
       <BusinessHeader business={business} role={role} current="usage" />
 
-      <section className="grid gap-4" aria-labelledby="usage-heading">
-        <div className="grid gap-1">
-          <h2 id="usage-heading" className="text-lg font-semibold">
-            The assistant&apos;s usage, last {period} days
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Costs are worked out from each call&apos;s tokens at the
-            model&apos;s list price; the AI Gateway&apos;s own report is the
-            bill. Days follow your business&apos;s time zone.
-          </p>
-        </div>
+      <section className="grid gap-5" aria-labelledby="usage-heading">
+        <SectionHeader
+          id="usage-heading"
+          title={<>The assistant&apos;s usage, last {period} days</>}
+          description="Costs are worked out from each call's tokens at the model's list price; the AI Gateway's own report is the bill. Days follow your business's time zone."
+          action={
+            <nav aria-label="Period" className="flex gap-1.5">
+              {PERIODS.map((option) => (
+                <Link
+                  key={option}
+                  href={option === 7 ? base : `${base}?days=${option}`}
+                  aria-current={option === period ? "page" : undefined}
+                  className={cn(
+                    "inline-flex h-9 items-center rounded-full px-3.5 text-small whitespace-nowrap",
+                    option === period
+                      ? "bg-accent font-medium text-accent-foreground"
+                      : "text-secondary-foreground ring-1 ring-border ring-inset hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  Last {option} days
+                </Link>
+              ))}
+            </nav>
+          }
+        />
 
-        <nav aria-label="Period" className="flex gap-2">
-          {PERIODS.map((option) => (
-            <Link
-              key={option}
-              href={option === 7 ? base : `${base}?days=${option}`}
-              aria-current={option === period ? "page" : undefined}
-              className={buttonVariants({
-                variant: option === period ? "default" : "outline",
-                size: "sm",
-              })}
-            >
-              Last {option} days
-            </Link>
-          ))}
-        </nav>
-
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatTile label="Spent" value={formatUsd(spent)} />
-          <StatTile
-            label="Website conversations"
-            value={formatCount(total((day) => day.conversations))}
-          />
-          <StatTile
-            label="Bookings by the assistant"
-            value={formatCount(total((day) => day.bookings))}
-          />
-          <StatTile
-            label="Asked for a person"
-            value={formatCount(total((day) => day.person_requests))}
-          />
-        </dl>
-
-        <div className="grid gap-2 rounded-lg border p-3">
-          <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-            <span id="budget-label" className="font-medium">
+        {/* Today's spend against the budget leads: the one meter on the page. */}
+        <div className={`${surface} grid gap-3 p-5 sm:p-6`}>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <span id="budget-label" className="text-large font-semibold">
               Spent today
             </span>
-            <span className="tabular-nums">
-              {formatUsd(spentToday)} of {formatUsd(dailyBudget)}
+            <span className="text-h3 tabular-nums">
+              {formatUsd(spentToday)}{" "}
+              <span className="text-body font-normal text-muted-foreground">
+                of {formatUsd(dailyBudget)}
+              </span>
             </span>
           </div>
           <div
@@ -134,7 +128,7 @@ export default async function UsagePage({
             aria-valuemax={dailyBudget}
             aria-valuenow={spentToday}
             aria-valuetext={`${formatUsd(spentToday)} of ${formatUsd(dailyBudget)}`}
-            className="h-2 overflow-hidden rounded-full bg-muted"
+            className="h-2.5 overflow-hidden rounded-full bg-muted"
           >
             <div
               className={cn(
@@ -144,7 +138,7 @@ export default async function UsagePage({
               style={{ width: `${budgetShare * 100}%` }}
             />
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-small text-secondary-foreground">
             {budgetShare >= 1
               ? "Today's limit is reached: until midnight, customers get a fixed reply and the conversation goes to your team."
               : budgetShare >= 0.8
@@ -152,45 +146,58 @@ export default async function UsagePage({
                 : "The daily limit keeps a busy or abusive day from running up costs."}
           </p>
         </div>
+
+        <dl className="flex flex-wrap gap-x-12 gap-y-4 px-1">
+          <Figure label="Spent" value={formatUsd(spent)} />
+          <Figure
+            label="Website conversations"
+            value={formatCount(total((day) => day.conversations))}
+          />
+          <Figure
+            label="Bookings by the assistant"
+            value={formatCount(total((day) => day.bookings))}
+          />
+          <Figure
+            label="Asked for a person"
+            value={formatCount(total((day) => day.person_requests))}
+          />
+        </dl>
       </section>
 
-      <section className="grid gap-3" aria-labelledby="spend-heading">
-        <h2 id="spend-heading" className="text-lg font-semibold">
-          Spend per day
-        </h2>
+      <section className="grid gap-4" aria-labelledby="spend-heading">
+        <SectionHeader id="spend-heading" title="Spend per day" />
         {spent > 0 ? (
-          <SpendChart
-            days={days.map((day) => ({
-              day: day.day,
-              cost: day.cost_usd,
-              chatCalls: day.chat_calls,
-            }))}
-          />
+          <div className={`${surface} p-5 sm:p-6`}>
+            <SpendChart
+              days={days.map((day) => ({
+                day: day.day,
+                cost: day.cost_usd,
+                chatCalls: day.chat_calls,
+              }))}
+            />
+          </div>
         ) : (
-          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
+          <p className="text-secondary-foreground">
             Nothing spent in these days.
           </p>
         )}
       </section>
 
       {/* The scrolling table is the named region, so the section doesn't repeat its name. */}
-      <section className="grid gap-3">
-        <h2 id="days-heading" className="text-lg font-semibold">
+      <section className="grid gap-4">
+        <h2 id="days-heading" className="text-h2">
           Day by day
         </h2>
         <div
-          className="overflow-x-auto rounded-lg border"
+          className={tableSurface}
           tabIndex={0}
           role="region"
           aria-labelledby="days-heading"
         >
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-start text-xs text-muted-foreground">
+          <table className="w-full text-small">
+            <thead>
               <tr>
-                <th
-                  scope="col"
-                  className="px-2 py-2 text-start align-bottom font-medium"
-                >
+                <th scope="col" className={`${headCell} text-start`}>
                   Day
                 </th>
                 {[
@@ -207,7 +214,7 @@ export default async function UsagePage({
                   <th
                     key={heading}
                     scope="col"
-                    className="px-2 py-2 text-end align-bottom font-medium"
+                    className={`${headCell} text-end`}
                   >
                     {heading}
                   </th>
@@ -216,10 +223,10 @@ export default async function UsagePage({
             </thead>
             <tbody>
               {days.toReversed().map((day) => (
-                <tr key={day.day} className="border-t">
+                <tr key={day.day} className="border-t hover:bg-muted">
                   <th
                     scope="row"
-                    className="px-2 py-2 text-start font-normal whitespace-nowrap"
+                    className="px-3 py-2.5 text-start font-normal whitespace-nowrap"
                   >
                     {formatRowDay(day.day)}
                   </th>
@@ -236,10 +243,7 @@ export default async function UsagePage({
                     formatCount(day.person_requests),
                     formatCount(day.failed_model_calls),
                   ].map((value, index) => (
-                    <td
-                      key={index}
-                      className="px-2 py-2 text-end whitespace-nowrap tabular-nums"
-                    >
+                    <td key={index} className={`${bodyCell} text-end`}>
                       {value}
                     </td>
                   ))}
@@ -250,28 +254,28 @@ export default async function UsagePage({
         </div>
       </section>
 
-      <section className="grid gap-3">
-        <h2 id="models-heading" className="text-lg font-semibold">
+      <section className="grid gap-4">
+        <h2 id="models-heading" className="text-h2">
           By model
         </h2>
         {models.length === 0 ? (
-          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
+          <p className="text-secondary-foreground">
             No model calls in these days.
           </p>
         ) : (
           <div
-            className="overflow-x-auto rounded-lg border"
+            className={tableSurface}
             tabIndex={0}
             role="region"
             aria-labelledby="models-heading"
           >
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-xs text-muted-foreground">
+            <table className="w-full text-small">
+              <thead>
                 <tr>
-                  <th scope="col" className="px-3 py-2 text-start font-medium">
+                  <th scope="col" className={`${headCell} text-start`}>
                     Model
                   </th>
-                  <th scope="col" className="px-3 py-2 text-start font-medium">
+                  <th scope="col" className={`${headCell} text-start`}>
                     Used for
                   </th>
                   {["Calls", "Tokens in", "Tokens out", "Spent", "Failed"].map(
@@ -279,7 +283,7 @@ export default async function UsagePage({
                       <th
                         key={heading}
                         scope="col"
-                        className="px-3 py-2 text-end font-medium"
+                        className={`${headCell} text-end`}
                       >
                         {heading}
                       </th>
@@ -289,15 +293,18 @@ export default async function UsagePage({
               </thead>
               <tbody>
                 {models.map((row) => (
-                  <tr key={`${row.model}:${row.purpose}`} className="border-t">
+                  <tr
+                    key={`${row.model}:${row.purpose}`}
+                    className="border-t hover:bg-muted"
+                  >
                     <th
                       scope="row"
                       dir="ltr"
-                      className="px-3 py-2 text-start font-mono text-xs font-normal"
+                      className="px-3 py-2.5 text-start font-mono text-caption font-normal"
                     >
                       {row.model}
                     </th>
-                    <td className="px-3 py-2 whitespace-nowrap">
+                    <td className="px-3 py-2.5 whitespace-nowrap">
                       {purposeLabels[row.purpose] ?? row.purpose}
                     </td>
                     {[
@@ -307,10 +314,7 @@ export default async function UsagePage({
                       formatUsd(row.cost_usd),
                       formatCount(row.failed_calls),
                     ].map((value, index) => (
-                      <td
-                        key={index}
-                        className="px-3 py-2 text-end whitespace-nowrap tabular-nums"
-                      >
+                      <td key={index} className={`${bodyCell} text-end`}>
                         {value}
                       </td>
                     ))}

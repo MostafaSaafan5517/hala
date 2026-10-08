@@ -18,19 +18,22 @@
     "eval": "vitest run --config vitest.evals.config.mts",
     "env:local": "supabase status -o json | node scripts/write-local-env.mjs",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "screens": "playwright test --config playwright.screens.config.ts",
+    "tokens": "node scripts/design-tokens.mjs && cn build --css src/app/globals.css --full --out src/lib/cn-tables.ts --quiet",
+    "widget": "node scripts/build-widget.mjs"
   },
   "dependencies": {
     "@ai-sdk/provider": "4.0.21",
     "@ai-sdk/react": "^4.0.130",
     "@base-ui/react": "^1.8.0",
+    "@phosphor-icons/react": "2.1.10",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "ai": "^7.0.127",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "libphonenumber-js": "^1.13.14",
-    "lucide-react": "^1.50.0",
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -56,6 +59,7 @@
     "shadcn": "^4.21.1",
     "supabase": "^2.119.0",
     "tailwindcss": "^4",
+    "terser": "^5.51.2",
     "typescript": "^5",
     "vitest": "^5.0.3"
   },

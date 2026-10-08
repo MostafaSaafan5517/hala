@@ -99,7 +99,7 @@ test("staff book an appointment and find it on the day's list", async ({
     .getByRole("link", { name: `All bookings on ${formatDay(tomorrow())}` })
     .click();
   const booking = page.getByRole("listitem");
-  await expect(booking).toContainText("10:00–10:45");
+  await expect(booking).toContainText("10:00-10:45");
   await expect(booking).toContainText("Mona Adel · Haircut with Layla");
 
   // The booked time (and anything that would overlap it) is no longer offered.

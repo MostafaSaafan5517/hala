@@ -3,6 +3,8 @@ import Link from "next/link";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
 import { setHours } from "@/app/(app)/dashboard/b/[slug]/hours/actions";
 import { WeekEditor } from "@/app/(app)/dashboard/b/[slug]/hours/week-editor";
+import { SectionHeader } from "@/components/section-header";
+import { surfaceList } from "@/components/surface";
 import { requireMemberBusiness } from "@/lib/business";
 import { type Span, WEEKDAYS } from "@/lib/hours";
 import { cn } from "@/lib/utils";
@@ -16,17 +18,24 @@ function shortTime(time: string) {
 
 function WeekSummary({ spans }: { spans: Span[] }) {
   return (
-    <dl className="grid gap-x-6 gap-y-2 rounded-lg border p-4 text-sm sm:grid-cols-[auto_1fr]">
+    <dl className={`${surfaceList} max-w-2xl`}>
       {WEEKDAYS.map((dayName, weekday) => {
         const daySpans = spans.filter((span) => span.weekday === weekday);
         return (
-          <div key={dayName} className="contents">
-            <dt className="text-muted-foreground">{dayName}</dt>
-            <dd>
+          <div
+            key={dayName}
+            className="grid grid-cols-[8rem_minmax(0,1fr)] gap-4 px-4 py-3 sm:px-5"
+          >
+            <dt className="font-medium">{dayName}</dt>
+            <dd
+              className={
+                daySpans.length === 0 ? "text-muted-foreground" : "tabular-nums"
+              }
+            >
               {daySpans.length === 0
                 ? "Closed"
                 : daySpans
-                    .map((span) => `${span.opensAt}–${span.closesAt}`)
+                    .map((span) => `${span.opensAt}-${span.closesAt}`)
                     .join(", ")}
             </dd>
           </div>
@@ -93,17 +102,25 @@ export default async function HoursPage({
     <>
       <BusinessHeader business={business} role={role} current="hours" />
 
-      <section className="grid gap-3" aria-labelledby="hours-heading">
-        <h2 id="hours-heading" className="text-lg font-semibold">
-          {selected ? (
-            <>
-              <span dir="auto">{selected.name}</span>&apos;s hours
-            </>
-          ) : (
-            "Business hours"
-          )}
-        </h2>
-        <nav aria-label="Whose hours" className="flex flex-wrap gap-2">
+      <section className="grid gap-4" aria-labelledby="hours-heading">
+        <SectionHeader
+          id="hours-heading"
+          title={
+            selected ? (
+              <>
+                <span dir="auto">{selected.name}</span>&apos;s hours
+              </>
+            ) : (
+              "Business hours"
+            )
+          }
+          description={
+            selected
+              ? "Staff work the business's hours unless they have their own."
+              : `In ${business.timezone.replaceAll("_", " ")} time. Staff work these hours unless they have their own.`
+          }
+        />
+        <nav aria-label="Whose hours" className="flex flex-wrap gap-1.5">
           {choices.map((choice) => {
             const current = (selected?.id ?? null) === choice.id;
             return (
@@ -113,10 +130,10 @@ export default async function HoursPage({
                 aria-current={current ? "page" : undefined}
                 dir="auto"
                 className={cn(
-                  "rounded-full border px-3 py-1 text-sm",
+                  "inline-flex h-9 items-center rounded-full px-3.5 text-small",
                   current
-                    ? "border-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "bg-accent font-medium text-accent-foreground"
+                    : "text-secondary-foreground ring-1 ring-border ring-inset hover:bg-muted hover:text-foreground",
                 )}
               >
                 {choice.label}
@@ -125,11 +142,6 @@ export default async function HoursPage({
             );
           })}
         </nav>
-        <p className="text-sm text-muted-foreground">
-          {selected
-            ? "Staff work the business's hours unless they have their own."
-            : `In ${business.timezone.replaceAll("_", " ")} time. Staff work these hours unless they have their own.`}
-        </p>
 
         {canManage ? (
           <WeekEditor

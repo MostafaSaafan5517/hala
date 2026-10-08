@@ -20,7 +20,9 @@ test("a new user signs up, confirms their email on another device, and lands on 
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Check your email")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Check your email" }),
+  ).toBeVisible();
   expect(await accessibilityViolations(page)).toEqual([]);
 
   // Signing in before confirming explains what to do.
@@ -113,7 +115,9 @@ test("signing up from a page that needed sign-in comes back to that page after c
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Check your email")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Check your email" }),
+  ).toBeVisible();
 
   await page.goto(await getEmailLink(email, "/auth/confirm"));
   await expect(page).toHaveURL(/\/dashboard\/new-business$/);
@@ -132,7 +136,9 @@ test("Supabase's default confirmation email signs in the browser that signed up"
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Check your email")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Check your email" }),
+  ).toBeVisible();
 
   await page.goto(
     defaultTemplateLink(await getEmailLink(email, "/auth/confirm")),
@@ -151,7 +157,9 @@ test("Supabase's default email opened on another device confirms the address and
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Check your email")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Check your email" }),
+  ).toBeVisible();
 
   // The code only signs in the browser holding the sign-up's PKCE verifier; this one isn't it.
   const phone = await browser.newContext();

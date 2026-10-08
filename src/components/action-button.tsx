@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 
 /** What a Server Action behind an ActionButton returns. */
@@ -14,24 +15,22 @@ export function ActionButton({
   label,
   pendingLabel,
   variant = "default",
+  size = "default",
 }: {
   action: () => Promise<ActionState>;
   label: string;
   pendingLabel: string;
-  variant?: "default" | "outline";
+  variant?: "default" | "outline" | "secondary" | "ghost" | "destructive";
+  size?: "default" | "sm";
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
     <form action={formAction} className="grid justify-items-start gap-2">
-      <Button type="submit" variant={variant} disabled={pending}>
+      <Button type="submit" variant={variant} size={size} disabled={pending}>
         {pending ? pendingLabel : label}
       </Button>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormError>{state.error}</FormError>}
     </form>
   );
 }

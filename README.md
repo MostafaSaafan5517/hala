@@ -54,10 +54,14 @@ An AI receptionist for appointment-based businesses (salons, clinics, studios, c
 - **Prompt-injection resistance, idempotent actions, an append-only audit log of every tool call, and cost controls** (tokens, cost and latency logged per call; rate limits and token budgets).
 - **An evaluation suite** of scripted Arabic and English conversations, run against the real model and scored.
 
+## Design
+
+Hala has a design system of its own ([docs/design/DESIGN.md](docs/design/DESIGN.md)): warm stone neutrals with one teal accent, in light and dark; Readex Pro setting Arabic and English together; surfaces instead of borders; calm motion that stops for reduced motion. Every text pair meets WCAG AA, and a unit test checks it. The tokens live in `src/styles/tokens.css` and are exported to `docs/design/tokens.json` for Hala's other projects. Every screen before and after the redesign, with the accessibility checks, Lighthouse scores and the widget's size budget, is in [docs/design/results.md](docs/design/results.md); what changed is in the [changelog](CHANGELOG.md).
+
 ## Stack
 
 - [Next.js](https://nextjs.org) 16 (App Router) and TypeScript in strict mode
-- [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com), right-to-left ready for Arabic
+- [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) themed by Hala's tokens, right-to-left ready for Arabic; [Readex Pro](https://fonts.google.com/specimen/Readex+Pro) and [Phosphor](https://phosphoricons.com) icons
 - [Supabase](https://supabase.com): Postgres, Auth, Row-Level Security, pgvector, SQL migrations
 - [Vitest](https://vitest.dev), [Playwright](https://playwright.dev) with [axe](https://github.com/dequelabs/axe-core) accessibility checks, and [pgTAP](https://pgtap.org)
 - GitHub Actions for CI, [Vercel](https://vercel.com) for hosting
@@ -74,6 +78,8 @@ pnpm dev
 ```
 
 Then open http://localhost:3100. `pnpm env:local` writes the local Supabase URL and keys into `.env.local` (see `.env.example` for every variable), and sets `EMBEDDING_MODEL=offline`, a word-matching stand-in that needs no API key. For real semantic search, set `EMBEDDING_MODEL=cohere/embed-v4.0` and an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/ai-gateway), then re-index on the Knowledge tab. `CHAT_MODEL` works the same way: `offline` (answers from the knowledge base, and books from one exact request) or `openai/gpt-5-mini`. Both are on the gateway's free tier ($5 of credit every 30 days, for a subset of models; Claude and OpenAI's embeddings need paid credit), which covers local use and the evaluation suite. The test suites always use the offline models, whatever `.env.local` says.
+
+Two files are built from sources: after editing the embed script's source, `src/embed/widget.js`, run `pnpm widget` to minify it to `public/widget.js` (a unit test fails when the output is stale or over its size limit), and after changing a design token in `src/styles/tokens.css`, run `pnpm tokens`.
 
 ## Deploying
 

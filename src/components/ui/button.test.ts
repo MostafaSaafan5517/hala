@@ -5,7 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 describe("buttonVariants", () => {
   it("lets a variant's border color replace the base's transparent one", () => {
     const classes = buttonVariants({ variant: "outline" }).split(" ");
-    expect(classes).toContain("border-border");
+    expect(classes).toContain("border-input");
     expect(classes).not.toContain("border-transparent");
   });
 

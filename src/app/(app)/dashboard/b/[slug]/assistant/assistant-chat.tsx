@@ -10,6 +10,7 @@ import { ChatComposer } from "@/components/chat/chat-composer";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { chatLabels } from "@/components/chat/labels";
 import { turnRequestBody } from "@/components/chat/turn-request";
+import { FormError } from "@/components/form-feedback";
 
 const labels = chatLabels.en;
 
@@ -42,27 +43,25 @@ export function AssistantChat({
       <div
         role="log"
         aria-label="Conversation"
-        className="grid gap-3 rounded-lg border p-4"
+        className="grid min-h-48 grid-cols-[minmax(0,1fr)] content-start gap-3 rounded-surface bg-card p-4 shadow-level-1 sm:p-5"
       >
         {messages.length === 0 && (
-          <p className="text-sm text-muted-foreground">{labels.empty}</p>
+          <p className="text-secondary-foreground">{labels.empty}</p>
         )}
         <ChatMessages
           messages={messages}
           labels={labels}
+          replying={busy}
           onAnswer={(id, approved) => addToolApprovalResponse({ id, approved })}
         />
       </div>
+      {/* The typing dots show it; this says it to screen readers. */}
       {busy && (
-        <p role="status" className="text-sm text-muted-foreground">
+        <p role="status" className="sr-only">
           {labels.replying}
         </p>
       )}
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {labels.error}
-        </p>
-      )}
+      {error && <FormError>{labels.error}</FormError>}
       <ChatComposer
         labels={labels}
         busy={busy}

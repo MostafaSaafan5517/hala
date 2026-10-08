@@ -1,7 +1,10 @@
+import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateService } from "@/app/(app)/dashboard/b/[slug]/services/actions";
 import { ServiceForm } from "@/app/(app)/dashboard/b/[slug]/services/service-form";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -46,29 +49,42 @@ export default async function EditServicePage({
     : [...PRICE_CURRENCIES, service.currency];
 
   return (
-    <Card className="mx-auto w-full max-w-xl">
-      <CardHeader>
-        <CardTitle>Edit service</CardTitle>
-        <CardDescription>
-          Changes apply to new bookings; existing ones keep what was booked.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ServiceForm
-          action={updateService.bind(null, business.slug, serviceId)}
-          initial={{
-            nameEn: service.name_en ?? "",
-            nameAr: service.name_ar ?? "",
-            duration: String(service.duration_minutes),
-            buffer: String(service.buffer_minutes),
-            price: amountToInput(service.price, service.currency),
-            currency: service.currency,
-          }}
-          currencies={currencies}
-          submitLabel="Save service"
-          pendingLabel="Saving..."
-        />
-      </CardContent>
-    </Card>
+    <div className="mx-auto grid w-full max-w-2xl gap-4">
+      <Link
+        href={`/dashboard/b/${business.slug}/services`}
+        className={buttonVariants({
+          variant: "ghost",
+          size: "sm",
+          className: "justify-self-start",
+        })}
+      >
+        <ArrowLeft aria-hidden="true" className="rtl:-scale-x-100" />
+        Services
+      </Link>
+      <Card>
+        <CardHeader>
+          <CardTitle as="h1">Edit service</CardTitle>
+          <CardDescription>
+            Changes apply to new bookings; existing ones keep what was booked.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ServiceForm
+            action={updateService.bind(null, business.slug, serviceId)}
+            initial={{
+              nameEn: service.name_en ?? "",
+              nameAr: service.name_ar ?? "",
+              duration: String(service.duration_minutes),
+              buffer: String(service.buffer_minutes),
+              price: amountToInput(service.price, service.currency),
+              currency: service.currency,
+            }}
+            currencies={currencies}
+            submitLabel="Save service"
+            pendingLabel="Saving..."
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

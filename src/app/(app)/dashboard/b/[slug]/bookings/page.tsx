@@ -1,7 +1,18 @@
+import {
+  CalendarBlank,
+  CaretLeft,
+  CaretRight,
+  Plus,
+  XCircle,
+} from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BusinessHeader } from "@/app/(app)/dashboard/b/[slug]/business-header";
+import { Badge } from "@/components/badge";
+import { EmptyState } from "@/components/empty-state";
+import { SectionHeader } from "@/components/section-header";
 import { ServiceName } from "@/components/service-name";
+import { surfaceLinkRow, surfaceList } from "@/components/surface";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,31 +54,37 @@ export default async function BookingsPage({
 
   const base = `/dashboard/b/${business.slug}/bookings`;
   const dayLink = buttonVariants({ variant: "outline", size: "sm" });
+  const zone = business.timezone.replaceAll("_", " ");
 
   return (
     <>
       <BusinessHeader business={business} role={role} current="bookings" />
 
-      <section className="grid gap-3" aria-labelledby="bookings-heading">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 id="bookings-heading" className="text-lg font-semibold">
-            {formatDay(day)}
-            {day === today && (
-              <span className="font-normal text-muted-foreground">
-                {" "}
-                (today)
-              </span>
-            )}
-          </h2>
-          <Link
-            href={`${base}/new?day=${day}`}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            New booking
-          </Link>
-        </div>
+      <section className="grid gap-4" aria-labelledby="bookings-heading">
+        <SectionHeader
+          id="bookings-heading"
+          title={
+            <>
+              {formatDay(day)}
+              {day === today && (
+                <span className="font-normal text-muted-foreground">
+                  {" "}
+                  (today)
+                </span>
+              )}
+            </>
+          }
+          description={`Times are in ${zone} time.`}
+          action={
+            <Link href={`${base}/new?day=${day}`} className={buttonVariants()}>
+              <Plus aria-hidden="true" />
+              New booking
+            </Link>
+          }
+        />
         <nav aria-label="Days" className="flex flex-wrap items-center gap-2">
           <Link href={`${base}?day=${addDays(day, -1)}`} className={dayLink}>
+            <CaretLeft aria-hidden="true" className="rtl:-scale-x-100" />
             Previous day
           </Link>
           {day !== today && (
@@ -77,8 +94,9 @@ export default async function BookingsPage({
           )}
           <Link href={`${base}?day=${addDays(day, 1)}`} className={dayLink}>
             Next day
+            <CaretRight aria-hidden="true" className="rtl:-scale-x-100" />
           </Link>
-          <form className="flex items-center gap-2">
+          <form className="flex items-center gap-2 sm:ms-auto">
             <Label htmlFor="day" className="sr-only">
               Go to date
             </Label>
@@ -87,7 +105,7 @@ export default async function BookingsPage({
               name="day"
               type="date"
               defaultValue={day}
-              className="h-7 w-auto"
+              className="h-8 w-auto"
               required
             />
             <Button type="submit" variant="outline" size="sm">
@@ -95,23 +113,23 @@ export default async function BookingsPage({
             </Button>
           </form>
         </nav>
-        <p className="text-sm text-muted-foreground">
-          Times are in {business.timezone.replaceAll("_", " ")} time.
-        </p>
 
         {bookings.length === 0 ? (
-          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-            No bookings on this day.
-          </p>
+          <EmptyState
+            icon={<CalendarBlank aria-hidden="true" />}
+            title="No bookings on this day."
+          >
+            Bookings the assistant takes, and the ones you add, appear here.
+          </EmptyState>
         ) : (
-          <ul className="grid gap-2">
+          <ul className={surfaceList}>
             {bookings.map((booking) => {
               const cancelled = booking.status === "cancelled";
               return (
                 <li key={booking.id}>
                   <Link
                     href={`${base}/${booking.id}`}
-                    className="grid gap-1 rounded-lg border p-3 text-sm hover:bg-muted/50 sm:grid-cols-[7rem_1fr_auto] sm:items-center sm:gap-4"
+                    className={`${surfaceLinkRow} grid gap-1 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-center sm:gap-4`}
                   >
                     <span
                       className={cn(
@@ -119,10 +137,10 @@ export default async function BookingsPage({
                         cancelled && "text-muted-foreground line-through",
                       )}
                     >
-                      {formatLocalTime(booking.starts_at, business.timezone)}–
+                      {formatLocalTime(booking.starts_at, business.timezone)}-
                       {formatLocalTime(booking.ends_at, business.timezone)}
                     </span>
-                    <span className="grid gap-0.5">
+                    <span className="grid min-w-0 gap-0.5">
                       <span>
                         <span dir="auto" className="font-medium">
                           {booking.customers.name}
@@ -130,13 +148,26 @@ export default async function BookingsPage({
                         · <ServiceName service={booking.services} /> with{" "}
                         <span dir="auto">{booking.staff.name}</span>
                       </span>
-                      <span className="text-muted-foreground" dir="ltr">
+                      <span
+                        className="justify-self-start text-small text-muted-foreground"
+                        dir="ltr"
+                      >
                         {formatPhone(booking.customers.phone)}
                       </span>
                     </span>
-                    <span className="text-muted-foreground">
-                      {cancelled ? "Cancelled" : booking.reference}
-                    </span>
+                    {cancelled ? (
+                      <Badge
+                        tone="danger"
+                        icon={<XCircle aria-hidden="true" />}
+                        className="justify-self-start"
+                      >
+                        Cancelled
+                      </Badge>
+                    ) : (
+                      <span className="text-small text-muted-foreground tabular-nums">
+                        {booking.reference}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );

@@ -27,18 +27,18 @@ export default async function SignUpPage({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create your account</CardTitle>
+        <CardTitle as="h1">Create your account</CardTitle>
         <CardDescription>
           Set up an AI receptionist for your business.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <SignUpForm next={nextPath} />
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-small text-secondary-foreground">
           Already have an account?{" "}
           <Link
             href={withNext("/login", nextPath)}
-            className="text-foreground underline"
+            className="font-medium text-accent-foreground underline underline-offset-4"
           >
             Sign in
           </Link>

@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import type { AddFormState } from "@/app/(app)/dashboard/b/[slug]/time-off/actions";
+import { FormDone, FormError } from "@/components/form-feedback";
+import { surface } from "@/components/surface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,26 +20,16 @@ type AddAction = (
 const initialState: AddFormState = { error: null, added: 0 };
 
 function Feedback({ state, noun }: { state: AddFormState; noun: string }) {
-  if (state.error) {
-    return (
-      <p role="alert" className="text-sm text-destructive">
-        {state.error}
-      </p>
-    );
-  }
-  return state.added > 0 ? (
-    <p role="status" className="text-sm text-muted-foreground">
-      {noun} added.
-    </p>
-  ) : null;
+  if (state.error) return <FormError>{state.error}</FormError>;
+  return state.added > 0 ? <FormDone>{noun} added.</FormDone> : null;
 }
 
 export function ClosureForm({ action }: { action: AddAction }) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
-    <form action={formAction} className="grid gap-3 rounded-lg border p-4">
-      <div className="grid gap-3 sm:grid-cols-2">
+    <form action={formAction} className={`${surface} grid gap-4 p-5 sm:p-6`}>
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="startsOn">First day</Label>
           <Input id="startsOn" name="startsOn" type="date" required />
@@ -78,14 +70,14 @@ export function TimeOffForm({
 
   if (staff.length === 0) {
     return (
-      <p className="rounded-lg border p-4 text-sm text-muted-foreground">
+      <p className="text-secondary-foreground">
         Add staff on the Staff tab first.
       </p>
     );
   }
 
   return (
-    <form action={formAction} className="grid gap-3 rounded-lg border p-4">
+    <form action={formAction} className={`${surface} grid gap-4 p-5 sm:p-6`}>
       <div className="grid gap-2">
         <Label htmlFor="staffId">Staff member</Label>
         <NativeSelect id="staffId" name="staffId" className="w-full">
@@ -96,7 +88,7 @@ export function TimeOffForm({
           ))}
         </NativeSelect>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="startsAt">From</Label>
           <Input
