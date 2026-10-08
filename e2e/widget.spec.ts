@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, type Route, test } from "@playwright/test";
 import { addDays, todayIn } from "@/lib/dates";
 import { accessibilityViolations } from "./support/accessibility";
 import { addMember, createSalonFor } from "./support/businesses";
@@ -160,6 +160,51 @@ async function openSite(slug: string, appUrl: string | undefined) {
   sites.push(site);
   return site.origin;
 }
+
+test("a message the server never got stays in the box, to send again", async ({
+  page,
+  browser,
+}) => {
+  const { business } = await salonWithParkingFaq(page);
+  await enableWidget(business.id);
+  const visitor = await (
+    await browser.newContext({ extraHTTPHeaders: asNewVisitor() })
+  ).newPage();
+  await visitor.goto(`/widget/${business.slug}`);
+  await say(visitor, "Where is the parking?");
+  const log = visitor.getByRole("log");
+  await expect(log).toContainText("Yes, free parking behind the salon.");
+
+  const box = visitor.getByRole("textbox");
+  const chat = "**/api/widget/*/chat";
+  // The connection drops, then the server refuses the turn: the message stays to send again,
+  // and the log keeps only what the server has.
+  for (const failure of [
+    (route: Route) => route.abort(),
+    (route: Route) =>
+      route.fulfill({ status: 500, json: { error: "Something went wrong." } }),
+  ]) {
+    let failed!: () => void;
+    const turnFailed = new Promise<void>((resolve) => (failed = resolve));
+    await visitor.route(chat, async (route) => {
+      await failure(route);
+      failed();
+    });
+    await say(visitor, "Is it free on Fridays?");
+    await turnFailed;
+    await expect(box).toHaveValue("Is it free on Fridays?");
+    await expect(
+      visitor.getByRole("alert").filter({ hasText: "Something went wrong" }),
+    ).toBeVisible();
+    await expect(log).not.toContainText("Is it free on Fridays?");
+    await expect(box).toHaveValue("Is it free on Fridays?");
+    await visitor.unroute(chat);
+  }
+
+  await visitor.getByRole("button", { name: "Send" }).click();
+  await expect(log).toContainText("Is it free on Fridays?");
+  await expect(box).toHaveValue("");
+});
 
 test("the widget shows only for businesses that turned it on, and only on their sites", async ({
   page,
